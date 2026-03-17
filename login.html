@@ -14,7 +14,6 @@
             --text-muted: #A0A0A0;
             --blue-accent: #4682B4; 
             --orange-accent: #f59e0b;
-            --red-accent: #ef4444;
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
         }
@@ -28,7 +27,7 @@
             align-items: center;
             min-height: 100vh;
             color: var(--text-main);
-            flex-direction: column; /* Para apilar los botones de gestión abajo */
+            flex-direction: column;
         }
 
         .login-container {
@@ -78,17 +77,15 @@
             margin-top: 10px;
         }
 
-        .btn-login:hover { opacity: 0.9; transform: scale(1.02); }
-
-        /* --- BOTONES DE GESTIÓN RÁPIDA (BAJO EL LOGIN) --- */
-        .admin-tools {
+        /* --- BOTONES DE DESARROLLO (ABAJO) --- */
+        .dev-tools {
             margin-top: 30px;
             display: flex;
             gap: 15px;
         }
 
-        .btn-tool {
-            padding: 10px 20px;
+        .btn-dev {
+            padding: 12px 20px;
             border-radius: 10px;
             font-size: 0.75rem;
             font-weight: 800;
@@ -98,11 +95,11 @@
             transition: 0.2s;
         }
 
+        .btn-seed { border: 1px solid var(--blue-accent); color: var(--blue-accent); }
+        .btn-seed:hover { background: var(--blue-accent); color: white; }
+
         .btn-reset { border: 1px solid var(--orange-accent); color: var(--orange-accent); }
         .btn-reset:hover { background: var(--orange-accent); color: white; }
-
-        .btn-clear { border: 1px solid var(--red-accent); color: var(--red-accent); }
-        .btn-clear:hover { background: var(--red-accent); color: white; }
 
         .error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none; }
     </style>
@@ -111,7 +108,7 @@
 
     <div class="login-container">
         <h1>Bienvenido</h1>
-        <p>Ingresa a tu panel médico</p>
+        <p>Acceso al Panel Médico</p>
 
         <div class="input-group">
             <label>Correo Electrónico</label>
@@ -127,15 +124,15 @@
         <div id="error-text" class="error-msg">Credenciales incorrectas</div>
     </div>
 
-    <div class="admin-tools">
-        <button class="btn-tool btn-reset" onclick="resetearEstados()">Reiniciar Jornada</button>
-        <button class="btn-tool btn-clear" onclick="limpiarBaseDatos()">Vaciar Pacientes</button>
+    <div class="dev-tools">
+        <button class="btn-dev btn-seed" onclick="crearPacientesPrueba()">Crear Pacientes Test</button>
+        <button class="btn-dev btn-reset" onclick="resetearEstados()">Reiniciar Jornada</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -152,28 +149,38 @@
 
         // LOGIN
         document.getElementById('loginBtn').addEventListener('click', async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
             try {
-                await signInWithEmailAndPassword(auth, email.value, password.value);
+                await signInWithEmailAndPassword(auth, email, password);
                 window.location.href = "doctor.html";
             } catch (e) { document.getElementById('error-text').style.display = "block"; }
         });
 
-        // REINICIAR ESTADOS (Vuelve a todos a 'pendiente' y borra hora_llegada)
+        // NUEVO: CREAR PACIENTES DE PRUEBA
+        window.crearPacientesPrueba = async () => {
+            const pacientes = [
+                { nombre: "JUAN PEREZ", rut: "12345678K", hora_consulta: "09:00", estado: "pendiente", doctor_id: "doctor@clinica.cl", consulta: "101", piso: "Piso 1" },
+                { nombre: "MARIA GONZALEZ", rut: "112223334", hora_consulta: "09:30", estado: "pendiente", doctor_id: "doctor@clinica.cl", consulta: "101", piso: "Piso 1" },
+                { nombre: "RICARDO SOTO", rut: "156667778", hora_consulta: "10:00", estado: "pendiente", doctor_id: "doctor@clinica.cl", consulta: "101", piso: "Piso 1" }
+            ];
+
+            try {
+                for (let p of pacientes) {
+                    await addDoc(collection(db, "agendados"), p);
+                }
+                alert("Se han creado 3 pacientes de prueba para doctor@clinica.cl");
+            } catch (e) { console.error(e); }
+        };
+
+        // REINICIAR ESTADOS
         window.resetearEstados = async () => {
-            if(!confirm("¿Deseas reiniciar todos los pacientes a 'Pendiente'?")) return;
+            if(!confirm("¿Reiniciar todos a 'Pendiente'?")) return;
             const snap = await getDocs(collection(db, "agendados"));
             snap.forEach(async (d) => {
                 await updateDoc(doc(db, "agendados", d.id), { estado: "pendiente", hora_llegada: "" });
             });
-            alert("Estados reiniciados.");
-        };
-
-        // LIMPIAR BASE DE DATOS (Borra todos los documentos de la colección)
-        window.limpiarBaseDatos = async () => {
-            if(!confirm("¡ATENCIÓN! Esto borrará a TODOS los pacientes. ¿Continuar?")) return;
-            const snap = await getDocs(collection(db, "agendados"));
-            snap.forEach(async (d) => { await deleteDoc(doc(db, "agendados", d.id)); });
-            alert("Base de datos vaciada.");
+            alert("Jornada reiniciada.");
         };
     </script>
 </body>
