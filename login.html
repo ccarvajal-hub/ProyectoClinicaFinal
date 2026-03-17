@@ -9,8 +9,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // CONFIGURACIÓN DE TU PROYECTO
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
             authDomain: "llamado-cliente.firebaseapp.com",
@@ -24,25 +25,47 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // FUNCIÓN 1: INICIAR SESIÓN (USA EL EMAIL Y PASS QUE ESCRIBAS)
         window.iniciarSesion = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
             
             if (!email || !pass) {
-                alert("Por favor, completa todos los campos.");
+                alert("Por favor, ingresa tu correo y contraseña.");
                 return;
             }
 
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
+                // Si el login es correcto, te manda al panel del doctor
                 window.location.href = "doctor.html";
             } catch (error) { 
                 alert("Error de acceso: Credenciales incorrectas."); 
             }
         };
 
+        // FUNCIÓN 2: CREAR PACIENTE DE PRUEBA RÁPIDO
+        window.crearPrueba = async () => {
+            const emailDoctor = document.getElementById('email').value;
+            if(!emailDoctor) {
+                alert("Escribe el correo del doctor arriba para saber a quién asignarle el paciente.");
+                return;
+            }
+            try {
+                await addDoc(collection(db, "agendados"), {
+                    nombre: "PACIENTE DE PRUEBA",
+                    doctor_id: emailDoctor,
+                    estado: "llegado",
+                    piso: "PISO 1",
+                    consulta: "BOX 101"
+                });
+                alert("¡Paciente creado para " + emailDoctor + "!");
+            } catch (e) { alert("Error al crear: " + e.message); }
+        };
+
+        // FUNCIÓN 3: REINICIAR TODA LA AGENDA
         window.resetearTodos = async () => {
-            if(!confirm("¿Deseas reiniciar todos los pacientes a 'pendiente'?")) return;
+            if(!confirm("¿Deseas reiniciar todos los estados a 'pendiente'?")) return;
             try {
                 const querySnapshot = await getDocs(collection(db, "agendados"));
                 const promesas = [];
@@ -50,10 +73,8 @@
                     promesas.push(updateDoc(docSnap.ref, { estado: "pendiente" }));
                 });
                 await Promise.all(promesas);
-                alert("¡Listo! Agenda reiniciada.");
-            } catch (e) {
-                alert("Error al resetear: " + e.message);
-            }
+                alert("¡Agenda reiniciada con éxito!");
+            } catch (e) { alert("Error al resetear: " + e.message); }
         };
     </script>
 
@@ -65,6 +86,7 @@
             --text-muted: #A0A0A0;
             --blue-accent: #4682B4; 
             --orange-accent: #f59e0b;
+            --green-accent: #1DB954;
             --input-bg: #2A2A2A;
             --input-border: #3E3E3E;
             --radius-box: 32px;
@@ -89,14 +111,12 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            /* Aumentamos el ancho máximo del contenedor principal */
-            max-width: 600px; 
+            max-width: 550px; 
         }
 
         .box { 
             background: var(--bg-card); 
-            /* Aumentamos el padding para dar más "aire" */
-            padding: 70px 60px; 
+            padding: 60px 50px; 
             border-radius: var(--radius-box); 
             width: 100%;
             text-align: center; 
@@ -105,96 +125,65 @@
             box-sizing: border-box;
         }
 
-        h2 { 
-            /* Aumentamos ligeramente el tamaño del título */
-            font-size: 2.8rem; 
-            font-weight: 800; 
-            margin: 0 0 10px 0; 
-            letter-spacing: -2px;
-        }
-
-        p { 
-            color: var(--text-muted); 
-            font-size: 1.2rem; 
-            /* Aumentamos el margen inferior para separar del contenido */
-            margin-bottom: 50px; 
-            margin-top: 0;
-            font-weight: 400;
-        }
-
-        .input-group {
-            width: 100%;
-            /* Aumentamos la separación entre inputs */
-            margin-bottom: 20px; 
-        }
+        h2 { font-size: 2.6rem; font-weight: 800; margin: 0 0 10px 0; letter-spacing: -2px; }
+        p { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 40px; }
 
         input { 
             width: 100%; 
-            /* Aumentamos el padding interno para inputs más altos */
-            padding: 24px; 
+            padding: 22px; 
+            margin-bottom: 15px;
             background: var(--input-bg);
             border: 2px solid var(--input-border);
             border-radius: var(--radius-input); 
             color: white;
-            font-size: 1.2rem; 
+            font-size: 1.1rem;
             box-sizing: border-box;
             outline: none;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
 
-        input:focus { 
-            border-color: var(--blue-accent);
-            background: #333;
-            transform: translateY(-2px);
-        }
+        input:focus { border-color: var(--blue-accent); background: #333; }
 
         .btn-login { 
             background: var(--blue-accent); 
             color: white; 
             border: none; 
-            /* Aumentamos el padding del botón */
-            padding: 24px; 
+            padding: 22px; 
             width: 100%; 
             cursor: pointer; 
             border-radius: var(--radius-input); 
-            /* Aumentamos el margen superior */
-            margin-top: 30px; 
+            margin-top: 20px;
             font-weight: 800;
-            font-size: 1.2rem; 
-            letter-spacing: 0.05em;
+            font-size: 1.1rem;
             text-transform: uppercase;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 20px rgba(70, 130, 180, 0.2);
-        }
-
-        .btn-login:hover { 
-            opacity: 0.9; 
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(70, 130, 180, 0.4);
-        }
-
-        .btn-login:active { transform: translateY(-1px); }
-
-        .test-btn { 
-            background: transparent;
-            color: var(--orange-accent);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            padding: 16px 32px; 
-            border-radius: 14px; 
-            cursor: pointer; 
-            font-weight: 600;
-            font-size: 0.9rem; 
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            /* Aumentamos el margen superior para separar de la caja */
-            margin-top: 50px; 
             transition: all 0.3s;
         }
-        .test-btn:hover { 
-            background: rgba(245, 158, 11, 0.05); 
-            border-color: var(--orange-accent);
-            color: #ffb84d;
+
+        .btn-login:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        /* HERRAMIENTAS DE ABAJO */
+        .admin-tools {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
         }
+
+        .tool-btn { 
+            background: transparent;
+            padding: 14px 20px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+
+        .btn-create { color: var(--green-accent); border: 1px solid rgba(29, 185, 84, 0.3); }
+        .btn-reset { color: var(--orange-accent); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .tool-btn:hover { background: rgba(255,255,255,0.05); transform: translateY(-1px); }
     </style>
 </head>
 <body>
@@ -202,19 +191,18 @@
     <div class="container">
         <div class="box">
             <h2>Bienvenido</h2>
-            <p>Panel de Gestión Médica</p>
+            <p>Acceso al Panel Médico</p>
             
-            <div class="input-group">
-                <input type="email" id="email" placeholder="Correo electrónico">
-            </div>
-            <div class="input-group">
-                <input type="password" id="password" placeholder="Contraseña">
-            </div>
+            <input type="email" id="email" placeholder="Correo electrónico">
+            <input type="password" id="password" placeholder="Contraseña">
             
-            <button class="btn-login" onclick="iniciarSesion()">INGRESAR AL PANEL</button>
+            <button class="btn-login" onclick="iniciarSesion()">INGRESAR</button>
         </div>
         
-        <button class="test-btn" onclick="resetearTodos()">Reiniciar Agenda del Día</button>
+        <div class="admin-tools">
+            <button class="tool-btn btn-create" onclick="crearPrueba()">+ Crear Paciente</button>
+            <button class="tool-btn btn-reset" onclick="resetearTodos()">Reiniciar Agenda</button>
+        </div>
     </div>
 
 </body>
