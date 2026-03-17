@@ -2,92 +2,185 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Agenda Médica - Panel Doctor</title>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
-            authDomain: "llamado-cliente.firebaseapp.com",
-            projectId: "llamado-cliente",
-            storageBucket: "llamado-cliente.appspot.com",
-            messagingSenderId: "444376711880",
-            appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Funciones globales para botones
-        window.cambiarEstado = async (id, nuevoEstado, nombre = null, box = null) => {
-            await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
-            if (nuevoEstado === 'llamando') {
-                await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: box });
-            }
-        };
-
-        window.cancelar = async (id, nombre) => {
-            if (confirm("¿Eliminar cita de " + nombre + "?")) await deleteDoc(doc(db, "agendados", id));
-        };
-
-        window.cerrarSesion = () => signOut(auth).then(() => location.href = "login.html");
-
-        // --- INICIALIZACIÓN SEGURA ---
-        document.addEventListener('DOMContentLoaded', () => {
-            onAuthStateChanged(auth, (user) => {
-                if (!user) { window.location.href = "login.html"; return; }
-                
-                const emailSpan = document.getElementById('email-display');
-                if (emailSpan) emailSpan.innerText = user.email;
-                
-                const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
-                
-                onSnapshot(q, (snapshot) => {
-                    const container = document.getElementById('agenda-lista');
-                    container.innerHTML = "";
-                    
-                    snapshot.forEach((docSnap) => {
-                        const p = docSnap.data();
-                        const estado = p.estado || 'llegado';
-                        
-                        container.innerHTML += `
-                            <div class="paciente-card estado-${estado}">
-                                <div class="col-nombre"><strong>${p.nombre}</strong></div>
-                                <div class="col-estado"><span>${estado.toUpperCase()}</span></div>
-                                <div class="col-accion">
-                                    ${estado === 'llegado' ? `<button onclick="cambiarEstado('${docSnap.id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
-                                    ${estado === 'llamando' ? `<button onclick="cambiarEstado('${docSnap.id}', 'atendiendo')">ATENDIENDO</button>` : ''}
-                                    ${estado === 'atendiendo' ? `<button onclick="cambiarEstado('${docSnap.id}', 'atendido')">FINALIZAR</button>` : ''}
-                                    ${estado !== 'llegado' ? `<button class="btn-deshacer" onclick="cambiarEstado('${docSnap.id}', 'llegado')">↺</button>` : ''}
-                                    <button class="btn-cancelar" onclick="cancelar('${docSnap.id}', '${p.nombre}')">✕</button>
-                                </div>
-                            </div>`;
-                    });
-                });
-            });
-        });
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Médico - Gestión de Pacientes</title>
+    
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .btn-logout { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
-        .paciente-card { background: white; padding: 15px; margin: 8px 0; border-radius: 10px; display: grid; grid-template-columns: 2fr 1fr 1fr; align-items: center; border-left: 6px solid #cbd5e1; }
-        .estado-llamando { border-left-color: #f59e0b; background: #fffbeb; }
-        .estado-atendiendo { border-left-color: #8b5cf6; background: #f5f3ff; }
-        .estado-atendido { border-left-color: #94a3b8; background: #f1f5f9; }
-        .col-accion { display: flex; gap: 5px; justify-content: flex-end; }
-        .btn-deshacer { background: #64748b; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
-        .btn-cancelar { background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
+        /* IMPORTACIÓN DE FUENTE INTER */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+        :root {
+            /* COLORES EXACTOS DE TU KIOSKO */
+            --bg-main: #121212;
+            --bg-card: #1E1E1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A0;
+            --accent-blue-mate: #4682B4; 
+            --accent-blue-hover: #5492C4;
+            --input-bg: #2A2A2A;
+            --input-border: #3E3E3E;
+            --radius-custom: 10px;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background: var(--bg-main); 
+            margin: 0; 
+            color: var(--text-primary);
+        }
+
+        /* CONTENEDOR PRINCIPAL (IGUAL AL KIOSKO) */
+        .box { 
+            background: var(--bg-card); 
+            padding: 50px 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6); 
+            text-align: center; 
+            width: 90%; 
+            max-width: 420px; 
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        h1 { 
+            font-size: 2.2rem; 
+            font-weight: 800; 
+            margin-bottom: 10px; 
+            letter-spacing: -0.03em; 
+        }
+
+        p { 
+            color: var(--text-secondary); 
+            margin-bottom: 35px; 
+            font-size: 1.1rem; 
+        }
+
+        /* INPUTS ESTILO KIOSKO (OSCUROS) */
+        input { 
+            width: 100%; 
+            padding: 20px; 
+            font-size: 1rem; 
+            border: 2px solid var(--input-border); 
+            border-radius: var(--radius-custom); 
+            box-sizing: border-box; 
+            text-align: center; 
+            color: var(--text-primary); 
+            background: var(--input-bg);
+            margin-bottom: 15px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        input:focus { 
+            outline: none; 
+            border-color: var(--accent-blue-mate);
+            background: #252525;
+        }
+
+        /* BOTÓN IDÉNTICO AL KIOSKO */
+        button { 
+            width: 100%; 
+            padding: 20px; 
+            font-size: 1.1rem; 
+            background: var(--accent-blue-mate); 
+            color: white; 
+            border: none; 
+            border-radius: var(--radius-custom); 
+            cursor: pointer; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.15em; 
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover { 
+            background: var(--accent-blue-hover); 
+            transform: translateY(-2px); 
+        }
+
+        /* TARJETAS DE PACIENTES DENTRO DEL PANEL */
+        .paciente-item {
+            background: var(--input-bg);
+            padding: 20px;
+            border-radius: var(--radius-custom);
+            margin-bottom: 15px;
+            border: 1px solid var(--input-border);
+            text-align: left;
+        }
+
+        .paciente-nombre { 
+            display: block; 
+            font-weight: 700; 
+            font-size: 1.2rem; 
+            color: var(--text-primary);
+        }
+
+        .paciente-info { 
+            color: var(--text-secondary); 
+            font-size: 0.85rem; 
+            margin-top: 5px;
+            display: block;
+        }
+
+        .btn-atendido {
+            background: #2A2A2A;
+            border: 1px solid #444;
+            margin-top: 15px;
+        }
+
+        .btn-logout { 
+            background: transparent; 
+            border: 1px solid #333; 
+            color: #555; 
+            font-size: 0.8rem; 
+            margin-top: 30px; 
+            letter-spacing: 0.1em;
+        }
+
+        .footer-text { 
+            margin-top: 40px; 
+            font-size: 0.75rem; 
+            color: #444; 
+            letter-spacing: 0.2em; 
+            font-weight: 600; 
+        }
+        
+        #login-section, #doctor-section { width: 100%; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Dr(a). <span id="email-display"></span></h1>
-        <button class="btn-logout" onclick="cerrarSesion()">CERRAR SESIÓN</button>
+
+    <div class="box">
+        <div id="login-section">
+            <h1>Ingreso Médico</h1>
+            <p>Acceda a su panel de gestión</p>
+            <input type="email" id="email" placeholder="Correo electrónico" autocomplete="email">
+            <input type="password" id="password" placeholder="Contraseña">
+            <button id="btnLogin">Ingresar</button>
+        </div>
+
+        <div id="doctor-section" class="hidden">
+            <h1 id="doc-title">Atención</h1>
+            <p id="doc-email" style="font-size: 0.8rem; margin-top: -20px; margin-bottom: 30px; opacity: 0.6;"></p>
+            
+            <div id="lista-pacientes">
+                </div>
+
+            <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+
+        <div class="footer-text">SISTEMA DE GESTIÓN CLÍNICA</div>
     </div>
-    <div id="agenda-lista">Cargando datos de la agenda...</div>
-</body>
-</html>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIGURACIÓN FIREBASE
+        const
