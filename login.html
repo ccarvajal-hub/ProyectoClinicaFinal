@@ -25,7 +25,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // FUNCIÓN 1: INICIAR SESIÓN (USA EL EMAIL Y PASS QUE ESCRIBAS)
+        // FUNCIÓN 1: INICIAR SESIÓN
         window.iniciarSesion = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
@@ -37,29 +37,61 @@
 
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
-                // Si el login es correcto, te manda al panel del doctor
                 window.location.href = "doctor.html";
             } catch (error) { 
                 alert("Error de acceso: Credenciales incorrectas."); 
             }
         };
 
-        // FUNCIÓN 2: CREAR PACIENTE DE PRUEBA RÁPIDO
+        // --- GENERADORES ALEATORIOS PARA PRUEBAS ---
+        const nombres = ["Juan", "María", "Pedro", "Ana", "Luis", "Carmen", "Diego", "Camila", "Jorge", "Valentina"];
+        const apellidos = ["González", "Muñoz", "Rojas", "Díaz", "Pérez", "Soto", "Contreras", "Silva", "Martínez", "Sepúlveda"];
+
+        function generarRutValido() {
+            // Genera un número de RUT aleatorio entre 5.000.000 y 25.000.000
+            let num = Math.floor(Math.random() * 20000000) + 5000000;
+            let rut = num;
+            let M = 0, S = 1;
+            for (; rut; rut = Math.floor(rut / 10)) {
+                S = (S + rut % 10 * (9 - M++ % 6)) % 11;
+            }
+            let dv = S ? S - 1 : 'k';
+            return `${num}${dv}`; // Lo devuelve sin puntos ni guion para el formato que usas: ej. 14021549k
+        }
+
+        function generarFecha() {
+            const year = Math.floor(Math.random() * (2005 - 1950 + 1)) + 1950;
+            const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+            const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // FUNCIÓN 2: CREAR PACIENTE ALEATORIO Y VÁLIDO
         window.crearPrueba = async () => {
             const emailDoctor = document.getElementById('email').value;
             if(!emailDoctor) {
                 alert("Escribe el correo del doctor arriba para saber a quién asignarle el paciente.");
                 return;
             }
+
+            const nombreRandom = `${nombres[Math.floor(Math.random() * nombres.length)]} ${apellidos[Math.floor(Math.random() * apellidos.length)]}`;
+            const rutRandom = generarRutValido();
+            const fechaRandom = generarFecha();
+
             try {
                 await addDoc(collection(db, "agendados"), {
-                    nombre: "PACIENTE DE PRUEBA",
+                    nombre: nombreRandom,
+                    rut: rutRandom,
+                    fecha_nacimiento: fechaRandom,
+                    hora_consulta: "10:00",
+                    piso: "PISO 2",
+                    consulta: "BOX 5",
                     doctor_id: emailDoctor,
-                    estado: "llegado",
-                    piso: "PISO 1",
-                    consulta: "BOX 101"
+                    estado: "pendiente" // Lo dejamos en pendiente para que vayas al tótem a "llegar"
                 });
-                alert("¡Paciente creado para " + emailDoctor + "!");
+                
+                // Muestra la alerta con el RUT para que el usuario pueda probarlo en el Tótem
+                alert(`¡Paciente Creado Exitosamente!\n\nNombre: ${nombreRandom}\nRUT: ${rutRandom}\n\nAnótalo para probar en el Tótem.`);
             } catch (e) { alert("Error al crear: " + e.message); }
         };
 
