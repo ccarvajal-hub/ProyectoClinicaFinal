@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pantalla de Llamados</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
+            authDomain: "llamado-cliente.firebaseapp.com",
+            projectId: "llamado-cliente",
+            storageBucket: "llamado-cliente.appspot.com",
+            messagingSenderId: "444376711880",
+            appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        let inicializado = false;
+
+        // 1. LLAMADO ACTUAL (Centro de la pantalla)
+        onSnapshot(doc(db, "turnos", "actual"), (snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                document.getElementById('p-nombre').innerText = data.paciente;
+                document.getElementById('p-box').innerText = data.box;
+                
+                if (inicializado) {
+                    audio.play().catch(e => console.log("Permiso de audio pendiente"));
+                    const bg = document.getElementById('main');
+                    bg.style.background = "#fef08a";
+                    setTimeout(() => bg.style.background = "white", 1000);
+                }
+                inicializado = true;
+            }
+        });
+
+        // 2. HISTORIAL (Saltando el primero para no repetir)
+        const q = query(collection(db, "historial"), orderBy("fecha", "desc"), limit(6));
+        onSnapshot(q, (snapshot) => {
+            const lista = document.getElementById('lista-historial');
+            lista.innerHTML = "";
+            
+            // CONVERTIR A ARRAY Y SALTAR EL ÍNDICE 0 (El paciente actual)
+            const documentos = snapshot.docs;
+            const soloAnteriores = documentos.slice(1); 
+
+            soloAnteriores.forEach((docSnap) => {
+                const h = docSnap.data();
+                const item = document.createElement('li');
+                item.innerHTML = `<strong>${h.paciente}</strong><br><small>${h.box}</small>`;
+                lista.appendChild(item);
+            });
+        });
+
+        window.comenzar = () => {
+            document.getElementById('modal').style.display = 'none';
+            audio.play();
+        }
+    </script>
+    <style>
+        body { font-family: 'Arial Black', sans-serif; margin: 0; display: flex; height: 100vh; background: #0f172a; color: #1e293b; overflow: hidden; }
+        #main { flex: 2; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; border-right: 15px solid #3b82f6; transition: 0.5s; }
+        #p-nombre { font-size: 7rem; text-transform: uppercase; text-align: center; margin: 30px; }
+        #p-box { font-size: 5rem; background: #3b82f6; color: white; padding: 20px 60px; border-radius: 30px; }
+        #sidebar { flex: 0.8; background: #1e293b; color: white; padding: 30px; }
+        h3 { border-bottom: 3px solid #3b82f6; font-size: 2.5rem; margin-top: 0; }
+        ul { list-style: none; padding: 0; }
+        li { background: #334155; padding: 20px; border-radius: 15px; margin-bottom: 15px; font-size: 1.8rem; border-left: 10px solid #22c55e; animation: aparece 0.5s ease; }
+        @keyframes aparece { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        #modal { position: fixed; top:0; left:0; width:100%; height:100%; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        #modal button { padding: 30px 60px; font-size: 2rem; background: #22c55e; border: none; color: white; border-radius: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="modal"><button onclick="comenzar()">ACTIVAR PANTALLA</button></div>
+    <div id="main">
+        <h2 style="color: #3b82f6; font-size: 3rem;">LLAMANDO A:</h2>
+        <div id="p-nombre">---</div>
+        <div id="p-box">---</div>
+    </div>
+    <div id="sidebar">
+        <h3>ANTERIORES</h3>
+        <ul id="lista-historial"></ul>
+    </div>
+</body>
+</html>
