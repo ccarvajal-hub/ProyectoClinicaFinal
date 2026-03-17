@@ -7,9 +7,8 @@
     
     <style>
         :root {
-            /* --- CONTENEDOR: GRIS GRAFITO SUAVE --- */
-            --bg-card: #1c1c1c; 
-            
+            --bg-page: #4a4a4a;      /* Gris claro sólido */
+            --bg-card: #1c1c1c;      /* Gris grafito del contenedor */
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;   
             --blue-accent: #4682B4; 
@@ -23,8 +22,7 @@
 
         body { 
             font-family: 'Inter', sans-serif; 
-            /* --- CAMBIO: FONDO GRIS CLARO SÓLIDO --- */
-            background-color: #4a4a4a; 
+            background-color: var(--bg-page);
             color: var(--text-main);
             margin: 0;
             display: flex;
@@ -41,8 +39,7 @@
             border-radius: var(--radius-box);
             width: 95%; 
             max-width: 1200px;
-            /* Sombra para dar profundidad sobre el gris claro */
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
             border: 1px solid var(--border-color);
             box-sizing: border-box;
         }
@@ -50,6 +47,7 @@
         h1 { font-size: 2.4rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
         .user-email { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 40px; text-align: center; }
 
+        /* COLUMNAS */
         .col-paciente { width: 25%; text-align: left; }
         .col-rut      { width: 18%; text-align: center; }
         .col-hora-c   { width: 12%; text-align: center; }
@@ -58,12 +56,10 @@
         .col-acciones { width: 20%; text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
 
         .agenda-header {
-            width: 100%;
             display: flex;
             padding: 15px 20px;
             border-bottom: 2px solid var(--border-color);
             margin-bottom: 10px;
-            box-sizing: border-box;
         }
 
         .agenda-header div {
@@ -75,7 +71,6 @@
         }
 
         .paciente-row {
-            width: 100%;
             background: rgba(255,255,255,0.03);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-card);
@@ -83,43 +78,42 @@
             margin-bottom: 8px;
             display: flex;
             align-items: center;
-            box-sizing: border-box;
             transition: 0.2s;
         }
 
         .paciente-row:hover { background: rgba(255,255,255,0.06); }
 
-        .paciente-name { font-weight: 700; font-size: 1.1rem; color: #fff; }
-        .paciente-rut  { font-weight: 400; font-size: 1rem; color: #ccc; }
-        .text-time     { font-size: 1rem; color: var(--text-muted); }
-        .text-arrival  { font-size: 1rem; color: var(--orange-accent); font-weight: 600; }
+        .paciente-name { font-weight: 700; font-size: 1.1rem; }
+        .paciente-rut  { color: #ccc; }
+        .text-time     { color: var(--text-muted); }
+        .text-arrival  { color: var(--orange-accent); font-weight: 600; }
 
-        /* ESTADOS CON MARCO */
+        /* ESTADOS */
         .status-tag {
             font-size: 0.7rem;
             font-weight: 800;
             padding: 6px 12px;
             border-radius: 8px;
             text-transform: uppercase;
-            display: inline-block;
         }
-        .status-pendiente { background: rgba(255,255,255,0.05); color: #888; border: 1px solid #444; }
-        .status-llegado { background: rgba(255, 255, 255, 0.05); color: #aaa; border: 1px solid #555; }
-        .status-llamando { background: rgba(70, 130, 180, 0.15); color: #7ab3e0; border: 1px solid var(--blue-accent); }
-        .status-atendiendo { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid var(--orange-accent); }
-        .status-atendido { background: rgba(29, 185, 84, 0.15); color: #4ade80; border: 1px solid var(--green-accent); }
+        .status-pendiente { background: rgba(255,255,255,0.05); color: #888; }
+        .status-llegado { background: rgba(245, 158, 11, 0.1); color: var(--orange-accent); }
+        .status-pagado { background: rgba(29, 185, 84, 0.1); color: var(--green-accent); }
+        .status-llamando { background: rgba(70, 130, 180, 0.2); color: #7ab3e0; }
+        .status-atendiendo { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
 
-        button { font-family: 'Inter', sans-serif; cursor: pointer; transition: 0.2s; border: none; outline: none; }
-        .btn-action { padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; }
-        .btn-call { background: var(--blue-accent); color: white; }
-        .btn-wait { background: var(--orange-accent); color: white; }
-        .btn-done { background: var(--green-accent); color: white; }
-        .btn-delete { background: var(--red-accent); color: white; width: 42px; height: 42px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; font-weight: 800; }
+        /* BOTONES */
+        button { cursor: pointer; transition: 0.2s; border: none; font-family: 'Inter', sans-serif; }
+        .btn-action { padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: white; }
+        .btn-call { background: var(--blue-accent); }
+        .btn-wait { background: var(--orange-accent); }
+        .btn-done { background: var(--green-accent); }
+        .btn-delete { background: var(--red-accent); color: white; width: 38px; height: 38px; border-radius: 10px; font-weight: 800; }
         
         .btn-action:hover, .btn-delete:hover { opacity: 0.85; transform: scale(1.02); }
 
-        .footer-tools { margin-top: 50px; display: flex; justify-content: center; }
-        .btn-logout { background: var(--blue-accent); color: white; padding: 14px 30px; border-radius: 12px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; }
+        .footer-tools { margin-top: 50px; text-align: center; }
+        .btn-logout { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 10px 20px; border-radius: 12px; font-weight: 700; }
     </style>
 
     <script type="module">
@@ -151,36 +145,44 @@
 
         window.cambiarEstado = async (id, nuevoEstado, nombre = null, box = null) => {
             try {
-                if (nuevoEstado === 'llamando') {
-                    const confirmar = confirm(`¿Deseas llamar al paciente ${nombre} al Box?`);
-                    if (!confirmar) return;
-                }
                 await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
                 if (nuevoEstado === 'llamando') {
                     await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: box });
                 }
-            } catch (error) { console.error(error); }
+            } catch (e) { console.error(e); }
         };
 
         window.cancelar = async (id, nombre) => {
-            if (confirm(`¿Eliminar definitivamente a ${nombre}?`)) {
-                await deleteDoc(doc(db, "agendados", id));
-            }
+            if (confirm(`¿Eliminar a ${nombre}?`)) await deleteDoc(doc(db, "agendados", id));
         };
 
         window.cerrarSesion = () => signOut(auth).then(() => location.href = "login.html");
 
         onAuthStateChanged(auth, (user) => {
-            if (!user) { window.location.href = "login.html"; return; }
+            if (!user) { location.href = "login.html"; return; }
             document.getElementById('email-display').innerText = user.email;
+            
             const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
             onSnapshot(q, (snapshot) => {
                 const container = document.getElementById('agenda-lista');
                 container.innerHTML = "";
+                
                 snapshot.forEach((docSnap) => {
                     const p = docSnap.data();
                     const id = docSnap.id;
                     const estado = p.estado || 'pendiente';
+                    
+                    let botonesHTML = '';
+                    if (estado === 'pagado') {
+                        botonesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>`;
+                    } else if (estado === 'llegado') {
+                        botonesHTML = `<span style="color:var(--orange-accent); font-size:0.75rem; font-weight:800; margin-right:10px;">EN RECEPCIÓN</span>`;
+                    } else if (estado === 'llamando') {
+                        botonesHTML = `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
+                    } else if (estado === 'atendiendo') {
+                        botonesHTML = `<button class="btn-action btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>`;
+                    }
+
                     const row = document.createElement('div');
                     row.className = 'paciente-row';
                     row.innerHTML = `
@@ -192,10 +194,8 @@
                             <span class="status-tag status-${estado}">${estado}</span>
                         </div>
                         <div class="col-acciones">
-                            ${(estado === 'pendiente' || estado === 'llegado') ? `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
-                            ${estado === 'llamando' ? `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
-                            ${estado === 'atendiendo' ? `<button class="btn-action btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
-                            <button class="btn-delete" onclick="cancelar('${id}', '${p.nombre}')" title="Eliminar">✕</button>
+                            ${botonesHTML}
+                            <button class="btn-delete" onclick="cancelar('${id}', '${p.nombre}')">✕</button>
                         </div>
                     `;
                     container.appendChild(row);
@@ -218,6 +218,7 @@
             <div class="col-acciones">Acciones</div>
         </div>
         <div id="agenda-lista"></div>
+        
         <div class="footer-tools">
             <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
