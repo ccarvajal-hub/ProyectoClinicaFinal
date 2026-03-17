@@ -2,52 +2,206 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Acceso Médicos - Agenda</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Médica - Panel Doctor</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --bg-page: #4a4a4a; --bg-card: #1c1c1c; --text-main: #FFFFFF; --text-muted: #A0A0A0; --blue-accent: #4682B4; --orange-accent: #f59e0b; --border-color: rgba(255, 255, 255, 0.1); --radius: 24px; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-page); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text-main); flex-direction: column; }
-        .login-container { background-color: var(--bg-card); padding: 50px 40px; border-radius: var(--radius); width: 100%; max-width: 400px; border: 1px solid var(--border-color); text-align: center; }
-        input { width: 100%; padding: 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 12px; color: white; margin-bottom: 20px; box-sizing: border-box; }
-        .btn-login { width: 100%; padding: 16px; background-color: var(--blue-accent); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; }
-        .dev-tools { margin-top: 30px; display: flex; gap: 15px; }
-        .btn-dev { padding: 12px 20px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; cursor: pointer; background: transparent; }
-        .btn-seed { border: 1px solid var(--blue-accent); color: var(--blue-accent); }
+        :root {
+            --bg-page: #4a4a4a;      
+            --bg-card: #1c1c1c;      
+            --text-main: #FFFFFF;
+            --text-muted: #A0A0A0;   
+            --blue-accent: #4682B4; 
+            --green-accent: #1DB954;
+            --orange-accent: #f59e0b;
+            --purple-accent: #a78bfa;
+            --red-accent: #ef4444;   
+            --border-color: rgba(255, 255, 255, 0.1); 
+            --radius-box: 24px;
+            --radius-card: 16px;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .agenda-container {
+            background-color: var(--bg-card);
+            padding: 40px;
+            border-radius: var(--radius-box);
+            width: 95%; 
+            max-width: 1200px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
+            border: 1px solid var(--border-color);
+        }
+
+        h1 { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
+        .user-email { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 40px; text-align: center; }
+
+        .agenda-header, .paciente-row {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+        }
+
+        .col-paciente { flex: 2; text-align: left; }
+        .col-rut      { flex: 1.2; text-align: center; }
+        .col-hora-c   { flex: 0.8; text-align: center; }
+        .col-hora-ll  { flex: 0.8; text-align: center; }
+        .col-estado   { flex: 1.2; text-align: center; }
+        .col-acciones { flex: 1.5; text-align: right; display: flex; justify-content: flex-end; gap: 10px; min-height: 45px; }
+
+        .agenda-header { border-bottom: 2px solid var(--border-color); margin-bottom: 10px; }
+        .agenda-header div { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
+
+        .paciente-row {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-card);
+            margin-bottom: 8px;
+        }
+
+        .paciente-name { font-weight: 700; font-size: 1.05rem; }
+
+        /* ESTADOS EN TEXTO PLANO */
+        .txt-estado { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
+        .st-pendiente  { color: #666; }
+        .st-llegado    { color: var(--orange-accent); }
+        .st-pagado     { color: var(--green-accent); }
+        .st-llamando   { color: var(--blue-accent); }
+        .st-atendiendo { color: var(--purple-accent); }
+        .st-atendido   { color: #444; }
+
+        /* BOTONES */
+        button { cursor: pointer; transition: 0.2s; border: none; font-family: 'Inter', sans-serif; }
+        .btn-action { padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: white; }
+        .btn-call { background: var(--blue-accent); }
+        .btn-wait { background: var(--purple-accent); }
+        .btn-done { background: var(--green-accent); }
+        .btn-delete { background: transparent; color: var(--red-accent); font-size: 1.2rem; font-weight: 800; width: 34px; }
+        
+        .btn-action:hover { opacity: 0.9; }
+        .footer-tools { margin-top: 40px; text-align: center; }
+        .btn-logout { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 16px; border-radius: 10px; }
     </style>
-</head>
-<body>
-    <div class="login-container">
-        <h1>Bienvenido</h1>
-        <input type="email" id="email" placeholder="doctor@clinica.cl">
-        <input type="password" id="password" placeholder="••••••••">
-        <button class="btn-login" id="loginBtn">Iniciar Sesión</button>
-    </div>
-    <div class="dev-tools">
-        <button class="btn-dev btn-seed" onclick="crearPacientesPrueba()">Crear Pacientes Test</button>
-    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts", authDomain: "llamado-cliente.firebaseapp.com", projectId: "llamado-cliente", storageBucket: "llamado-cliente.appspot.com", messagingSenderId: "444376711880", appId: "1:444376711880:web:01c32061eea040ef0f9bfd" };
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
+            authDomain: "llamado-cliente.firebaseapp.com",
+            projectId: "llamado-cliente",
+            storageBucket: "llamado-cliente.appspot.com",
+            messagingSenderId: "444376711880",
+            appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        document.getElementById('loginBtn').addEventListener('click', async () => {
-            try { await signInWithEmailAndPassword(auth, email.value, password.value); window.location.href = "doctor.html"; } catch (e) { alert("Error"); }
-        });
-
-        window.crearPacientesPrueba = async () => {
-            const pacientes = [
-                { nombre: "JUAN PEREZ", rut: "12345678K", hora_consulta: "09:00", estado: "pendiente", doctor_id: "doctor@clinica.cl", consulta: "101", piso: "Piso 1" },
-                { nombre: "MARIA GONZALEZ", rut: "112223334", hora_consulta: "09:30", estado: "pendiente", doctor_id: "doctor@clinica.cl", consulta: "101", piso: "Piso 1" }
-            ];
-            for (let p of pacientes) { await addDoc(collection(db, "agendados"), p); }
-            alert("Pacientes creados!");
+        window.formatearRut = (rut) => {
+            if (!rut) return "---";
+            let v = rut.replace(/[.-]/g, '');
+            return v.slice(0,-1).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + v.slice(-1).toUpperCase();
         };
+
+        window.cambiarEstado = async (id, nuevoEstado, nombre = null, infoBox = null) => {
+            try {
+                await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
+                if (nuevoEstado === 'llamando') {
+                    // Actualizamos la colección 'turnos' para la TV
+                    await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: infoBox });
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        window.cancelar = async (id, nombre) => {
+            if (confirm(`¿Eliminar a ${nombre}?`)) await deleteDoc(doc(db, "agendados", id));
+        };
+
+        window.cerrarSesion = () => signOut(auth).then(() => location.href = "login.html");
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) { location.href = "login.html"; return; }
+            document.getElementById('email-display').innerText = user.email;
+            
+            // FILTRO POR DOCTOR
+            const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
+            
+            onSnapshot(q, (snapshot) => {
+                const container = document.getElementById('agenda-lista');
+                container.innerHTML = "";
+                
+                snapshot.forEach((docSnap) => {
+                    const p = docSnap.data();
+                    const id = docSnap.id;
+                    const estado = p.estado || 'pendiente';
+                    
+                    let labelEstado = estado;
+                    if (estado === 'llegado') labelEstado = 'En Recepción';
+
+                    let accionesHTML = '';
+                    // REGLA: El botón llamar SOLO aparece si el estado es PAGADO
+                    if (estado === 'pagado') {
+                        accionesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} - ${p.consulta}')">LLAMAR</button>`;
+                    } else if (estado === 'llamando') {
+                        accionesHTML = `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
+                    } else if (estado === 'atendiendo') {
+                        accionesHTML = `<button class="btn-action btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>`;
+                    }
+
+                    const row = document.createElement('div');
+                    row.className = 'paciente-row';
+                    row.innerHTML = `
+                        <div class="col-paciente paciente-name">${p.nombre}</div>
+                        <div class="col-rut paciente-rut">${window.formatearRut(p.rut)}</div>
+                        <div class="col-hora-c text-muted">${p.hora_consulta || '--:--'}</div>
+                        <div class="col-hora-ll" style="color:var(--orange-accent); font-weight:600;">${p.hora_llegada || '--:--'}</div>
+                        <div class="col-estado">
+                            <span class="txt-estado st-${estado}">${labelEstado}</span>
+                        </div>
+                        <div class="col-acciones">
+                            ${accionesHTML}
+                            <button class="btn-delete" onclick="cancelar('${id}', '${p.nombre}')">✕</button>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            });
+        });
     </script>
+</head>
+<body>
+    <div class="agenda-container">
+        <h1>Agenda Médica</h1>
+        <div class="user-email" id="email-display">Cargando...</div>
+        
+        <div class="agenda-header">
+            <div class="col-paciente">Paciente</div>
+            <div class="col-rut">RUT</div>
+            <div class="col-hora-c">Cita</div>
+            <div class="col-hora-ll">Llegada</div>
+            <div class="col-estado">Estado</div>
+            <div class="col-acciones">Acciones</div>
+        </div>
+        <div id="agenda-lista"></div>
+        
+        <div class="footer-tools">
+            <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+    </div>
 </body>
 </html>
