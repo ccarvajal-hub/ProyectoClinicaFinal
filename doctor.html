@@ -3,26 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Agenda Médica - Panel Doctor</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-dark: #121212;
-            --bg-card: #1E1E1E;
+            /* --- CONTENEDOR: GRIS GRAFITO SUAVE --- */
+            --bg-card: #1c1c1c; 
+            
             --text-main: #FFFFFF;
-            --text-muted: #A0A0A0;
+            --text-muted: #A0A0A0;   
             --blue-accent: #4682B4; 
             --green-accent: #1DB954;
             --orange-accent: #f59e0b;
-            --border-color: #333333;
+            --red-accent: #d32f2f;   
+            --border-color: rgba(255, 255, 255, 0.1); 
             --radius-box: 24px;
             --radius-card: 16px;
         }
 
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-dark); 
+            /* --- CAMBIO: FONDO GRIS CLARO SÓLIDO --- */
+            background-color: #4a4a4a; 
             color: var(--text-main);
             margin: 0;
             display: flex;
@@ -33,129 +35,98 @@
             box-sizing: border-box;
         }
 
-        /* NUEVO CONTENEDOR ANCHO (COMO LA LÍNEA ROJA) */
         .agenda-container {
             background-color: var(--bg-card);
-            padding: 50px 40px;
+            padding: 40px;
             border-radius: var(--radius-box);
-            width: 90%; /* flexible */
-            max-width: 1100px; /* Ancho máximo para que no se deforme */
-            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.05);
+            width: 95%; 
+            max-width: 1200px;
+            /* Sombra para dar profundidad sobre el gris claro */
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
+            border: 1px solid var(--border-color);
             box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
 
-        h1 { font-size: 2.6rem; font-weight: 800; margin: 0; letter-spacing: -2px; text-align: center; }
-        .user-email { color: var(--text-muted); font-size: 1rem; margin-bottom: 40px; text-align: center; font-weight: 400; }
+        h1 { font-size: 2.4rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
+        .user-email { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 40px; text-align: center; }
 
-        /* NUEVA CABECERA DE TABLA (COMO LA LÍNEA AMARILLA) */
+        .col-paciente { width: 25%; text-align: left; }
+        .col-rut      { width: 18%; text-align: center; }
+        .col-hora-c   { width: 12%; text-align: center; }
+        .col-hora-ll  { width: 12%; text-align: center; }
+        .col-estado   { width: 13%; text-align: center; }
+        .col-acciones { width: 20%; text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+
         .agenda-header {
             width: 100%;
             display: flex;
-            align-items: center;
             padding: 15px 20px;
-            box-sizing: border-box;
-            margin-bottom: 15px;
             border-bottom: 2px solid var(--border-color);
+            margin-bottom: 10px;
+            box-sizing: border-box;
         }
 
         .agenda-header div {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
             text-transform: uppercase;
-            font-weight: 700;
+            font-weight: 800;
             letter-spacing: 1px;
         }
 
-        /* NUEVA FILA DE PACIENTE (COMO LA LÍNEA VERDE) */
         .paciente-row {
             width: 100%;
-            background: rgba(255,255,255,0.02);
+            background: rgba(255,255,255,0.03);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-card);
-            padding: 18px 20px;
-            margin-bottom: 12px;
+            padding: 15px 20px;
+            margin-bottom: 8px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
             box-sizing: border-box;
-            transition: all 0.3s ease;
+            transition: 0.2s;
         }
 
-        .paciente-row:hover {
-            background: rgba(255,255,255,0.05);
-            border-color: #444;
-            transform: translateY(-2px);
-        }
+        .paciente-row:hover { background: rgba(255,255,255,0.06); }
 
-        /* Definición de anchos de columna para alineación */
-        .col-paciente { flex: 3; display: flex; flex-direction: column; align-items: flex-start; text-align: left;}
-        .col-rut { flex: 2; text-align: left;}
-        .col-hora { flex: 1.5; text-align: left;}
-        .col-estado { flex: 2; display: flex; justify-content: flex-start; align-items: center; }
-        .col-acciones { flex: 2.5; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+        .paciente-name { font-weight: 700; font-size: 1.1rem; color: #fff; }
+        .paciente-rut  { font-weight: 400; font-size: 1rem; color: #ccc; }
+        .text-time     { font-size: 1rem; color: var(--text-muted); }
+        .text-arrival  { font-size: 1rem; color: var(--orange-accent); font-weight: 600; }
 
-
-        .col-paciente strong { display: block; font-size: 1.15rem; color: #fff; }
-        .sub-info { color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-top: 3px; }
-
-        .col-rut, .col-hora { font-size: 1rem; color: #ccc; }
-
-        /* Tags de estado sutiles */
+        /* ESTADOS CON MARCO */
         .status-tag {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 5px 12px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 6px 12px;
             border-radius: 8px;
-            color: #fff;
+            text-transform: uppercase;
+            display: inline-block;
         }
+        .status-pendiente { background: rgba(255,255,255,0.05); color: #888; border: 1px solid #444; }
+        .status-llegado { background: rgba(255, 255, 255, 0.05); color: #aaa; border: 1px solid #555; }
+        .status-llamando { background: rgba(70, 130, 180, 0.15); color: #7ab3e0; border: 1px solid var(--blue-accent); }
+        .status-atendiendo { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid var(--orange-accent); }
+        .status-atendido { background: rgba(29, 185, 84, 0.15); color: #4ade80; border: 1px solid var(--green-accent); }
 
-        .status-llegado { background-color: rgba(255,255,255,0.1); color: #ccc;}
-        .status-llamando { background-color: rgba(70, 130, 180, 0.2); color: var(--blue-accent); border: 1px solid rgba(70, 130, 180, 0.4);}
-        .status-atendiendo { background-color: rgba(245, 158, 11, 0.2); color: var(--orange-accent); border: 1px solid rgba(245, 158, 11, 0.4);}
-        .status-atendido { background-color: rgba(29, 185, 84, 0.2); color: var(--green-accent); border: 1px solid rgba(29, 185, 84, 0.4);}
-
-
-        /* Botones principales de acción */
-        button { font-family: 'Inter', sans-serif; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; outline: none; }
+        button { font-family: 'Inter', sans-serif; cursor: pointer; transition: 0.2s; border: none; outline: none; }
+        .btn-action { padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; }
+        .btn-call { background: var(--blue-accent); color: white; }
+        .btn-wait { background: var(--orange-accent); color: white; }
+        .btn-done { background: var(--green-accent); color: white; }
+        .btn-delete { background: var(--red-accent); color: white; width: 42px; height: 42px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; font-weight: 800; }
         
-        .btn-action { padding: 12px 24px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;}
-        .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-action:hover, .btn-delete:hover { opacity: 0.85; transform: scale(1.02); }
 
-        .btn-call { background: var(--blue-accent); color: white; box-shadow: 0 4px 10px rgba(70, 130, 180, 0.2); }
-        .btn-call:hover { box-shadow: 0 6px 15px rgba(70, 130, 180, 0.4); }
-
-        .btn-wait { background: var(--orange-accent); color: white; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2); }
-        .btn-wait:hover { box-shadow: 0 6px 15px rgba(245, 158, 11, 0.4); }
-
-        .btn-done { background: var(--green-accent); color: white; box-shadow: 0 4px 10px rgba(29, 185, 84, 0.2); }
-        .btn-done:hover { box-shadow: 0 6px 15px rgba(29, 185, 84, 0.4); }
-
-        /* Grupo de mini botones compacto */
-        .mini-btn-group { display: flex; gap: 6px; }
-        .btn-mini { 
-            background: rgba(255,255,255,0.03); color: #777; width: 36px; height: 36px; 
-            border-radius: 10px; display: flex; justify-content: center; align-items: center; 
-            font-size: 1rem; border: 1px solid rgba(255,255,255,0.05);
-        }
-        .btn-mini:hover { background: rgba(255,255,255,0.08); color: white; border-color: #444; }
-
-        .btn-logout { margin-top: 50px; background: transparent; color: var(--text-muted); text-decoration: underline; font-size: 0.9rem; font-weight: 600; opacity: 0.7; }
-        .btn-logout:hover { opacity: 1; color: #fff; }
-
+        .footer-tools { margin-top: 50px; display: flex; justify-content: center; }
+        .btn-logout { background: var(--blue-accent); color: white; padding: 14px 30px; border-radius: 12px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; }
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Configuración de Firebase (asegúrate de que sea la correcta)
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
             authDomain: "llamado-cliente.firebaseapp.com",
@@ -169,69 +140,65 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Funciones existentes (se mantienen igual)
-        window.duplicarPaciente = async (id) => {
-            const docRef = doc(db, "agendados", id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const datos = docSnap.data();
-                datos.estado = "llegado"; 
-                await addDoc(collection(db, "agendados"), datos);
-            }
+        window.formatearRut = (rut) => {
+            if (!rut) return "---";
+            let valor = rut.replace(/[.-]/g, '');
+            let cuerpo = valor.slice(0, -1);
+            let dv = valor.slice(-1).toUpperCase();
+            cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return cuerpo + "-" + dv;
         };
 
         window.cambiarEstado = async (id, nuevoEstado, nombre = null, box = null) => {
-            await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
-            if (nuevoEstado === 'llamando') {
-                await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: box });
-            }
+            try {
+                if (nuevoEstado === 'llamando') {
+                    const confirmar = confirm(`¿Deseas llamar al paciente ${nombre} al Box?`);
+                    if (!confirmar) return;
+                }
+                await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
+                if (nuevoEstado === 'llamando') {
+                    await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: box });
+                }
+            } catch (error) { console.error(error); }
         };
 
         window.cancelar = async (id, nombre) => {
-            if (confirm("¿Eliminar a " + nombre + "?")) await deleteDoc(doc(db, "agendados", id));
+            if (confirm(`¿Eliminar definitivamente a ${nombre}?`)) {
+                await deleteDoc(doc(db, "agendados", id));
+            }
         };
 
         window.cerrarSesion = () => signOut(auth).then(() => location.href = "login.html");
 
-        document.addEventListener('DOMContentLoaded', () => {
-            onAuthStateChanged(auth, (user) => {
-                if (!user) { window.location.href = "login.html"; return; }
-                document.getElementById('email-display').innerText = user.email;
-                
-                const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
-                onSnapshot(q, (snapshot) => {
-                    const container = document.getElementById('agenda-lista');
-                    container.innerHTML = ""; // Limpiar lista antes de recargar
-                    snapshot.forEach((docSnap) => {
-                        const p = docSnap.data();
-                        const id = docSnap.id;
-                        const estado = p.estado || 'llegado';
-                        
-                        // Generación dinámica del nuevo HTML con diseño horizontal
-                        container.innerHTML += `
-                            <div class="paciente-row">
-                                <div class="col-field col-paciente">
-                                    <strong>${p.nombre}</strong>
-                                    <span class="sub-info">${p.piso} ${p.consulta}</span>
-                                </div>
-                                <div class="col-field col-rut">${p.rut || '---'}</div>
-                                <div class="col-field col-hora">${p.hora_consulta || '---'}</div>
-                                <div class="col-field col-estado">
-                                    <span class="status-tag status-${estado}">${estado}</span>
-                                </div>
-                                <div class="col-field col-acciones">
-                                    ${estado === 'llegado' ? `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
-                                    ${estado === 'llamando' ? `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
-                                    ${estado === 'atendiendo' ? `<button class="btn-action btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
-                                    
-                                    <div class="mini-btn-group">
-                                        <button class="btn-mini" onclick="duplicarPaciente('${id}')" title="Copiar Paciente">❐</button>
-                                        ${estado !== 'llegado' ? `<button class="btn-mini" onclick="cambiarEstado('${id}', 'llegado')" title="Reiniciar">↺</button>` : ''}
-                                        <button class="btn-mini" onclick="cancelar('${id}', '${p.nombre}')" title="Eliminar" style="color:#ff5555">✕</button>
-                                    </div>
-                                </div>
-                            </div>`;
-                    });
+        onAuthStateChanged(auth, (user) => {
+            if (!user) { window.location.href = "login.html"; return; }
+            document.getElementById('email-display').innerText = user.email;
+            const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
+            onSnapshot(q, (snapshot) => {
+                const container = document.getElementById('agenda-lista');
+                container.innerHTML = "";
+                snapshot.forEach((docSnap) => {
+                    const p = docSnap.data();
+                    const id = docSnap.id;
+                    const estado = p.estado || 'pendiente';
+                    const row = document.createElement('div');
+                    row.className = 'paciente-row';
+                    row.innerHTML = `
+                        <div class="col-paciente paciente-name">${p.nombre}</div>
+                        <div class="col-rut paciente-rut">${window.formatearRut(p.rut)}</div>
+                        <div class="col-hora-c text-time">${p.hora_consulta || '--:--'}</div>
+                        <div class="col-hora-ll text-arrival">${p.hora_llegada || '--:--'}</div>
+                        <div class="col-estado">
+                            <span class="status-tag status-${estado}">${estado}</span>
+                        </div>
+                        <div class="col-acciones">
+                            ${(estado === 'pendiente' || estado === 'llegado') ? `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
+                            ${estado === 'llamando' ? `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
+                            ${estado === 'atendiendo' ? `<button class="btn-action btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
+                            <button class="btn-delete" onclick="cancelar('${id}', '${p.nombre}')" title="Eliminar">✕</button>
+                        </div>
+                    `;
+                    container.appendChild(row);
                 });
             });
         });
@@ -239,20 +206,21 @@
 </head>
 <body>
     <div class="agenda-container">
-        <h1>Agenda</h1>
+        <h1>Agenda Médica</h1>
         <div class="user-email" id="email-display">Cargando...</div>
         
         <div class="agenda-header">
-            <div class="col-paciente">PACIENTE</div>
+            <div class="col-paciente">Paciente</div>
             <div class="col-rut">RUT</div>
-            <div class="col-hora">HORA CONSULTA</div>
-            <div class="col-estado">ESTADO</div>
-            <div class="col-acciones">ACCIONES</div>
+            <div class="col-hora-c">Cita</div>
+            <div class="col-hora-ll">Llegada</div>
+            <div class="col-estado">Estado</div>
+            <div class="col-acciones">Acciones</div>
         </div>
-
-        <div id="agenda-lista" style="width: 100%;"></div>
-        
-        <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+        <div id="agenda-lista"></div>
+        <div class="footer-tools">
+            <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
     </div>
 </body>
 </html>
