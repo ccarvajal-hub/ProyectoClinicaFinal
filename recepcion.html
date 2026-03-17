@@ -2,36 +2,114 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Recepción - Validación de Pagos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recepción - Validación de Pagos</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-page: #4a4a4a; --bg-card: #1c1c1c; --text-main: #FFFFFF;
-            --text-muted: #A0A0A0; --blue-accent: #4682B4; --green-accent: #1DB954;
-            --orange-accent: #f59e0b; --border-color: rgba(255, 255, 255, 0.1);
-            --radius-box: 24px;
+            --bg-page: #4a4a4a;      
+            --bg-card: #1c1c1c;      
+            --text-main: #FFFFFF;
+            --text-muted: #A0A0A0;
+            --blue-accent: #4682B4; 
+            --green-accent: #1DB954;
+            --orange-accent: #f59e0b;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --radius: 24px;
         }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-main); margin: 0; display: flex; justify-content: center; padding: 40px; }
-        .container { background-color: var(--bg-card); padding: 40px; border-radius: var(--radius-box); width: 100%; max-width: 1000px; border: 1px solid var(--border-color); box-shadow: 0 30px 60px rgba(0,0,0,0.4); }
-        h1 { text-align: center; font-weight: 800; letter-spacing: -1px; }
-        .row { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid var(--border-color); gap: 15px; }
-        .name { flex: 2; font-weight: 700; }
-        .status { flex: 1; text-align: center; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
-        .btn-pay { background: var(--green-accent); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 800; cursor: pointer; }
-        .btn-pay:hover { opacity: 0.8; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--bg-card);
+            padding: 50px 40px;
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 750px; /* Un poco más estrecho para centrar el contenido */
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            border: 1px solid var(--border-color);
+        }
+
+        h1 { text-align: center; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 40px; font-size: 2rem; }
+
+        .row {
+            display: flex;
+            align-items: center;
+            padding: 22px 30px; /* Más aire interno */
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        .name { 
+            flex: 2; 
+            font-weight: 700; 
+            font-size: 1.15rem; 
+            letter-spacing: -0.5px;
+        }
+
+        .status {
+            flex: 1.5;
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
         .tag-llegado { color: var(--orange-accent); }
-        .tag-pagado { color: var(--green-accent); opacity: 0.6; }
+        .tag-pagado { color: var(--green-accent); opacity: 0.8; }
+
+        .action-area {
+            flex: 1;
+            text-align: center; /* Centrado dentro de su columna */
+            display: flex;
+            justify-content: center;
+        }
+
+        .btn-pay {
+            background-color: var(--green-accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-pay:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        .check-mark { 
+            color: var(--green-accent); 
+            font-size: 1.5rem; 
+            display: flex;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Recepción: Confirmación de Pago</h1>
+        <h1>Recepción</h1>
         <div id="lista-recepcion"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -48,16 +126,22 @@
         onSnapshot(collection(db, "agendados"), (snapshot) => {
             const list = document.getElementById('lista-recepcion');
             list.innerHTML = "";
+            
             snapshot.forEach(docSnap => {
                 const p = docSnap.data();
                 if (p.estado === 'llegado' || p.estado === 'pagado') {
                     const div = document.createElement('div');
                     div.className = "row";
+                    
+                    const textoEstado = p.estado === 'llegado' ? 'En Recepción' : 'Pagado';
+                    
                     div.innerHTML = `
                         <div class="name">${p.nombre}</div>
-                        <div class="status tag-${p.estado}">${p.estado}</div>
-                        <div>
-                            ${p.estado === 'llegado' ? `<button class="btn-pay" onclick="confirmarPago('${docSnap.id}')">CONFIRMAR PAGO</button>` : '✅ LISTO'}
+                        <div class="status tag-${p.estado}">${textoEstado}</div>
+                        <div class="action-area">
+                            ${p.estado === 'llegado' 
+                                ? `<button class="btn-pay" onclick="confirmarPago('${docSnap.id}')">PAGAR</button>` 
+                                : '<span class="check-mark">✔</span>'}
                         </div>
                     `;
                     list.appendChild(div);
