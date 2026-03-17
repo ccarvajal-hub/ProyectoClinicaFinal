@@ -24,7 +24,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Función de inicio de sesión
         window.iniciarSesion = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
@@ -42,7 +41,6 @@
             }
         };
 
-        // Botón masivo para resetear pacientes
         window.resetearTodos = async () => {
             if(!confirm("¿Deseas reiniciar todos los pacientes a 'pendiente'?")) return;
             try {
@@ -64,13 +62,13 @@
             --bg-dark: #121212;
             --bg-card: #1E1E1E;
             --text-main: #FFFFFF;
-            --text-muted: #888888;
+            --text-muted: #A0A0A0;
             --blue-accent: #4682B4; 
             --orange-accent: #f59e0b;
             --input-bg: #2A2A2A;
             --input-border: #3E3E3E;
-            --radius-box: 24px;
-            --radius-input: 12px;
+            --radius-box: 32px;
+            --radius-input: 16px;
         }
 
         body { 
@@ -91,70 +89,112 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 380px;
+            /* Aumentamos el ancho máximo del contenedor principal */
+            max-width: 600px; 
         }
 
         .box { 
             background: var(--bg-card); 
-            padding: 50px 40px; 
+            /* Aumentamos el padding para dar más "aire" */
+            padding: 70px 60px; 
             border-radius: var(--radius-box); 
             width: 100%;
             text-align: center; 
-            border: 1px solid rgba(255,255,255,0.03);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
             box-sizing: border-box;
         }
 
-        h2 { font-size: 2.2rem; font-weight: 800; margin: 0 0 8px 0; letter-spacing: -1.5px; }
-        p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 35px; margin-top: 0; }
+        h2 { 
+            /* Aumentamos ligeramente el tamaño del título */
+            font-size: 2.8rem; 
+            font-weight: 800; 
+            margin: 0 0 10px 0; 
+            letter-spacing: -2px;
+        }
+
+        p { 
+            color: var(--text-muted); 
+            font-size: 1.2rem; 
+            /* Aumentamos el margen inferior para separar del contenido */
+            margin-bottom: 50px; 
+            margin-top: 0;
+            font-weight: 400;
+        }
+
+        .input-group {
+            width: 100%;
+            /* Aumentamos la separación entre inputs */
+            margin-bottom: 20px; 
+        }
 
         input { 
             width: 100%; 
-            padding: 18px; 
-            margin: 10px 0; 
+            /* Aumentamos el padding interno para inputs más altos */
+            padding: 24px; 
             background: var(--input-bg);
             border: 2px solid var(--input-border);
             border-radius: var(--radius-input); 
             color: white;
-            font-size: 1rem;
+            font-size: 1.2rem; 
             box-sizing: border-box;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
         }
 
-        input:focus { border-color: var(--blue-accent); }
+        input:focus { 
+            border-color: var(--blue-accent);
+            background: #333;
+            transform: translateY(-2px);
+        }
 
         .btn-login { 
             background: var(--blue-accent); 
             color: white; 
             border: none; 
-            padding: 18px; 
+            /* Aumentamos el padding del botón */
+            padding: 24px; 
             width: 100%; 
             cursor: pointer; 
             border-radius: var(--radius-input); 
-            margin-top: 15px;
-            font-weight: 700;
-            font-size: 1rem;
-            transition: all 0.2s;
+            /* Aumentamos el margen superior */
+            margin-top: 30px; 
+            font-weight: 800;
+            font-size: 1.2rem; 
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(70, 130, 180, 0.2);
         }
 
-        .btn-login:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-login:hover { 
+            opacity: 0.9; 
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(70, 130, 180, 0.4);
+        }
+
+        .btn-login:active { transform: translateY(-1px); }
 
         .test-btn { 
             background: transparent;
             color: var(--orange-accent);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            padding: 12px 20px; 
-            border-radius: var(--radius-input); 
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            padding: 16px 32px; 
+            border-radius: 14px; 
             cursor: pointer; 
             font-weight: 600;
-            font-size: 0.7rem;
+            font-size: 0.9rem; 
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 25px;
-            transition: all 0.2s;
+            letter-spacing: 1.5px;
+            /* Aumentamos el margen superior para separar de la caja */
+            margin-top: 50px; 
+            transition: all 0.3s;
         }
-        .test-btn:hover { background: rgba(245, 158, 11, 0.1); border-color: var(--orange-accent); }
+        .test-btn:hover { 
+            background: rgba(245, 158, 11, 0.05); 
+            border-color: var(--orange-accent);
+            color: #ffb84d;
+        }
     </style>
 </head>
 <body>
@@ -162,12 +202,16 @@
     <div class="container">
         <div class="box">
             <h2>Bienvenido</h2>
-            <p>Ingreso al panel médico</p>
+            <p>Panel de Gestión Médica</p>
             
-            <input type="email" id="email" placeholder="Correo electrónico">
-            <input type="password" id="password" placeholder="Contraseña">
+            <div class="input-group">
+                <input type="email" id="email" placeholder="Correo electrónico">
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Contraseña">
+            </div>
             
-            <button class="btn-login" onclick="iniciarSesion()">INGRESAR</button>
+            <button class="btn-login" onclick="iniciarSesion()">INGRESAR AL PANEL</button>
         </div>
         
         <button class="test-btn" onclick="resetearTodos()">Reiniciar Agenda del Día</button>
