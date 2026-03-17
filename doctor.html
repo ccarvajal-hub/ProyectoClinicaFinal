@@ -40,95 +40,46 @@
             width: 90%; 
             max-width: 420px; 
             border: 1px solid rgba(255,255,255,0.03);
-            display: flex;
-            flex-direction: column;
         }
 
         h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.03em; }
         p { color: var(--text-secondary); margin-bottom: 35px; font-size: 1.1rem; }
 
-        /* Arreglo para inputs auto-rellenados */
+        input { 
+            width: 100%; padding: 20px; font-size: 1rem; 
+            border: 2px solid var(--input-border); border-radius: var(--radius-custom); 
+            box-sizing: border-box; text-align: center; color: var(--text-primary); 
+            background: var(--input-bg); margin-bottom: 15px; font-weight: 600;
+        }
+
         input:-webkit-autofill {
             -webkit-text-fill-color: white !important;
             -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
         }
 
-        input { 
-            width: 100%; 
-            padding: 20px; 
-            font-size: 1rem; 
-            border: 2px solid var(--input-border); 
-            border-radius: var(--radius-custom); 
-            box-sizing: border-box; 
-            text-align: center; 
-            color: var(--text-primary); 
-            background: var(--input-bg);
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
         button { 
-            width: 100%; 
-            padding: 20px; 
-            font-size: 1rem; 
-            background: var(--accent-blue-mate); 
-            color: white; 
-            border: none; 
-            border-radius: var(--radius-custom); 
-            cursor: pointer; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            letter-spacing: 0.12em; 
-            transition: all 0.3s ease;
+            width: 100%; padding: 20px; font-size: 1rem; 
+            background: var(--accent-blue-mate); color: white; border: none; 
+            border-radius: var(--radius-custom); cursor: pointer; font-weight: 700; 
+            text-transform: uppercase; letter-spacing: 0.12em; transition: all 0.3s ease;
         }
 
-        button:hover { background: var(--accent-blue-hover); transform: translateY(-2px); }
-
-        /* LISTA DE PACIENTES - Sin parecer ventana emergente */
-        #lista-pacientes {
-            width: 100%;
-            margin-top: 10px;
-        }
-
+        /* ESTILO DE LISTA INTEGRADA (Sin ventana emergente) */
         .paciente-item {
-            background: transparent; /* Quitamos el fondo gris de "ventana" */
-            padding: 20px 0;
-            border-bottom: 1px solid var(--input-border); /* Separación elegante */
+            padding: 25px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
         }
-
         .paciente-item:last-child { border-bottom: none; }
 
-        .paciente-nombre { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.02em; }
-        .paciente-info { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px; }
+        .paciente-nombre { font-weight: 800; font-size: 1.4rem; display: block; margin-bottom: 5px; text-transform: uppercase; }
+        .paciente-info { color: var(--text-secondary); font-size: 0.9rem; display: block; margin-bottom: 20px; }
 
-        .btn-accion { margin-top: 5px; }
-        .btn-atendiendo { background: #1DB954; } /* Verde tipo Spotify */
-        .btn-finalizar { background: #555; }
+        .btn-accion { margin-bottom: 10px; }
+        .btn-atendiendo { background: #1DB954; }
+        .btn-cancelar { background: transparent; color: #444; font-size: 0.75rem; border: none; text-decoration: underline; margin-top: 10px; width: auto; padding: 5px; }
 
-        .btn-cancelar { 
-            background: transparent; 
-            color: #444; 
-            font-size: 0.7rem; 
-            padding: 10px; 
-            margin-top: 10px;
-            border: 1px solid #333;
-        }
-        .btn-cancelar:hover { border-color: #ef4444; color: #ef4444; }
-
-        .btn-logout { 
-            background: transparent; 
-            color: var(--text-secondary); 
-            font-size: 0.75rem; 
-            margin-top: 30px; 
-            text-decoration: underline; 
-            letter-spacing: 0.1em;
-            border: none;
-            padding: 5px;
-        }
+        .btn-logout { background: transparent; color: #444; border: none; font-size: 0.8rem; margin-top: 30px; text-decoration: underline; cursor: pointer; font-weight: 600; }
 
         .hidden { display: none; }
     </style>
@@ -147,10 +98,7 @@
         <div id="doctor-section" class="hidden">
             <h1>Agenda</h1>
             <p id="doc-email" style="font-size: 0.8rem; opacity: 0.5; margin-top: -25px;"></p>
-            
-            <div id="lista-pacientes">
-                </div>
-
+            <div id="lista-pacientes"></div>
             <button class="btn-logout" onclick="cerrarSesion()">CERRAR SESIÓN</button>
         </div>
     </div>
@@ -176,7 +124,7 @@
         document.getElementById('btnLogin').addEventListener('click', () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Acceso denegado"));
+            signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Error: " + err.message));
         });
 
         window.cerrarSesion = () => signOut(auth);
@@ -198,7 +146,8 @@
                 document.getElementById('doctor-section').classList.remove('hidden');
                 document.getElementById('doc-email').innerText = user.email;
 
-                const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email), where("estado", "!=", "atendido"));
+                // CAMBIO CLAVE: Quitamos el segundo "where" para evitar el error de índice de Firebase
+                const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
                 
                 onSnapshot(q, (snapshot) => {
                     const container = document.getElementById('lista-pacientes');
@@ -209,17 +158,20 @@
                         const id = docSnap.id;
                         const estado = p.estado || 'llegado';
                         
-                        const item = document.createElement('div');
-                        item.className = 'paciente-item';
-                        item.innerHTML = `
-                            <span class="paciente-nombre">${p.nombre}</span>
-                            <span class="paciente-info">RUT: ${p.rut} • ${estado.toUpperCase()}</span>
-                            ${estado === 'llegado' ? `<button class="btn-accion" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
-                            ${estado === 'llamando' ? `<button class="btn-accion btn-atendiendo" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
-                            ${estado === 'atendiendo' ? `<button class="btn-accion btn-finalizar" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
-                            <button class="btn-cancelar" onclick="cancelar('${id}', '${p.nombre}')">ELIMINAR CITA</button>
-                        `;
-                        container.appendChild(item);
+                        // Filtramos por código para que no de error la base de datos
+                        if (estado !== 'atendido') {
+                            const item = document.createElement('div');
+                            item.className = 'paciente-item';
+                            item.innerHTML = `
+                                <span class="paciente-nombre">${p.nombre}</span>
+                                <span class="paciente-info">RUT: ${p.rut} • ${estado.toUpperCase()}</span>
+                                ${estado === 'llegado' ? `<button class="btn-accion" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
+                                ${estado === 'llamando' ? `<button class="btn-accion btn-atendiendo" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
+                                ${estado === 'atendiendo' ? `<button class="btn-accion" style="background:#555" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
+                                <br><button class="btn-cancelar" onclick="cancelar('${id}', '${p.nombre}')">ELIMINAR CITA</button>
+                            `;
+                            container.appendChild(item);
+                        }
                     });
                 });
             } else {
