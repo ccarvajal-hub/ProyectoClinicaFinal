@@ -11,7 +11,7 @@
     <meta name="theme-color" content="#121212">
 
     <style>
-        /* Importamos la fuente Inter (Moderna y limpia) */
+        /* Importamos la fuente Inter */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
         :root {
@@ -19,11 +19,11 @@
             --bg-card: #1E1E1E;
             --text-primary: #FFFFFF;
             --text-secondary: #A0A0A0;
-            --accent-blue-mate: #4682B4; /* Azul Acero Mate */
+            --accent-blue-mate: #4682B4; 
             --accent-blue-mate-hover: #5492C4;
             --input-bg: #2A2A2A;
             --input-border: #3E3E3E;
-            --radius-custom: 10px; /* Bordes simétricos para input y botón */
+            --radius-custom: 10px;
         }
 
         body { 
@@ -99,7 +99,7 @@
             cursor: pointer; 
             font-weight: 700; 
             text-transform: uppercase; 
-            letter-spacing: 0.1em; 
+            letter-spacing: 0.15em; 
             transition: all 0.3s ease;
         }
 
@@ -127,7 +127,7 @@
         <h1>Bienvenido</h1>
         <p>Ingrese su RUT para confirmar su llegada</p>
         
-        <input type="text" id="rutInput" placeholder="12.345.678-9" spellcheck="false" autocomplete="off">
+        <input type="text" id="rutInput" placeholder="12.345.678-9" maxlength="12" spellcheck="false" autocomplete="off">
         
         <button id="btnCheckIn">Confirmar Llegada</button>
         
@@ -138,6 +138,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // CONFIGURACIÓN DE TU PROYECTO FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts", 
             authDomain: "llamado-cliente.firebaseapp.com",
@@ -150,6 +151,23 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // LÓGICA 1: FORMATEADOR DE RUT AUTOMÁTICO
+        const inputRut = document.getElementById('rutInput');
+        inputRut.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\./g, '').replace(/-/g, '');
+            if (value.length <= 1) return;
+            
+            let cuerpo = value.slice(0, -1);
+            let dv = value.slice(-1).toUpperCase();
+            
+            // Agregar puntos al cuerpo
+            cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            
+            // Unir todo con el guion
+            e.target.value = cuerpo + "-" + dv;
+        });
+
+        // LÓGICA 2: VALIDACIÓN MATEMÁTICA
         function validarRUT(rut) {
             rut = rut.replace(/\./g, '').replace(/-/g, '').trim();
             if (rut.length < 8) return false;
@@ -165,13 +183,14 @@
             return dvEsperado === dv;
         }
 
+        // LÓGICA 3: PROCESO DE CHECK-IN
         async function checkIn() {
             const input = document.getElementById('rutInput');
             const rutOriginal = input.value.trim();
             const rutLimpio = rutOriginal.replace(/\./g, '').replace(/-/g, '').toUpperCase();
             
             if (!validarRUT(rutOriginal)) {
-                alert("⚠️ RUT INVÁLIDO");
+                alert("⚠️ RUT INVÁLIDO\nPor favor, ingrese un RUT válido.");
                 input.value = "";
                 input.focus();
                 return;
@@ -192,20 +211,23 @@
                             estado: "llegado",
                             horaLlegada: new Date().toLocaleTimeString() 
                         });
-                        alert(`¡Bienvenido ${data.nombre}!\n📍 Diríjase a: ${data.piso} - ${data.consulta}.`);
+                        
+                        // Mensaje de éxito con Doctor, Piso y Consulta
+                        alert(`¡Bienvenido ${data.nombre}!\n\n🩺 Doctor: ${data.doctor || 'Médico de Turno'}\n📍 Ubicación: ${data.piso} - ${data.consulta}`);
                     }
                 } else {
-                    alert("RUT no encontrado en la agenda de hoy.");
+                    alert("RUT no encontrado en la agenda de hoy.\nPor favor, consulte en recepción.");
                 }
             } catch (e) {
                 console.error(e);
-                alert("Error de conexión.");
+                alert("Error de conexión con la base de datos.");
             } finally {
                 input.value = "";
                 input.focus();
             }
         }
 
+        // Asignación de evento
         document.getElementById('btnCheckIn').addEventListener('click', checkIn);
     </script>
 </body>
