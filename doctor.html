@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Médico - Gestión</title>
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
@@ -33,17 +32,20 @@
 
         .box { 
             background: var(--bg-card); 
-            padding: 50px 40px; 
+            padding: 40px; 
             border-radius: 20px; 
             box-shadow: 0 25px 50px rgba(0,0,0,0.6); 
             text-align: center; 
             width: 90%; 
-            max-width: 420px; 
+            max-width: 450px; 
+            min-height: 500px;
             border: 1px solid rgba(255,255,255,0.03);
+            display: flex;
+            flex-direction: column;
         }
 
         h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.03em; }
-        p { color: var(--text-secondary); margin-bottom: 35px; font-size: 1.1rem; }
+        p { color: var(--text-secondary); margin-bottom: 30px; font-size: 1rem; }
 
         input { 
             width: 100%; padding: 20px; font-size: 1rem; 
@@ -52,6 +54,7 @@
             background: var(--input-bg); margin-bottom: 15px; font-weight: 600;
         }
 
+        /* Corregir color blanco de auto-relleno */
         input:-webkit-autofill {
             -webkit-text-fill-color: white !important;
             -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
@@ -64,22 +67,29 @@
             text-transform: uppercase; letter-spacing: 0.12em; transition: all 0.3s ease;
         }
 
-        /* ESTILO DE LISTA INTEGRADA (Sin ventana emergente) */
+        /* DISEÑO DE LA LISTA */
+        #lista-pacientes { margin-top: 10px; }
+
         .paciente-item {
-            padding: 25px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: var(--radius-custom);
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--input-border);
+            margin-bottom: 15px;
             text-align: center;
         }
-        .paciente-item:last-child { border-bottom: none; }
 
-        .paciente-nombre { font-weight: 800; font-size: 1.4rem; display: block; margin-bottom: 5px; text-transform: uppercase; }
-        .paciente-info { color: var(--text-secondary); font-size: 0.9rem; display: block; margin-bottom: 20px; }
+        /* Estilo sutil para pacientes ya atendidos */
+        .estado-atendido { opacity: 0.5; border-color: transparent; background: rgba(255,255,255,0.01); }
 
-        .btn-accion { margin-bottom: 10px; }
+        .paciente-nombre { font-weight: 800; font-size: 1.3rem; display: block; margin-bottom: 5px; color: var(--text-primary); }
+        .paciente-info { color: var(--text-secondary); font-size: 0.85rem; display: block; margin-bottom: 15px; }
+
         .btn-atendiendo { background: #1DB954; }
-        .btn-cancelar { background: transparent; color: #444; font-size: 0.75rem; border: none; text-decoration: underline; margin-top: 10px; width: auto; padding: 5px; }
+        .btn-finalizar { background: #555; }
+        .status-badge { color: #1DB954; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; border: 1px solid #1DB954; padding: 5px 10px; border-radius: 5px; display: inline-block; }
 
-        .btn-logout { background: transparent; color: #444; border: none; font-size: 0.8rem; margin-top: 30px; text-decoration: underline; cursor: pointer; font-weight: 600; }
+        .btn-logout { background: transparent; color: #444; border: none; font-size: 0.8rem; margin-top: auto; padding-top: 20px; text-decoration: underline; cursor: pointer; }
 
         .hidden { display: none; }
     </style>
@@ -96,8 +106,8 @@
         </div>
 
         <div id="doctor-section" class="hidden">
-            <h1>Agenda</h1>
-            <p id="doc-email" style="font-size: 0.8rem; opacity: 0.5; margin-top: -25px;"></p>
+            <h1>Agenda Médica</h1>
+            <p id="doc-email" style="font-size: 0.8rem; opacity: 0.5; margin-top: -20px; margin-bottom: 20px;"></p>
             <div id="lista-pacientes"></div>
             <button class="btn-logout" onclick="cerrarSesion()">CERRAR SESIÓN</button>
         </div>
@@ -106,7 +116,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -124,7 +134,7 @@
         document.getElementById('btnLogin').addEventListener('click', () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Error: " + err.message));
+            signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Error de acceso"));
         });
 
         window.cerrarSesion = () => signOut(auth);
@@ -136,17 +146,13 @@
             }
         };
 
-        window.cancelar = async (id, nombre) => {
-            if (confirm("¿Eliminar cita de " + nombre + "?")) await deleteDoc(doc(db, "agendados", id));
-        };
-
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('login-section').classList.add('hidden');
                 document.getElementById('doctor-section').classList.remove('hidden');
                 document.getElementById('doc-email').innerText = user.email;
 
-                // CAMBIO CLAVE: Quitamos el segundo "where" para evitar el error de índice de Firebase
+                // CONSULTA SIMPLE: Sin filtros de estado para que no falle nunca
                 const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
                 
                 onSnapshot(q, (snapshot) => {
@@ -158,20 +164,26 @@
                         const id = docSnap.id;
                         const estado = p.estado || 'llegado';
                         
-                        // Filtramos por código para que no de error la base de datos
-                        if (estado !== 'atendido') {
-                            const item = document.createElement('div');
-                            item.className = 'paciente-item';
-                            item.innerHTML = `
-                                <span class="paciente-nombre">${p.nombre}</span>
-                                <span class="paciente-info">RUT: ${p.rut} • ${estado.toUpperCase()}</span>
-                                ${estado === 'llegado' ? `<button class="btn-accion" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
-                                ${estado === 'llamando' ? `<button class="btn-accion btn-atendiendo" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
-                                ${estado === 'atendiendo' ? `<button class="btn-accion" style="background:#555" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
-                                <br><button class="btn-cancelar" onclick="cancelar('${id}', '${p.nombre}')">ELIMINAR CITA</button>
-                            `;
-                            container.appendChild(item);
+                        const item = document.createElement('div');
+                        item.className = `paciente-item ${estado === 'atendido' ? 'estado-atendido' : ''}`;
+                        
+                        let controles = '';
+                        if (estado === 'llegado') {
+                            controles = `<button onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>`;
+                        } else if (estado === 'llamando') {
+                            controles = `<button class="btn-atendiendo" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
+                        } else if (estado === 'atendiendo') {
+                            controles = `<button class="btn-finalizar" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>`;
+                        } else {
+                            controles = `<span class="status-badge">Atendido ✓</span>`;
                         }
+
+                        item.innerHTML = `
+                            <span class="paciente-nombre">${p.nombre}</span>
+                            <span class="paciente-info">RUT: ${p.rut}</span>
+                            ${controles}
+                        `;
+                        container.appendChild(item);
                     });
                 });
             } else {
