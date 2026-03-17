@@ -3,6 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <title>Agenda Médica - Panel Doctor</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* COLORES KIOSKO (Dark Mode) */
+            --bg-main: #121212;
+            --bg-card: #1E1E1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A0;
+            --accent-blue: #4682B4; 
+            --accent-blue-hover: #5492C4;
+            --input-bg: #2A2A2A;
+            --input-border: #3E3E3E;
+            --radius-custom: 10px;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg-main); 
+            color: var(--text-primary);
+            padding: 30px; 
+            margin: 0;
+            max-width: 900px;
+            margin: 0 auto; /* Centrar el contenido en pantallas grandes */
+        }
+
+        /* CABECERA (Estilo Kiosko) */
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: var(--bg-card); 
+            padding: 25px 30px; 
+            border-radius: var(--radius-custom); 
+            margin-bottom: 30px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        #email-display {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .btn-logout { 
+            background: transparent; 
+            color: #ef4444; 
+            border: 1px solid #ef4444; 
+            padding: 10px 20px; 
+            border-radius: var(--radius-custom); 
+            cursor: pointer; 
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover { background: rgba(239, 68, 68, 0.1); }
+
+        /* TARJETAS DE PACIENTES (ESTILO TABLA GRID, MISMAS COLUMNAS) */
+        .paciente-card { 
+            background: var(--input-bg); 
+            padding: 20px 25px; 
+            margin: 15px 0; 
+            border-radius: var(--radius-custom); 
+            display: grid; 
+            grid-template-columns: 2fr 1fr 1fr; /* Tus mismas columnas */
+            align-items: center; 
+            border: 1px solid var(--input-border);
+            border-left: 6px solid var(--text-secondary); /* Borde lateral base */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .paciente-card:hover { transform: translateX(5px); }
+
+        /* COLORES DE ESTADO (Adaptados al Dark Mode) */
+        .estado-llegado { border-left-color: var(--accent-blue); }
+        .estado-llamando { border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
+        .estado-atendiendo { border-left-color: #1DB954; background: rgba(29, 185, 84, 0.05); }
+        .estado-atendido { border-left-color: #444; background: rgba(255, 255, 255, 0.02); opacity: 0.6; }
+
+        /* COLUMNAS */
+        .col-nombre strong { font-size: 1.2rem; letter-spacing: -0.01em; }
+        
+        .col-estado span { 
+            font-size: 0.85rem; 
+            font-weight: 700; 
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+        }
+
+        .col-accion { display: flex; gap: 8px; justify-content: flex-end; }
+
+        /* BOTONES DE ACCIÓN (Todos estilo Kiosko) */
+        button {
+            font-family: 'Inter', sans-serif;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: var(--accent-blue-hover); }
+
+        /* Botones específicos */
+        .estado-llamando button { background: #f59e0b; }
+        .estado-llamando button:hover { background: #d97706; }
+        
+        .estado-atendiendo button { background: #1DB954; }
+        .estado-atendiendo button:hover { background: #169c46; }
+
+        /* Botones pequeños (Deshacer y Cancelar) */
+        .col-accion .btn-deshacer, 
+        .col-accion .btn-cancelar {
+            padding: 12px 15px;
+            font-size: 1rem;
+            background: transparent;
+            border: 1px solid var(--input-border);
+            color: var(--text-secondary);
+        }
+        
+        .col-accion .btn-deshacer:hover { background: rgba(255,255,255,0.1); color: white; }
+        .col-accion .btn-cancelar:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: #ef4444; }
+
+        #agenda-lista { color: var(--text-secondary); font-size: 1.1rem; }
+    </style>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -70,22 +209,10 @@
             });
         });
     </script>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .btn-logout { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
-        .paciente-card { background: white; padding: 15px; margin: 8px 0; border-radius: 10px; display: grid; grid-template-columns: 2fr 1fr 1fr; align-items: center; border-left: 6px solid #cbd5e1; }
-        .estado-llamando { border-left-color: #f59e0b; background: #fffbeb; }
-        .estado-atendiendo { border-left-color: #8b5cf6; background: #f5f3ff; }
-        .estado-atendido { border-left-color: #94a3b8; background: #f1f5f9; }
-        .col-accion { display: flex; gap: 5px; justify-content: flex-end; }
-        .btn-deshacer { background: #64748b; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
-        .btn-cancelar { background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
-    </style>
 </head>
 <body>
     <div class="header">
-        <h1>Dr(a). <span id="email-display"></span></h1>
+        <h1>Dr(a). <br><span id="email-display"></span></h1>
         <button class="btn-logout" onclick="cerrarSesion()">CERRAR SESIÓN</button>
     </div>
     <div id="agenda-lista">Cargando datos de la agenda...</div>
