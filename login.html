@@ -8,11 +8,13 @@
     
     <style>
         :root {
-            --bg-page: #4a4a4a;      /* El gris claro sólido que elegiste */
-            --bg-card: #1c1c1c;      /* El gris grafito del contenedor */
+            --bg-page: #4a4a4a;      
+            --bg-card: #1c1c1c;      
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
             --blue-accent: #4682B4; 
+            --orange-accent: #f59e0b;
+            --red-accent: #ef4444;
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
         }
@@ -24,8 +26,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             color: var(--text-main);
+            flex-direction: column; /* Para apilar los botones de gestión abajo */
         }
 
         .login-container {
@@ -39,33 +42,11 @@
             text-align: center;
         }
 
-        h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            letter-spacing: -1px;
-        }
+        h1 { font-size: 2rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
+        p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 30px; }
 
-        p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-bottom: 30px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            color: var(--text-muted);
-            margin-left: 5px;
-        }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; color: var(--text-muted); margin-left: 5px; }
 
         input {
             width: 100%;
@@ -80,10 +61,7 @@
             transition: 0.2s;
         }
 
-        input:focus {
-            border-color: var(--blue-accent);
-            background: rgba(255, 255, 255, 0.08);
-        }
+        input:focus { border-color: var(--blue-accent); background: rgba(255, 255, 255, 0.08); }
 
         .btn-login {
             width: 100%;
@@ -100,17 +78,33 @@
             margin-top: 10px;
         }
 
-        .btn-login:hover {
-            opacity: 0.9;
-            transform: scale(1.02);
+        .btn-login:hover { opacity: 0.9; transform: scale(1.02); }
+
+        /* --- BOTONES DE GESTIÓN RÁPIDA (BAJO EL LOGIN) --- */
+        .admin-tools {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
         }
 
-        .error-msg {
-            color: #ef4444;
-            font-size: 0.85rem;
-            margin-top: 15px;
-            display: none;
+        .btn-tool {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            background: transparent;
+            transition: 0.2s;
         }
+
+        .btn-reset { border: 1px solid var(--orange-accent); color: var(--orange-accent); }
+        .btn-reset:hover { background: var(--orange-accent); color: white; }
+
+        .btn-clear { border: 1px solid var(--red-accent); color: var(--red-accent); }
+        .btn-clear:hover { background: var(--red-accent); color: white; }
+
+        .error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
@@ -133,9 +127,15 @@
         <div id="error-text" class="error-msg">Credenciales incorrectas</div>
     </div>
 
+    <div class="admin-tools">
+        <button class="btn-tool btn-reset" onclick="resetearEstados()">Reiniciar Jornada</button>
+        <button class="btn-tool btn-clear" onclick="limpiarBaseDatos()">Vaciar Pacientes</button>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -148,24 +148,33 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        const loginBtn = document.getElementById('loginBtn');
-        const emailInput = document.getElementById('email');
-        const passInput = document.getElementById('password');
-        const errorText = document.getElementById('error-text');
-
-        loginBtn.addEventListener('click', async () => {
-            const email = emailInput.value;
-            const password = passInput.value;
-
+        // LOGIN
+        document.getElementById('loginBtn').addEventListener('click', async () => {
             try {
-                await signInWithEmailAndPassword(auth, email, password);
-                window.location.href = "doctor.html"; // Redirige al panel
-            } catch (error) {
-                errorText.style.display = "block";
-                console.error("Error de login:", error.message);
-            }
+                await signInWithEmailAndPassword(auth, email.value, password.value);
+                window.location.href = "doctor.html";
+            } catch (e) { document.getElementById('error-text').style.display = "block"; }
         });
+
+        // REINICIAR ESTADOS (Vuelve a todos a 'pendiente' y borra hora_llegada)
+        window.resetearEstados = async () => {
+            if(!confirm("¿Deseas reiniciar todos los pacientes a 'Pendiente'?")) return;
+            const snap = await getDocs(collection(db, "agendados"));
+            snap.forEach(async (d) => {
+                await updateDoc(doc(db, "agendados", d.id), { estado: "pendiente", hora_llegada: "" });
+            });
+            alert("Estados reiniciados.");
+        };
+
+        // LIMPIAR BASE DE DATOS (Borra todos los documentos de la colección)
+        window.limpiarBaseDatos = async () => {
+            if(!confirm("¡ATENCIÓN! Esto borrará a TODOS los pacientes. ¿Continuar?")) return;
+            const snap = await getDocs(collection(db, "agendados"));
+            snap.forEach(async (d) => { await deleteDoc(doc(db, "agendados", d.id)); });
+            alert("Base de datos vaciada.");
+        };
     </script>
 </body>
 </html>
