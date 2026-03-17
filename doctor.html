@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Médico - Gestión</title>
+    <title>Panel Médico - Agenda</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
@@ -21,77 +21,104 @@
 
         body { 
             font-family: 'Inter', sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
             background: var(--bg-main); 
             margin: 0; 
             color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
         .box { 
             background: var(--bg-card); 
-            padding: 40px; 
+            padding: 40px 30px; 
             border-radius: 20px; 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.6); 
-            text-align: center; 
             width: 90%; 
-            max-width: 450px; 
-            min-height: 500px;
+            max-width: 500px; /* Un poco más ancho para las filas */
+            min-height: 600px;
             border: 1px solid rgba(255,255,255,0.03);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+            display: block; /* IMPORTANTE: Cambiado de flex a block para evitar amontonamiento */
+        }
+
+        h1 { font-size: 2rem; font-weight: 800; text-align: center; margin-bottom: 5px; }
+        .doc-info { text-align: center; color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 30px; opacity: 0.6; }
+
+        /* ESTILO DE FILA DE PACIENTE */
+        .paciente-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--input-border);
+            border-radius: var(--radius-custom);
+            padding: 25px;
+            margin-bottom: 15px;
+            width: 100%;
+            box-sizing: border-box; /* Para que el padding no ensanche la caja */
             display: flex;
             flex-direction: column;
+            align-items: center;
         }
 
-        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.03em; }
-        p { color: var(--text-secondary); margin-bottom: 30px; font-size: 1rem; }
-
-        input { 
-            width: 100%; padding: 20px; font-size: 1rem; 
-            border: 2px solid var(--input-border); border-radius: var(--radius-custom); 
-            box-sizing: border-box; text-align: center; color: var(--text-primary); 
-            background: var(--input-bg); margin-bottom: 15px; font-weight: 600;
-        }
-
-        /* Corregir color blanco de auto-relleno */
-        input:-webkit-autofill {
-            -webkit-text-fill-color: white !important;
-            -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
-        }
-
-        button { 
-            width: 100%; padding: 20px; font-size: 1rem; 
-            background: var(--accent-blue-mate); color: white; border: none; 
-            border-radius: var(--radius-custom); cursor: pointer; font-weight: 700; 
-            text-transform: uppercase; letter-spacing: 0.12em; transition: all 0.3s ease;
-        }
-
-        /* DISEÑO DE LA LISTA */
-        #lista-pacientes { margin-top: 10px; }
-
-        .paciente-item {
-            padding: 20px;
-            border-radius: var(--radius-custom);
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--input-border);
-            margin-bottom: 15px;
+        .paciente-nombre { 
+            font-weight: 800; 
+            font-size: 1.4rem; 
+            text-transform: uppercase; 
+            margin-bottom: 5px; 
             text-align: center;
         }
 
-        /* Estilo sutil para pacientes ya atendidos */
-        .estado-atendido { opacity: 0.5; border-color: transparent; background: rgba(255,255,255,0.01); }
+        .paciente-rut { 
+            color: var(--text-secondary); 
+            font-size: 0.9rem; 
+            margin-bottom: 15px; 
+        }
 
-        .paciente-nombre { font-weight: 800; font-size: 1.3rem; display: block; margin-bottom: 5px; color: var(--text-primary); }
-        .paciente-info { color: var(--text-secondary); font-size: 0.85rem; display: block; margin-bottom: 15px; }
+        /* BOTONES OCUPANDO TODA LA FILA */
+        .btn-accion { 
+            width: 100%; 
+            padding: 18px; 
+            font-size: 1rem; 
+            background: var(--accent-blue-mate); 
+            color: white; 
+            border: none; 
+            border-radius: var(--radius-custom); 
+            cursor: pointer; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1em;
+        }
 
         .btn-atendiendo { background: #1DB954; }
         .btn-finalizar { background: #555; }
-        .status-badge { color: #1DB954; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; border: 1px solid #1DB954; padding: 5px 10px; border-radius: 5px; display: inline-block; }
+        
+        .status-atendido { 
+            color: #1DB954; 
+            font-weight: 700; 
+            border: 1px solid #1DB954; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            text-transform: uppercase;
+        }
 
-        .btn-logout { background: transparent; color: #444; border: none; font-size: 0.8rem; margin-top: auto; padding-top: 20px; text-decoration: underline; cursor: pointer; }
+        .btn-logout { 
+            width: 100%;
+            background: transparent; 
+            color: #444; 
+            border: none; 
+            margin-top: 40px; 
+            text-decoration: underline; 
+            cursor: pointer; 
+        }
 
         .hidden { display: none; }
+
+        /* Estilos para el Login */
+        .login-input {
+            width: 100%; padding: 20px; margin-bottom: 15px;
+            background: var(--input-bg); border: 2px solid var(--input-border);
+            border-radius: var(--radius-custom); color: white; text-align: center;
+            box-sizing: border-box; font-size: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -99,16 +126,19 @@
     <div class="box">
         <div id="login-section">
             <h1>Ingreso Médico</h1>
-            <p>Acceda a su panel de gestión</p>
-            <input type="email" id="email" placeholder="Correo electrónico">
-            <input type="password" id="password" placeholder="Contraseña">
-            <button id="btnLogin">INGRESAR</button>
+            <p style="text-align:center; color:gray;">Gestión de pacientes</p>
+            <input type="email" id="email" class="login-input" placeholder="Correo electrónico">
+            <input type="password" id="password" class="login-input" placeholder="Contraseña">
+            <button class="btn-accion" id="btnLogin">INGRESAR</button>
         </div>
 
         <div id="doctor-section" class="hidden">
             <h1>Agenda Médica</h1>
-            <p id="doc-email" style="font-size: 0.8rem; opacity: 0.5; margin-top: -20px; margin-bottom: 20px;"></p>
-            <div id="lista-pacientes"></div>
+            <div class="doc-info" id="doc-email"></div>
+            
+            <div id="lista-pacientes">
+                </div>
+
             <button class="btn-logout" onclick="cerrarSesion()">CERRAR SESIÓN</button>
         </div>
     </div>
@@ -134,12 +164,12 @@
         document.getElementById('btnLogin').addEventListener('click', () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Error de acceso"));
+            signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Error al entrar"));
         });
 
         window.cerrarSesion = () => signOut(auth);
 
-        window.cambiarEstado = async (id, nuevoEstado, nombre = null, box = null) => {
+        window.cambiarEstado = async (id, nuevoEstado, nombre, box) => {
             await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
             if (nuevoEstado === 'llamando') {
                 await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: box });
@@ -152,7 +182,6 @@
                 document.getElementById('doctor-section').classList.remove('hidden');
                 document.getElementById('doc-email').innerText = user.email;
 
-                // CONSULTA SIMPLE: Sin filtros de estado para que no falle nunca
                 const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
                 
                 onSnapshot(q, (snapshot) => {
@@ -165,22 +194,22 @@
                         const estado = p.estado || 'llegado';
                         
                         const item = document.createElement('div');
-                        item.className = `paciente-item ${estado === 'atendido' ? 'estado-atendido' : ''}`;
+                        item.className = 'paciente-item';
                         
                         let controles = '';
                         if (estado === 'llegado') {
-                            controles = `<button onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>`;
+                            controles = `<button class="btn-accion" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>`;
                         } else if (estado === 'llamando') {
-                            controles = `<button class="btn-atendiendo" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
+                            controles = `<button class="btn-accion btn-atendiendo" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
                         } else if (estado === 'atendiendo') {
-                            controles = `<button class="btn-finalizar" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>`;
+                            controles = `<button class="btn-accion btn-finalizar" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>`;
                         } else {
-                            controles = `<span class="status-badge">Atendido ✓</span>`;
+                            controles = `<span class="status-atendido">ATENDIDO ✓</span>`;
                         }
 
                         item.innerHTML = `
-                            <span class="paciente-nombre">${p.nombre}</span>
-                            <span class="paciente-info">RUT: ${p.rut}</span>
+                            <div class="paciente-nombre">${p.nombre}</div>
+                            <div class="paciente-rut">RUT: ${p.rut}</div>
                             ${controles}
                         `;
                         container.appendChild(item);
