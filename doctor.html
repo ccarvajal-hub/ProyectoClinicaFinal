@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Médico - Gestión de Pacientes</title>
+    <title>Panel Médico - Gestión</title>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
@@ -40,18 +40,17 @@
             width: 90%; 
             max-width: 420px; 
             border: 1px solid rgba(255,255,255,0.03);
+            display: flex;
+            flex-direction: column;
         }
 
         h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.03em; }
         p { color: var(--text-secondary); margin-bottom: 35px; font-size: 1.1rem; }
 
-        /* Evitar que el navegador ponga los inputs blancos */
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
-        input:-webkit-autofill:focus {
+        /* Arreglo para inputs auto-rellenados */
+        input:-webkit-autofill {
             -webkit-text-fill-color: white !important;
             -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
-            transition: background-color 5000s ease-in-out 0s;
         }
 
         input { 
@@ -71,7 +70,7 @@
         button { 
             width: 100%; 
             padding: 20px; 
-            font-size: 1.1rem; 
+            font-size: 1rem; 
             background: var(--accent-blue-mate); 
             color: white; 
             border: none; 
@@ -79,26 +78,57 @@
             cursor: pointer; 
             font-weight: 700; 
             text-transform: uppercase; 
-            letter-spacing: 0.15em; 
+            letter-spacing: 0.12em; 
+            transition: all 0.3s ease;
+        }
+
+        button:hover { background: var(--accent-blue-hover); transform: translateY(-2px); }
+
+        /* LISTA DE PACIENTES - Sin parecer ventana emergente */
+        #lista-pacientes {
+            width: 100%;
             margin-top: 10px;
         }
 
-        /* Estilo para las tarjetas de la lista (Igual al input) */
         .paciente-item {
-            background: var(--input-bg);
-            padding: 20px;
-            border-radius: var(--radius-custom);
-            margin-bottom: 15px;
-            border: 1px solid var(--input-border);
-            text-align: left;
+            background: transparent; /* Quitamos el fondo gris de "ventana" */
+            padding: 20px 0;
+            border-bottom: 1px solid var(--input-border); /* Separación elegante */
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .paciente-nombre { font-weight: 700; font-size: 1.1rem; display: block; }
-        .paciente-info { color: var(--text-secondary); font-size: 0.8rem; display: block; margin-bottom: 15px; }
+        .paciente-item:last-child { border-bottom: none; }
 
-        .btn-accion { padding: 12px; font-size: 0.9rem; letter-spacing: 0.05em; }
-        .btn-cancelar { background: transparent; color: #555; border: 1px solid #333; margin-top: 15px; font-size: 0.7rem; }
-        .btn-logout { background: transparent; color: #444; border: none; font-size: 0.8rem; margin-top: 20px; text-decoration: underline; }
+        .paciente-nombre { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.02em; }
+        .paciente-info { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px; }
+
+        .btn-accion { margin-top: 5px; }
+        .btn-atendiendo { background: #1DB954; } /* Verde tipo Spotify */
+        .btn-finalizar { background: #555; }
+
+        .btn-cancelar { 
+            background: transparent; 
+            color: #444; 
+            font-size: 0.7rem; 
+            padding: 10px; 
+            margin-top: 10px;
+            border: 1px solid #333;
+        }
+        .btn-cancelar:hover { border-color: #ef4444; color: #ef4444; }
+
+        .btn-logout { 
+            background: transparent; 
+            color: var(--text-secondary); 
+            font-size: 0.75rem; 
+            margin-top: 30px; 
+            text-decoration: underline; 
+            letter-spacing: 0.1em;
+            border: none;
+            padding: 5px;
+        }
 
         .hidden { display: none; }
     </style>
@@ -115,9 +145,12 @@
         </div>
 
         <div id="doctor-section" class="hidden">
-            <h1 id="doc-title">Agenda</h1>
-            <p id="doc-email" style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 20px;"></p>
-            <div id="lista-pacientes"></div>
+            <h1>Agenda</h1>
+            <p id="doc-email" style="font-size: 0.8rem; opacity: 0.5; margin-top: -25px;"></p>
+            
+            <div id="lista-pacientes">
+                </div>
+
             <button class="btn-logout" onclick="cerrarSesion()">CERRAR SESIÓN</button>
         </div>
     </div>
@@ -140,11 +173,10 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // LOGIN LÓGICA
         document.getElementById('btnLogin').addEventListener('click', () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Error: " + err.message));
+            signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Acceso denegado"));
         });
 
         window.cerrarSesion = () => signOut(auth);
@@ -161,15 +193,12 @@
         };
 
         onAuthStateChanged(auth, (user) => {
-            const loginSec = document.getElementById('login-section');
-            const docSec = document.getElementById('doctor-section');
-            
             if (user) {
-                loginSec.classList.add('hidden');
-                docSec.classList.remove('hidden');
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('doctor-section').classList.remove('hidden');
                 document.getElementById('doc-email').innerText = user.email;
 
-                const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
+                const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email), where("estado", "!=", "atendido"));
                 
                 onSnapshot(q, (snapshot) => {
                     const container = document.getElementById('lista-pacientes');
@@ -185,19 +214,17 @@
                         item.innerHTML = `
                             <span class="paciente-nombre">${p.nombre}</span>
                             <span class="paciente-info">RUT: ${p.rut} • ${estado.toUpperCase()}</span>
-                            <div style="display:flex; flex-direction:column; gap:10px;">
-                                ${estado === 'llegado' ? `<button class="btn-accion" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
-                                ${estado === 'llamando' ? `<button class="btn-accion" style="background:#1DB954" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
-                                ${estado === 'atendiendo' ? `<button class="btn-accion" style="background:#64748b" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
-                                <button class="btn-cancelar" onclick="cancelar('${id}', '${p.nombre}')">ELIMINAR CITA</button>
-                            </div>
+                            ${estado === 'llegado' ? `<button class="btn-accion" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
+                            ${estado === 'llamando' ? `<button class="btn-accion btn-atendiendo" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
+                            ${estado === 'atendiendo' ? `<button class="btn-accion btn-finalizar" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
+                            <button class="btn-cancelar" onclick="cancelar('${id}', '${p.nombre}')">ELIMINAR CITA</button>
                         `;
                         container.appendChild(item);
                     });
                 });
             } else {
-                loginSec.classList.remove('hidden');
-                docSec.classList.add('hidden');
+                document.getElementById('login-section').classList.remove('hidden');
+                document.getElementById('doctor-section').classList.add('hidden');
             }
         });
     </script>
