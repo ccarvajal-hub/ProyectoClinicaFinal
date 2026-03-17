@@ -7,8 +7,8 @@
     
     <style>
         :root {
-            --bg-page: #4a4a4a;      /* Gris claro sólido */
-            --bg-card: #1c1c1c;      /* Gris grafito del contenedor */
+            --bg-page: #4a4a4a;      
+            --bg-card: #1c1c1c;      
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;   
             --blue-accent: #4682B4; 
@@ -47,7 +47,6 @@
         h1 { font-size: 2.4rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
         .user-email { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 40px; text-align: center; }
 
-        /* COLUMNAS */
         .col-paciente { width: 25%; text-align: left; }
         .col-rut      { width: 18%; text-align: center; }
         .col-hora-c   { width: 12%; text-align: center; }
@@ -82,13 +81,11 @@
         }
 
         .paciente-row:hover { background: rgba(255,255,255,0.06); }
-
         .paciente-name { font-weight: 700; font-size: 1.1rem; }
-        .paciente-rut  { color: #ccc; }
-        .text-time     { color: var(--text-muted); }
-        .text-arrival  { color: var(--orange-accent); font-weight: 600; }
+        .text-time { color: var(--text-muted); }
+        .text-arrival { color: var(--orange-accent); font-weight: 600; }
 
-        /* ESTADOS */
+        /* ESTADOS - ETIQUETAS */
         .status-tag {
             font-size: 0.7rem;
             font-weight: 800;
@@ -97,10 +94,17 @@
             text-transform: uppercase;
         }
         .status-pendiente { background: rgba(255,255,255,0.05); color: #888; }
-        .status-llegado { background: rgba(245, 158, 11, 0.1); color: var(--orange-accent); }
         .status-pagado { background: rgba(29, 185, 84, 0.1); color: var(--green-accent); }
         .status-llamando { background: rgba(70, 130, 180, 0.2); color: #7ab3e0; }
         .status-atendiendo { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+        /* TEXTO SIMPLE PARA LLEGADO (EN RECEPCIÓN) */
+        .text-llegado {
+            color: var(--orange-accent);
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
 
         /* BOTONES */
         button { cursor: pointer; transition: 0.2s; border: none; font-family: 'Inter', sans-serif; }
@@ -111,7 +115,6 @@
         .btn-delete { background: var(--red-accent); color: white; width: 38px; height: 38px; border-radius: 10px; font-weight: 800; }
         
         .btn-action:hover, .btn-delete:hover { opacity: 0.85; transform: scale(1.02); }
-
         .footer-tools { margin-top: 50px; text-align: center; }
         .btn-logout { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 10px 20px; border-radius: 12px; font-weight: 700; }
     </style>
@@ -172,15 +175,23 @@
                     const id = docSnap.id;
                     const estado = p.estado || 'pendiente';
                     
-                    let botonesHTML = '';
-                    if (estado === 'pagado') {
-                        botonesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>`;
-                    } else if (estado === 'llegado') {
-                        botonesHTML = `<span style="color:var(--orange-accent); font-size:0.75rem; font-weight:800; margin-right:10px;">EN RECEPCIÓN</span>`;
-                    } else if (estado === 'llamando') {
-                        botonesHTML = `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
-                    } else if (estado === 'atendiendo') {
-                        botonesHTML = `<button class="btn-action btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>`;
+                    let estadoCeldaHTML = '';
+                    let accionesHTML = '';
+
+                    // LÓGICA DE VISUALIZACIÓN SEGÚN ESTADO
+                    if (estado === 'llegado') {
+                        estadoCeldaHTML = `<span class="text-llegado">EN RECEPCIÓN</span>`;
+                        accionesHTML = `<span style="color:var(--text-muted); font-size:0.7rem;">ESPERANDO PAGO</span>`;
+                    } else {
+                        estadoCeldaHTML = `<span class="status-tag status-${estado}">${estado}</span>`;
+                        
+                        if (estado === 'pagado') {
+                            accionesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>`;
+                        } else if (estado === 'llamando') {
+                            accionesHTML = `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
+                        } else if (estado === 'atendiendo') {
+                            accionesHTML = `<button class="btn-action btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>`;
+                        }
                     }
 
                     const row = document.createElement('div');
@@ -190,11 +201,9 @@
                         <div class="col-rut paciente-rut">${window.formatearRut(p.rut)}</div>
                         <div class="col-hora-c text-time">${p.hora_consulta || '--:--'}</div>
                         <div class="col-hora-ll text-arrival">${p.hora_llegada || '--:--'}</div>
-                        <div class="col-estado">
-                            <span class="status-tag status-${estado}">${estado}</span>
-                        </div>
+                        <div class="col-estado">${estadoCeldaHTML}</div>
                         <div class="col-acciones">
-                            ${botonesHTML}
+                            ${accionesHTML}
                             <button class="btn-delete" onclick="cancelar('${id}', '${p.nombre}')">✕</button>
                         </div>
                     `;
