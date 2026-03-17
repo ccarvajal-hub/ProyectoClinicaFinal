@@ -11,7 +11,7 @@
             --bg-dark: #121212;
             --bg-card: #1E1E1E;
             --text-main: #FFFFFF;
-            --text-muted: #888888;
+            --text-muted: #A0A0A0;
             --blue-accent: #4682B4; 
             --green-accent: #1DB954;
             --orange-accent: #f59e0b;
@@ -33,127 +33,129 @@
             box-sizing: border-box;
         }
 
-        /* CAJA PRINCIPAL (Igual al estilo Kiosko de tus fotos) */
-        .box {
+        /* NUEVO CONTENEDOR ANCHO (COMO LA LÍNEA ROJA) */
+        .agenda-container {
             background-color: var(--bg-card);
-            padding: 45px 35px;
+            padding: 50px 40px;
             border-radius: var(--radius-box);
+            width: 90%; /* flexible */
+            max-width: 1100px; /* Ancho máximo para que no se deforme */
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.05);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { font-size: 2.6rem; font-weight: 800; margin: 0; letter-spacing: -2px; text-align: center; }
+        .user-email { color: var(--text-muted); font-size: 1rem; margin-bottom: 40px; text-align: center; font-weight: 400; }
+
+        /* NUEVA CABECERA DE TABLA (COMO LA LÍNEA AMARILLA) */
+        .agenda-header {
             width: 100%;
-            max-width: 500px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.03);
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
         }
 
-        h1 { 
-            font-size: 2.2rem; 
-            font-weight: 800; 
-            margin: 0; 
-            letter-spacing: -1.5px; 
+        .agenda-header div {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
-        .user-email { 
-            color: var(--text-muted); 
-            font-size: 0.9rem; 
-            margin-bottom: 30px;
-            font-weight: 500;
-        }
-
-        /* CONTENEDOR DE LA LISTA */
-        #agenda-lista { 
-            text-align: left; 
-        }
-
-        /* FILA DE PACIENTE */
-        .paciente-card {
+        /* NUEVA FILA DE PACIENTE (COMO LA LÍNEA VERDE) */
+        .paciente-row {
+            width: 100%;
             background: rgba(255,255,255,0.02);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-card);
-            padding: 18px;
+            padding: 18px 20px;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.2s ease;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
         }
 
-        .col-nombre strong { 
-            display: block; 
-            font-size: 1.1rem; 
-            letter-spacing: -0.5px;
-            margin-bottom: 2px;
+        .paciente-row:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: #444;
+            transform: translateY(-2px);
         }
 
-        .col-info { 
-            color: var(--text-muted); 
-            font-size: 0.7rem; 
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        /* Definición de anchos de columna para alineación */
+        .col-paciente { flex: 3; display: flex; flex-direction: column; align-items: flex-start; text-align: left;}
+        .col-rut { flex: 2; text-align: left;}
+        .col-hora { flex: 1.5; text-align: left;}
+        .col-estado { flex: 2; display: flex; justify-content: flex-start; align-items: center; }
+        .col-acciones { flex: 2.5; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
 
-        /* BOTONES Y ACCIONES */
-        .col-accion { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: flex-end; 
-            gap: 8px; 
-        }
 
-        button {
-            font-family: 'Inter', sans-serif;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform 0.1s ease, opacity 0.2s;
-        }
+        .col-paciente strong { display: block; font-size: 1.15rem; color: #fff; }
+        .sub-info { color: var(--text-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-top: 3px; }
 
-        button:active { transform: scale(0.95); }
+        .col-rut, .col-hora { font-size: 1rem; color: #ccc; }
 
-        .btn-call { background-color: var(--blue-accent); color: white; padding: 10px 20px; font-size: 0.8rem; }
-        .btn-wait { background-color: var(--orange-accent); color: white; padding: 10px 20px; font-size: 0.8rem; }
-        .btn-done { background-color: var(--green-accent); color: white; padding: 10px 20px; font-size: 0.8rem; }
-        
-        .tag-atendido { 
-            color: var(--green-accent); 
-            font-size: 0.7rem; 
-            font-weight: 800;
-            padding: 8px;
-        }
-
-        /* MINI BOTONES (Deshacer y Borrar) */
-        .mini-group { display: flex; gap: 5px; }
-        .btn-mini { 
-            background: #252525; 
-            color: #777; 
-            width: 32px; 
-            height: 32px; 
-            border-radius: 8px; 
-            font-size: 0.8rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .btn-mini:hover { background: #333; color: white; }
-        .btn-danger-text:hover { color: #ff5555; }
-
-        .btn-logout {
-            margin-top: 30px;
-            background: transparent;
-            color: var(--text-muted);
+        /* Tags de estado sutiles */
+        .status-tag {
             font-size: 0.75rem;
-            text-decoration: underline;
-            letter-spacing: 1px;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            color: #fff;
         }
+
+        .status-llegado { background-color: rgba(255,255,255,0.1); color: #ccc;}
+        .status-llamando { background-color: rgba(70, 130, 180, 0.2); color: var(--blue-accent); border: 1px solid rgba(70, 130, 180, 0.4);}
+        .status-atendiendo { background-color: rgba(245, 158, 11, 0.2); color: var(--orange-accent); border: 1px solid rgba(245, 158, 11, 0.4);}
+        .status-atendido { background-color: rgba(29, 185, 84, 0.2); color: var(--green-accent); border: 1px solid rgba(29, 185, 84, 0.4);}
+
+
+        /* Botones principales de acción */
+        button { font-family: 'Inter', sans-serif; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; outline: none; }
+        
+        .btn-action { padding: 12px 24px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;}
+        .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-call { background: var(--blue-accent); color: white; box-shadow: 0 4px 10px rgba(70, 130, 180, 0.2); }
+        .btn-call:hover { box-shadow: 0 6px 15px rgba(70, 130, 180, 0.4); }
+
+        .btn-wait { background: var(--orange-accent); color: white; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2); }
+        .btn-wait:hover { box-shadow: 0 6px 15px rgba(245, 158, 11, 0.4); }
+
+        .btn-done { background: var(--green-accent); color: white; box-shadow: 0 4px 10px rgba(29, 185, 84, 0.2); }
+        .btn-done:hover { box-shadow: 0 6px 15px rgba(29, 185, 84, 0.4); }
+
+        /* Grupo de mini botones compacto */
+        .mini-btn-group { display: flex; gap: 6px; }
+        .btn-mini { 
+            background: rgba(255,255,255,0.03); color: #777; width: 36px; height: 36px; 
+            border-radius: 10px; display: flex; justify-content: center; align-items: center; 
+            font-size: 1rem; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .btn-mini:hover { background: rgba(255,255,255,0.08); color: white; border-color: #444; }
+
+        .btn-logout { margin-top: 50px; background: transparent; color: var(--text-muted); text-decoration: underline; font-size: 0.9rem; font-weight: 600; opacity: 0.7; }
+        .btn-logout:hover { opacity: 1; color: #fff; }
+
     </style>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Configuración de Firebase (asegúrate de que sea la correcta)
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
             authDomain: "llamado-cliente.firebaseapp.com",
@@ -167,7 +169,17 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // FUNCIONES DE TU CÓDIGO ORIGINAL
+        // Funciones existentes (se mantienen igual)
+        window.duplicarPaciente = async (id) => {
+            const docRef = doc(db, "agendados", id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const datos = docSnap.data();
+                datos.estado = "llegado"; 
+                await addDoc(collection(db, "agendados"), datos);
+            }
+        };
+
         window.cambiarEstado = async (id, nuevoEstado, nombre = null, box = null) => {
             await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
             if (nuevoEstado === 'llamando') {
@@ -176,7 +188,7 @@
         };
 
         window.cancelar = async (id, nombre) => {
-            if (confirm("¿Eliminar cita de " + nombre + "?")) await deleteDoc(doc(db, "agendados", id));
+            if (confirm("¿Eliminar a " + nombre + "?")) await deleteDoc(doc(db, "agendados", id));
         };
 
         window.cerrarSesion = () => signOut(auth).then(() => location.href = "login.html");
@@ -187,31 +199,35 @@
                 document.getElementById('email-display').innerText = user.email;
                 
                 const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
-                
                 onSnapshot(q, (snapshot) => {
                     const container = document.getElementById('agenda-lista');
-                    container.innerHTML = "";
-                    
+                    container.innerHTML = ""; // Limpiar lista antes de recargar
                     snapshot.forEach((docSnap) => {
                         const p = docSnap.data();
                         const id = docSnap.id;
                         const estado = p.estado || 'llegado';
                         
+                        // Generación dinámica del nuevo HTML con diseño horizontal
                         container.innerHTML += `
-                            <div class="paciente-card">
-                                <div class="col-nombre">
+                            <div class="paciente-row">
+                                <div class="col-field col-paciente">
                                     <strong>${p.nombre}</strong>
-                                    <div class="col-info">${estado}</div>
+                                    <span class="sub-info">${p.piso} ${p.consulta}</span>
                                 </div>
-                                <div class="col-accion">
-                                    ${estado === 'llegado' ? `<button class="btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
-                                    ${estado === 'llamando' ? `<button class="btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
-                                    ${estado === 'atendiendo' ? `<button class="btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
-                                    ${estado === 'atendido' ? `<span class="tag-atendido">ATENDIDO ✓</span>` : ''}
+                                <div class="col-field col-rut">${p.rut || '---'}</div>
+                                <div class="col-field col-hora">${p.hora_consulta || '---'}</div>
+                                <div class="col-field col-estado">
+                                    <span class="status-tag status-${estado}">${estado}</span>
+                                </div>
+                                <div class="col-field col-acciones">
+                                    ${estado === 'llegado' ? `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
+                                    ${estado === 'llamando' ? `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
+                                    ${estado === 'atendiendo' ? `<button class="btn-action btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
                                     
-                                    <div class="mini-group">
-                                        ${estado !== 'llegado' ? `<button class="btn-mini" onclick="cambiarEstado('${id}', 'llegado')">↺</button>` : ''}
-                                        <button class="btn-mini btn-danger-text" onclick="cancelar('${id}', '${p.nombre}')">✕</button>
+                                    <div class="mini-btn-group">
+                                        <button class="btn-mini" onclick="duplicarPaciente('${id}')" title="Copiar Paciente">❐</button>
+                                        ${estado !== 'llegado' ? `<button class="btn-mini" onclick="cambiarEstado('${id}', 'llegado')" title="Reiniciar">↺</button>` : ''}
+                                        <button class="btn-mini" onclick="cancelar('${id}', '${p.nombre}')" title="Eliminar" style="color:#ff5555">✕</button>
                                     </div>
                                 </div>
                             </div>`;
@@ -222,10 +238,20 @@
     </script>
 </head>
 <body>
-    <div class="box">
+    <div class="agenda-container">
         <h1>Agenda</h1>
         <div class="user-email" id="email-display">Cargando...</div>
-        <div id="agenda-lista"></div>
+        
+        <div class="agenda-header">
+            <div class="col-paciente">PACIENTE</div>
+            <div class="col-rut">RUT</div>
+            <div class="col-hora">HORA CONSULTA</div>
+            <div class="col-estado">ESTADO</div>
+            <div class="col-acciones">ACCIONES</div>
+        </div>
+
+        <div id="agenda-lista" style="width: 100%;"></div>
+        
         <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
     </div>
 </body>
