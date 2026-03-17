@@ -8,138 +8,145 @@
     
     <style>
         :root {
-            /* COLORES KIOSKO (Dark Mode) */
-            --bg-main: #121212;
+            --bg-dark: #121212;
             --bg-card: #1E1E1E;
-            --text-primary: #FFFFFF;
-            --text-secondary: #A0A0A0;
-            --accent-blue: #4682B4; 
-            --accent-blue-hover: #5492C4;
-            --input-bg: #2A2A2A;
-            --input-border: #3E3E3E;
-            --radius-custom: 10px;
+            --text-main: #FFFFFF;
+            --text-muted: #888888;
+            --blue-accent: #4682B4; 
+            --green-accent: #1DB954;
+            --orange-accent: #f59e0b;
+            --border-color: #333333;
+            --radius-box: 24px;
+            --radius-card: 16px;
         }
 
         body { 
             font-family: 'Inter', sans-serif; 
-            background: var(--bg-main); 
-            color: var(--text-primary);
-            padding: 30px; 
+            background-color: var(--bg-dark); 
+            color: var(--text-main);
             margin: 0;
-            max-width: 900px;
-            margin: 0 auto; /* Centrar el contenido en pantallas grandes */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        /* CABECERA (Estilo Kiosko) */
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: var(--bg-card); 
-            padding: 25px 30px; 
-            border-radius: var(--radius-custom); 
-            margin-bottom: 30px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.05);
+        /* CAJA PRINCIPAL (Igual al estilo Kiosko de tus fotos) */
+        .box {
+            background-color: var(--bg-card);
+            padding: 45px 35px;
+            border-radius: var(--radius-box);
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.03);
         }
 
-        .header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
+        h1 { 
+            font-size: 2.2rem; 
+            font-weight: 800; 
+            margin: 0; 
+            letter-spacing: -1.5px; 
         }
 
-        #email-display {
-            color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 1.2rem;
+        .user-email { 
+            color: var(--text-muted); 
+            font-size: 0.9rem; 
+            margin-bottom: 30px;
+            font-weight: 500;
         }
 
-        .btn-logout { 
-            background: transparent; 
-            color: #ef4444; 
-            border: 1px solid #ef4444; 
-            padding: 10px 20px; 
-            border-radius: var(--radius-custom); 
-            cursor: pointer; 
+        /* CONTENEDOR DE LA LISTA */
+        #agenda-lista { 
+            text-align: left; 
+        }
+
+        /* FILA DE PACIENTE */
+        .paciente-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-card);
+            padding: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .col-nombre strong { 
+            display: block; 
+            font-size: 1.1rem; 
+            letter-spacing: -0.5px;
+            margin-bottom: 2px;
+        }
+
+        .col-info { 
+            color: var(--text-muted); 
+            font-size: 0.7rem; 
             font-weight: 700;
-            letter-spacing: 0.05em;
-            transition: all 0.2s;
-        }
-        .btn-logout:hover { background: rgba(239, 68, 68, 0.1); }
-
-        /* TARJETAS DE PACIENTES (ESTILO TABLA GRID, MISMAS COLUMNAS) */
-        .paciente-card { 
-            background: var(--input-bg); 
-            padding: 20px 25px; 
-            margin: 15px 0; 
-            border-radius: var(--radius-custom); 
-            display: grid; 
-            grid-template-columns: 2fr 1fr 1fr; /* Tus mismas columnas */
-            align-items: center; 
-            border: 1px solid var(--input-border);
-            border-left: 6px solid var(--text-secondary); /* Borde lateral base */
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
-        }
-        .paciente-card:hover { transform: translateX(5px); }
-
-        /* COLORES DE ESTADO (Adaptados al Dark Mode) */
-        .estado-llegado { border-left-color: var(--accent-blue); }
-        .estado-llamando { border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
-        .estado-atendiendo { border-left-color: #1DB954; background: rgba(29, 185, 84, 0.05); }
-        .estado-atendido { border-left-color: #444; background: rgba(255, 255, 255, 0.02); opacity: 0.6; }
-
-        /* COLUMNAS */
-        .col-nombre strong { font-size: 1.2rem; letter-spacing: -0.01em; }
-        
-        .col-estado span { 
-            font-size: 0.85rem; 
-            font-weight: 700; 
-            letter-spacing: 0.1em;
-            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .col-accion { display: flex; gap: 8px; justify-content: flex-end; }
+        /* BOTONES Y ACCIONES */
+        .col-accion { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: flex-end; 
+            gap: 8px; 
+        }
 
-        /* BOTONES DE ACCIÓN (Todos estilo Kiosko) */
         button {
             font-family: 'Inter', sans-serif;
-            background: var(--accent-blue);
-            color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
+            border-radius: 10px;
             font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 0.05em;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: transform 0.1s ease, opacity 0.2s;
         }
-        button:hover { background: var(--accent-blue-hover); }
 
-        /* Botones específicos */
-        .estado-llamando button { background: #f59e0b; }
-        .estado-llamando button:hover { background: #d97706; }
+        button:active { transform: scale(0.95); }
+
+        .btn-call { background-color: var(--blue-accent); color: white; padding: 10px 20px; font-size: 0.8rem; }
+        .btn-wait { background-color: var(--orange-accent); color: white; padding: 10px 20px; font-size: 0.8rem; }
+        .btn-done { background-color: var(--green-accent); color: white; padding: 10px 20px; font-size: 0.8rem; }
         
-        .estado-atendiendo button { background: #1DB954; }
-        .estado-atendiendo button:hover { background: #169c46; }
+        .tag-atendido { 
+            color: var(--green-accent); 
+            font-size: 0.7rem; 
+            font-weight: 800;
+            padding: 8px;
+        }
 
-        /* Botones pequeños (Deshacer y Cancelar) */
-        .col-accion .btn-deshacer, 
-        .col-accion .btn-cancelar {
-            padding: 12px 15px;
-            font-size: 1rem;
+        /* MINI BOTONES (Deshacer y Borrar) */
+        .mini-group { display: flex; gap: 5px; }
+        .btn-mini { 
+            background: #252525; 
+            color: #777; 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 8px; 
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn-mini:hover { background: #333; color: white; }
+        .btn-danger-text:hover { color: #ff5555; }
+
+        .btn-logout {
+            margin-top: 30px;
             background: transparent;
-            border: 1px solid var(--input-border);
-            color: var(--text-secondary);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-decoration: underline;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
-        
-        .col-accion .btn-deshacer:hover { background: rgba(255,255,255,0.1); color: white; }
-        .col-accion .btn-cancelar:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: #ef4444; }
-
-        #agenda-lista { color: var(--text-secondary); font-size: 1.1rem; }
     </style>
 
     <script type="module">
@@ -160,7 +167,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Funciones globales para botones
+        // FUNCIONES DE TU CÓDIGO ORIGINAL
         window.cambiarEstado = async (id, nuevoEstado, nombre = null, box = null) => {
             await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
             if (nuevoEstado === 'llamando') {
@@ -174,13 +181,10 @@
 
         window.cerrarSesion = () => signOut(auth).then(() => location.href = "login.html");
 
-        // --- INICIALIZACIÓN SEGURA ---
         document.addEventListener('DOMContentLoaded', () => {
             onAuthStateChanged(auth, (user) => {
                 if (!user) { window.location.href = "login.html"; return; }
-                
-                const emailSpan = document.getElementById('email-display');
-                if (emailSpan) emailSpan.innerText = user.email;
+                document.getElementById('email-display').innerText = user.email;
                 
                 const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
                 
@@ -190,18 +194,25 @@
                     
                     snapshot.forEach((docSnap) => {
                         const p = docSnap.data();
+                        const id = docSnap.id;
                         const estado = p.estado || 'llegado';
                         
                         container.innerHTML += `
-                            <div class="paciente-card estado-${estado}">
-                                <div class="col-nombre"><strong>${p.nombre}</strong></div>
-                                <div class="col-estado"><span>${estado.toUpperCase()}</span></div>
+                            <div class="paciente-card">
+                                <div class="col-nombre">
+                                    <strong>${p.nombre}</strong>
+                                    <div class="col-info">${estado}</div>
+                                </div>
                                 <div class="col-accion">
-                                    ${estado === 'llegado' ? `<button onclick="cambiarEstado('${docSnap.id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
-                                    ${estado === 'llamando' ? `<button onclick="cambiarEstado('${docSnap.id}', 'atendiendo')">ATENDIENDO</button>` : ''}
-                                    ${estado === 'atendiendo' ? `<button onclick="cambiarEstado('${docSnap.id}', 'atendido')">FINALIZAR</button>` : ''}
-                                    ${estado !== 'llegado' ? `<button class="btn-deshacer" onclick="cambiarEstado('${docSnap.id}', 'llegado')">↺</button>` : ''}
-                                    <button class="btn-cancelar" onclick="cancelar('${docSnap.id}', '${p.nombre}')">✕</button>
+                                    ${estado === 'llegado' ? `<button class="btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
+                                    ${estado === 'llamando' ? `<button class="btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
+                                    ${estado === 'atendiendo' ? `<button class="btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
+                                    ${estado === 'atendido' ? `<span class="tag-atendido">ATENDIDO ✓</span>` : ''}
+                                    
+                                    <div class="mini-group">
+                                        ${estado !== 'llegado' ? `<button class="btn-mini" onclick="cambiarEstado('${id}', 'llegado')">↺</button>` : ''}
+                                        <button class="btn-mini btn-danger-text" onclick="cancelar('${id}', '${p.nombre}')">✕</button>
+                                    </div>
                                 </div>
                             </div>`;
                     });
@@ -211,10 +222,11 @@
     </script>
 </head>
 <body>
-    <div class="header">
-        <h1>Dr(a). <br><span id="email-display"></span></h1>
-        <button class="btn-logout" onclick="cerrarSesion()">CERRAR SESIÓN</button>
+    <div class="box">
+        <h1>Agenda</h1>
+        <div class="user-email" id="email-display">Cargando...</div>
+        <div id="agenda-lista"></div>
+        <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
     </div>
-    <div id="agenda-lista">Cargando datos de la agenda...</div>
 </body>
 </html>
