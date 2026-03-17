@@ -3,144 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiosko de Check-in</title>
+    <title>Tótem de Autoatención - Bienvenida</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
-    <link rel="manifest" href="manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#121212">
-
     <style>
-        /* Importamos la fuente Inter */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
         :root {
-            --bg-main: #121212;
-            --bg-card: #1E1E1E;
-            --text-primary: #FFFFFF;
-            --text-secondary: #A0A0A0;
-            --accent-blue-mate: #4682B4; 
-            --accent-blue-mate-hover: #5492C4;
-            --input-bg: #2A2A2A;
-            --input-border: #3E3E3E;
-            --radius-custom: 10px;
+            --bg-page: #4a4a4a;      
+            --bg-card: #1c1c1c;      
+            --text-main: #FFFFFF;
+            --text-muted: #A0A0A0;
+            --blue-accent: #4682B4;  
+            --green-accent: #1DB954;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --radius: 24px;
         }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            background: var(--bg-main); 
-            margin: 0; 
-            color: var(--text-primary);
-            overflow: hidden;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-page);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: var(--text-main);
         }
 
-        .box { 
-            background: var(--bg-card); 
-            padding: 60px 40px; 
-            border-radius: 20px; 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.6); 
-            text-align: center; 
-            width: 90%; 
-            max-width: 420px; 
-            border: 1px solid rgba(255,255,255,0.03);
+        .totem-container {
+            background-color: var(--bg-card);
+            padding: 60px 40px;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            border: 1px solid var(--border-color);
+            text-align: center;
         }
 
         h1 { 
-            font-size: 2.4rem; 
+            font-size: 2.5rem; 
             font-weight: 800; 
-            margin-bottom: 8px; 
-            letter-spacing: -0.03em;
+            margin-bottom: 10px; 
+            letter-spacing: -1.5px; 
         }
 
         p { 
+            color: var(--text-muted); 
             font-size: 1.1rem; 
-            color: var(--text-secondary); 
-            margin-bottom: 45px;
+            margin-bottom: 40px; 
         }
 
-        input { 
-            width: 100%; 
-            padding: 22px; 
-            font-size: 1.7rem; 
-            border: 2px solid var(--input-border); 
-            border-radius: var(--radius-custom); 
-            box-sizing: border-box; 
-            text-align: center; 
-            color: var(--text-primary); 
-            background: var(--input-bg);
-            margin-bottom: 25px;
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        input {
+            width: 100%;
+            padding: 22px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            color: white;
+            font-size: 1.8rem; /* Más grande para que el RUT luzca */
+            text-align: center;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.2s;
+            letter-spacing: 1px;
             font-weight: 700;
-            transition: all 0.2s ease;
         }
 
-        input:focus { 
-            outline: none; 
-            border-color: var(--accent-blue-mate);
-            background: #252525;
+        input:focus {
+            border-color: var(--blue-accent);
+            background: rgba(255, 255, 255, 0.08);
         }
 
-        input::placeholder {
-            color: #555555;
-            font-weight: 400;
+        /* Botón con el azul mate exacto */
+        .btn-confirm {
+            width: 100%;
+            padding: 22px;
+            background-color: var(--blue-accent);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.2s;
+            letter-spacing: 1px;
         }
 
-        button { 
-            width: 100%; 
-            padding: 22px; 
-            font-size: 1.1rem; 
-            background: var(--accent-blue-mate); 
-            color: white; 
-            border: none; 
-            border-radius: var(--radius-custom); 
-            cursor: pointer; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            letter-spacing: 0.15em; 
-            transition: all 0.3s ease;
-        }
-
-        button:hover {
-            background: var(--accent-blue-mate-hover);
+        .btn-confirm:hover {
+            opacity: 0.95;
             transform: translateY(-2px);
         }
 
-        button:active { 
-            transform: translateY(0);
-        }
-
-        .footer-text {
-            margin-top: 50px;
-            font-size: 0.75rem;
-            color: #444;
-            letter-spacing: 0.2em;
-            font-weight: 600;
+        .success-msg {
+            color: var(--green-accent);
+            font-weight: 700;
+            margin-top: 25px;
+            display: none;
+            font-size: 1.1rem;
         }
     </style>
 </head>
 <body>
 
-    <div class="box">
+    <div class="totem-container">
         <h1>Bienvenido</h1>
-        <p>Ingrese su RUT para confirmar su llegada</p>
-        
-        <input type="text" id="rutInput" placeholder="12.345.678-9" maxlength="12" spellcheck="false" autocomplete="off">
-        
-        <button id="btnCheckIn">Confirmar Llegada</button>
-        
-        <div class="footer-text">SISTEMA DE GESTIÓN CLÍNICA</div>
+        <p>Ingrese su RUT para anunciar su llegada</p>
+
+        <div class="input-group">
+            <input type="text" id="rutInput" placeholder="12.345.678-K" maxlength="12">
+        </div>
+
+        <button class="btn-confirm" id="confirmBtn">Confirmar Llegada</button>
+        <div id="success-text" class="success-msg">✔ Llegada registrada correctamente</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIGURACIÓN DE TU PROYECTO FIREBASE
         const firebaseConfig = {
-            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts", 
+            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
             authDomain: "llamado-cliente.firebaseapp.com",
             projectId: "llamado-cliente",
             storageBucket: "llamado-cliente.appspot.com",
@@ -151,84 +138,59 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // LÓGICA 1: FORMATEADOR DE RUT AUTOMÁTICO
-        const inputRut = document.getElementById('rutInput');
-        inputRut.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\./g, '').replace(/-/g, '');
-            if (value.length <= 1) return;
-            
-            let cuerpo = value.slice(0, -1);
-            let dv = value.slice(-1).toUpperCase();
-            
-            // Agregar puntos al cuerpo
-            cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            
-            // Unir todo con el guion
-            e.target.value = cuerpo + "-" + dv;
+        const rutInput = document.getElementById('rutInput');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const successText = document.getElementById('success-text');
+
+        // FUNCIÓN PARA FORMATEAR RUT AUTOMÁTICAMENTE (12.345.678-K)
+        rutInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+            if (value.length > 1) {
+                let cv = value.slice(0, -1);
+                let dv = value.slice(-1);
+                value = cv.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + dv;
+            }
+            e.target.value = value;
         });
 
-        // LÓGICA 2: VALIDACIÓN MATEMÁTICA
-        function validarRUT(rut) {
-            rut = rut.replace(/\./g, '').replace(/-/g, '').trim();
-            if (rut.length < 8) return false;
-            let cuerpo = rut.slice(0, -1);
-            let dv = rut.slice(-1).toUpperCase();
-            let suma = 0, multiplo = 2;
-            for (let i = cuerpo.length - 1; i >= 0; i--) {
-                suma += multiplo * cuerpo.charAt(i);
-                multiplo = (multiplo < 7) ? multiplo + 1 : 2;
-            }
-            let dvEsperado = 11 - (suma % 11);
-            dvEsperado = (dvEsperado == 11) ? '0' : (dvEsperado == 10) ? 'K' : dvEsperado.toString();
-            return dvEsperado === dv;
-        }
-
-        // LÓGICA 3: PROCESO DE CHECK-IN
-        async function checkIn() {
-            const input = document.getElementById('rutInput');
-            const rutOriginal = input.value.trim();
-            const rutLimpio = rutOriginal.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+        confirmBtn.addEventListener('click', async () => {
+            // Limpiamos el RUT para buscar en la base de datos (solo números y letra)
+            let rawRut = rutInput.value.replace(/[.-]/g, '').toUpperCase();
             
-            if (!validarRUT(rutOriginal)) {
-                alert("⚠️ RUT INVÁLIDO\nPor favor, ingrese un RUT válido.");
-                input.value = "";
-                input.focus();
+            if (rawRut.length < 8) {
+                alert("Por favor ingrese un RUT válido.");
                 return;
             }
 
             try {
-                const q = query(collection(db, "agendados"), where("rut", "==", rutLimpio));
-                const snapshot = await getDocs(q);
+                const q = query(collection(db, "agendados"), where("rut", "==", rawRut));
+                const querySnapshot = await getDocs(q);
 
-                if (!snapshot.empty) {
-                    const docSnap = snapshot.docs[0];
-                    const data = docSnap.data();
-                    
-                    if (data.estado === "llegado") {
-                        alert(`Hola ${data.nombre}, ya registramos tu llegada.`);
-                    } else {
-                        await updateDoc(docSnap.ref, { 
-                            estado: "llegado",
-                            horaLlegada: new Date().toLocaleTimeString() 
-                        });
-                        
-                        // Mensaje de éxito con Doctor, Piso y Consulta
-                        alert(`¡Bienvenido ${data.nombre}!\n\n🩺 Doctor: ${data.doctor || 'Médico de Turno'}\n📍 Ubicación: ${data.piso} - ${data.consulta}`);
-                    }
-                } else {
-                    alert("RUT no encontrado en la agenda de hoy.\nPor favor, consulte en recepción.");
+                if (querySnapshot.empty) {
+                    alert("No se encontró una cita agendada para este RUT hoy.");
+                    return;
                 }
-            } catch (e) {
-                console.error(e);
-                alert("Error de conexión con la base de datos.");
-            } finally {
-                input.value = "";
-                input.focus();
-            }
-        }
 
-        // Asignación de evento
-        document.getElementById('btnCheckIn').addEventListener('click', checkIn);
+                const ahora = new Date();
+                const horaLlegada = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+
+                querySnapshot.forEach(async (docSnap) => {
+                    await updateDoc(doc(db, "agendados", docSnap.id), {
+                        estado: "llegado",
+                        hora_llegada: horaLlegada
+                    });
+                });
+
+                successText.style.display = "block";
+                rutInput.value = "";
+                
+                setTimeout(() => { successText.style.display = "none"; }, 5000);
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error al registrar llegada.");
+            }
+        });
     </script>
 </body>
 </html>
