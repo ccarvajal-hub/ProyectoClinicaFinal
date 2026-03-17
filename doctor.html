@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda Médica - Panel Doctor</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
@@ -41,28 +42,32 @@
             max-width: 1200px;
             box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
             border: 1px solid var(--border-color);
-            box-sizing: border-box;
         }
 
-        h1 { font-size: 2.4rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
+        h1 { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
         .user-email { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 40px; text-align: center; }
 
-        .col-paciente { width: 25%; text-align: left; }
-        .col-rut      { width: 18%; text-align: center; }
-        .col-hora-c   { width: 12%; text-align: center; }
-        .col-hora-ll  { width: 12%; text-align: center; }
-        .col-estado   { width: 13%; text-align: center; }
-        .col-acciones { width: 20%; text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+        /* GRILLA DE COLUMNAS */
+        .agenda-header, .paciente-row {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+        }
+
+        .col-paciente { flex: 2; text-align: left; }
+        .col-rut      { flex: 1.2; text-align: center; }
+        .col-hora-c   { flex: 0.8; text-align: center; }
+        .col-hora-ll  { flex: 0.8; text-align: center; }
+        .col-estado   { flex: 1.2; text-align: center; }
+        .col-acciones { flex: 1.5; text-align: right; display: flex; justify-content: flex-end; gap: 10px; min-height: 45px; }
 
         .agenda-header {
-            display: flex;
-            padding: 15px 20px;
             border-bottom: 2px solid var(--border-color);
             margin-bottom: 10px;
         }
 
         .agenda-header div {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             text-transform: uppercase;
             font-weight: 800;
@@ -73,32 +78,28 @@
             background: rgba(255,255,255,0.03);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-card);
-            padding: 15px 20px;
             margin-bottom: 8px;
-            display: flex;
-            align-items: center;
             transition: 0.2s;
         }
 
         .paciente-row:hover { background: rgba(255,255,255,0.06); }
-        .paciente-name { font-weight: 700; font-size: 1.1rem; }
-        .text-time { color: var(--text-muted); }
+        .paciente-name { font-weight: 700; font-size: 1.05rem; }
         .text-arrival { color: var(--orange-accent); font-weight: 600; }
 
-        /* ESTADOS - ETIQUETAS */
+        /* ETIQUETAS DE ESTADO */
         .status-tag {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 800;
-            padding: 6px 12px;
-            border-radius: 8px;
+            padding: 5px 10px;
+            border-radius: 6px;
             text-transform: uppercase;
         }
         .status-pendiente { background: rgba(255,255,255,0.05); color: #888; }
-        .status-pagado { background: rgba(29, 185, 84, 0.1); color: var(--green-accent); }
+        .status-pagado { background: rgba(29, 185, 84, 0.15); color: var(--green-accent); }
         .status-llamando { background: rgba(70, 130, 180, 0.2); color: #7ab3e0; }
         .status-atendiendo { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
 
-        /* TEXTO SIMPLE PARA LLEGADO (EN RECEPCIÓN) */
+        /* TEXTO SIMPLE LLEGADO */
         .text-llegado {
             color: var(--orange-accent);
             font-size: 0.75rem;
@@ -108,15 +109,15 @@
 
         /* BOTONES */
         button { cursor: pointer; transition: 0.2s; border: none; font-family: 'Inter', sans-serif; }
-        .btn-action { padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: white; }
+        .btn-action { padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: white; }
         .btn-call { background: var(--blue-accent); }
         .btn-wait { background: var(--orange-accent); }
         .btn-done { background: var(--green-accent); }
-        .btn-delete { background: var(--red-accent); color: white; width: 38px; height: 38px; border-radius: 10px; font-weight: 800; }
+        .btn-delete { background: var(--red-accent); color: white; width: 34px; height: 34px; border-radius: 8px; font-weight: 800; }
         
-        .btn-action:hover, .btn-delete:hover { opacity: 0.85; transform: scale(1.02); }
-        .footer-tools { margin-top: 50px; text-align: center; }
-        .btn-logout { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 10px 20px; border-radius: 12px; font-weight: 700; }
+        .btn-action:hover, .btn-delete:hover { opacity: 0.85; transform: translateY(-1px); }
+        .footer-tools { margin-top: 40px; text-align: center; }
+        .btn-logout { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 16px; border-radius: 10px; font-size: 0.8rem; }
     </style>
 
     <script type="module">
@@ -139,24 +140,22 @@
 
         window.formatearRut = (rut) => {
             if (!rut) return "---";
-            let valor = rut.replace(/[.-]/g, '');
-            let cuerpo = valor.slice(0, -1);
-            let dv = valor.slice(-1).toUpperCase();
-            cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            return cuerpo + "-" + dv;
+            let v = rut.replace(/[.-]/g, '');
+            return v.slice(0,-1).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + v.slice(-1).toUpperCase();
         };
 
-        window.cambiarEstado = async (id, nuevoEstado, nombre = null, box = null) => {
+        window.cambiarEstado = async (id, nuevoEstado, nombre = null, infoBox = null) => {
             try {
                 await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
                 if (nuevoEstado === 'llamando') {
-                    await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: box });
+                    // Actualiza la colección 'turnos' para que la TV lo muestre
+                    await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: infoBox });
                 }
             } catch (e) { console.error(e); }
         };
 
         window.cancelar = async (id, nombre) => {
-            if (confirm(`¿Eliminar a ${nombre}?`)) await deleteDoc(doc(db, "agendados", id));
+            if (confirm(`¿Eliminar a ${nombre} de la lista?`)) await deleteDoc(doc(db, "agendados", id));
         };
 
         window.cerrarSesion = () => signOut(auth).then(() => location.href = "login.html");
@@ -166,6 +165,7 @@
             document.getElementById('email-display').innerText = user.email;
             
             const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
+            
             onSnapshot(q, (snapshot) => {
                 const container = document.getElementById('agenda-lista');
                 container.innerHTML = "";
@@ -178,15 +178,15 @@
                     let estadoCeldaHTML = '';
                     let accionesHTML = '';
 
-                    // LÓGICA DE VISUALIZACIÓN SEGÚN ESTADO
+                    // LÓGICA DE VISUALIZACIÓN POR ESTADO
                     if (estado === 'llegado') {
-                        estadoCeldaHTML = `<span class="text-llegado">EN RECEPCIÓN</span>`;
-                        accionesHTML = `<span style="color:var(--text-muted); font-size:0.7rem;">ESPERANDO PAGO</span>`;
+                        estadoCeldaHTML = `<span class="text-llegado">En Recepción</span>`;
+                        accionesHTML = ''; // ÁREA VACÍA HASTA QUE PAGUE
                     } else {
                         estadoCeldaHTML = `<span class="status-tag status-${estado}">${estado}</span>`;
                         
                         if (estado === 'pagado') {
-                            accionesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>`;
+                            accionesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} - ${p.consulta}')">LLAMAR</button>`;
                         } else if (estado === 'llamando') {
                             accionesHTML = `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
                         } else if (estado === 'atendiendo') {
@@ -199,7 +199,7 @@
                     row.innerHTML = `
                         <div class="col-paciente paciente-name">${p.nombre}</div>
                         <div class="col-rut paciente-rut">${window.formatearRut(p.rut)}</div>
-                        <div class="col-hora-c text-time">${p.hora_consulta || '--:--'}</div>
+                        <div class="col-hora-c text-muted">${p.hora_consulta || '--:--'}</div>
                         <div class="col-hora-ll text-arrival">${p.hora_llegada || '--:--'}</div>
                         <div class="col-estado">${estadoCeldaHTML}</div>
                         <div class="col-acciones">
