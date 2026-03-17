@@ -6,11 +6,9 @@
     <title>Panel Médico - Gestión de Pacientes</title>
     
     <style>
-        /* IMPORTACIÓN DE FUENTE INTER */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
         :root {
-            /* COLORES EXACTOS DE TU KIOSKO */
             --bg-main: #121212;
             --bg-card: #1E1E1E;
             --text-primary: #FFFFFF;
@@ -33,7 +31,6 @@
             color: var(--text-primary);
         }
 
-        /* CONTENEDOR PRINCIPAL (IGUAL AL KIOSKO) */
         .box { 
             background: var(--bg-card); 
             padding: 50px 40px; 
@@ -45,20 +42,18 @@
             border: 1px solid rgba(255,255,255,0.03);
         }
 
-        h1 { 
-            font-size: 2.2rem; 
-            font-weight: 800; 
-            margin-bottom: 10px; 
-            letter-spacing: -0.03em; 
+        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.03em; }
+        p { color: var(--text-secondary); margin-bottom: 35px; font-size: 1.1rem; }
+
+        /* Evitar que el navegador ponga los inputs blancos */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus {
+            -webkit-text-fill-color: white !important;
+            -webkit-box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
+            transition: background-color 5000s ease-in-out 0s;
         }
 
-        p { 
-            color: var(--text-secondary); 
-            margin-bottom: 35px; 
-            font-size: 1.1rem; 
-        }
-
-        /* INPUTS ESTILO KIOSKO (OSCUROS) */
         input { 
             width: 100%; 
             padding: 20px; 
@@ -71,16 +66,8 @@
             background: var(--input-bg);
             margin-bottom: 15px;
             font-weight: 600;
-            transition: all 0.2s ease;
         }
 
-        input:focus { 
-            outline: none; 
-            border-color: var(--accent-blue-mate);
-            background: #252525;
-        }
-
-        /* BOTÓN IDÉNTICO AL KIOSKO */
         button { 
             width: 100%; 
             padding: 20px; 
@@ -93,16 +80,10 @@
             font-weight: 700; 
             text-transform: uppercase; 
             letter-spacing: 0.15em; 
-            transition: all 0.3s ease;
             margin-top: 10px;
         }
 
-        button:hover { 
-            background: var(--accent-blue-hover); 
-            transform: translateY(-2px); 
-        }
-
-        /* TARJETAS DE PACIENTES DENTRO DEL PANEL */
+        /* Estilo para las tarjetas de la lista (Igual al input) */
         .paciente-item {
             background: var(--input-bg);
             padding: 20px;
@@ -112,44 +93,13 @@
             text-align: left;
         }
 
-        .paciente-nombre { 
-            display: block; 
-            font-weight: 700; 
-            font-size: 1.2rem; 
-            color: var(--text-primary);
-        }
+        .paciente-nombre { font-weight: 700; font-size: 1.1rem; display: block; }
+        .paciente-info { color: var(--text-secondary); font-size: 0.8rem; display: block; margin-bottom: 15px; }
 
-        .paciente-info { 
-            color: var(--text-secondary); 
-            font-size: 0.85rem; 
-            margin-top: 5px;
-            display: block;
-        }
+        .btn-accion { padding: 12px; font-size: 0.9rem; letter-spacing: 0.05em; }
+        .btn-cancelar { background: transparent; color: #555; border: 1px solid #333; margin-top: 15px; font-size: 0.7rem; }
+        .btn-logout { background: transparent; color: #444; border: none; font-size: 0.8rem; margin-top: 20px; text-decoration: underline; }
 
-        .btn-atendido {
-            background: #2A2A2A;
-            border: 1px solid #444;
-            margin-top: 15px;
-        }
-
-        .btn-logout { 
-            background: transparent; 
-            border: 1px solid #333; 
-            color: #555; 
-            font-size: 0.8rem; 
-            margin-top: 30px; 
-            letter-spacing: 0.1em;
-        }
-
-        .footer-text { 
-            margin-top: 40px; 
-            font-size: 0.75rem; 
-            color: #444; 
-            letter-spacing: 0.2em; 
-            font-weight: 600; 
-        }
-        
-        #login-section, #doctor-section { width: 100%; }
         .hidden { display: none; }
     </style>
 </head>
@@ -159,28 +109,97 @@
         <div id="login-section">
             <h1>Ingreso Médico</h1>
             <p>Acceda a su panel de gestión</p>
-            <input type="email" id="email" placeholder="Correo electrónico" autocomplete="email">
+            <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="password" placeholder="Contraseña">
-            <button id="btnLogin">Ingresar</button>
+            <button id="btnLogin">INGRESAR</button>
         </div>
 
         <div id="doctor-section" class="hidden">
-            <h1 id="doc-title">Atención</h1>
-            <p id="doc-email" style="font-size: 0.8rem; margin-top: -20px; margin-bottom: 30px; opacity: 0.6;"></p>
-            
-            <div id="lista-pacientes">
-                </div>
-
-            <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+            <h1 id="doc-title">Agenda</h1>
+            <p id="doc-email" style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 20px;"></p>
+            <div id="lista-pacientes"></div>
+            <button class="btn-logout" onclick="cerrarSesion()">CERRAR SESIÓN</button>
         </div>
-
-        <div class="footer-text">SISTEMA DE GESTIÓN CLÍNICA</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIGURACIÓN FIREBASE
-        const
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
+            authDomain: "llamado-cliente.firebaseapp.com",
+            projectId: "llamado-cliente",
+            storageBucket: "llamado-cliente.appspot.com",
+            messagingSenderId: "444376711880",
+            appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // LOGIN LÓGICA
+        document.getElementById('btnLogin').addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Error: " + err.message));
+        });
+
+        window.cerrarSesion = () => signOut(auth);
+
+        window.cambiarEstado = async (id, nuevoEstado, nombre = null, box = null) => {
+            await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
+            if (nuevoEstado === 'llamando') {
+                await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: box });
+            }
+        };
+
+        window.cancelar = async (id, nombre) => {
+            if (confirm("¿Eliminar cita de " + nombre + "?")) await deleteDoc(doc(db, "agendados", id));
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            const loginSec = document.getElementById('login-section');
+            const docSec = document.getElementById('doctor-section');
+            
+            if (user) {
+                loginSec.classList.add('hidden');
+                docSec.classList.remove('hidden');
+                document.getElementById('doc-email').innerText = user.email;
+
+                const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
+                
+                onSnapshot(q, (snapshot) => {
+                    const container = document.getElementById('lista-pacientes');
+                    container.innerHTML = "";
+                    
+                    snapshot.forEach((docSnap) => {
+                        const p = docSnap.data();
+                        const id = docSnap.id;
+                        const estado = p.estado || 'llegado';
+                        
+                        const item = document.createElement('div');
+                        item.className = 'paciente-item';
+                        item.innerHTML = `
+                            <span class="paciente-nombre">${p.nombre}</span>
+                            <span class="paciente-info">RUT: ${p.rut} • ${estado.toUpperCase()}</span>
+                            <div style="display:flex; flex-direction:column; gap:10px;">
+                                ${estado === 'llegado' ? `<button class="btn-accion" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} ${p.consulta}')">LLAMAR</button>` : ''}
+                                ${estado === 'llamando' ? `<button class="btn-accion" style="background:#1DB954" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>` : ''}
+                                ${estado === 'atendiendo' ? `<button class="btn-accion" style="background:#64748b" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>` : ''}
+                                <button class="btn-cancelar" onclick="cancelar('${id}', '${p.nombre}')">ELIMINAR CITA</button>
+                            </div>
+                        `;
+                        container.appendChild(item);
+                    });
+                });
+            } else {
+                loginSec.classList.remove('hidden');
+                docSec.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
