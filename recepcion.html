@@ -68,19 +68,29 @@
         .hora { flex: 0.8; font-weight: 600; text-align: center; }
         .actions { flex: 1; text-align: right; }
 
+        /* Botón Pagar Activo */
         .btn-pay {
             background-color: var(--color-pagado);
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
             font-weight: 800;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             cursor: pointer;
             text-transform: uppercase;
+            transition: 0.2s;
         }
 
-        .btn-pay:hover { filter: brightness(1.1); transform: scale(1.05); }
+        /* Botón Pagar Desactivado (Antes del Tótem) */
+        .btn-disabled {
+            background-color: #333;
+            color: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .btn-pay:not(.btn-disabled):hover { filter: brightness(1.1); transform: scale(1.05); }
         .check { color: var(--color-pagado); font-weight: 800; font-size: 1.2rem; }
 
         .empty-msg { color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 20px; }
@@ -89,16 +99,16 @@
 <body>
 
     <div class="container">
-        <h2 class="title-espera">● PACIENTES EN ESPERA</h2>
+        <h2 class="title-espera">● PACIENTES EN ESPERA (REGISTRO TÓTEM)</h2>
         <div id="lista-espera">
             <div class="empty-msg">Cargando agenda...</div>
         </div>
     </div>
 
-    <div class="container" style="opacity: 0.8;">
-        <h2 class="title-atendidos">✔ PACIENTES ATENDIDOS (PAGADOS)</h2>
+    <div class="container" style="opacity: 0.9;">
+        <h2 class="title-atendidos">✔ HISTORIAL DE PAGOS Y ATENCIÓN</h2>
         <div id="lista-atendidos">
-            <div class="empty-msg">No hay pagos registrados hoy.</div>
+            <div class="empty-msg">No hay movimientos registrados.</div>
         </div>
     </div>
 
@@ -118,7 +128,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Escuchamos la base de datos
         const q = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
 
         onSnapshot(q, (snapshot) => {
@@ -136,36 +145,56 @@
                 const id = docSnap.id;
                 const estado = p.estado || 'pendiente';
 
-                const rowHtml = `
-                    <div class="row">
-                        <div class="name">${p.nombre}</div>
-                        <div class="doc">Dr. ${p.doctor_id.split('@')[0]}</div>
-                        <div class="hora">${p.hora_consulta}</div>
-                        <div class="actions">
-                            ${estado !== 'pagado' && estado !== 'llamando' && estado !== 'atendiendo' && estado !== 'atendido'
-                                ? `<button class="btn-pay" onclick="pagar('${id}')">PAGAR</button>` 
-                                : `<span class="check">✔</span>`}
-                        </div>
-                    </div>
+                // Solo movemos a la lista de abajo si ya pagó o ya está siendo atendido/llamado
+                const esHistorial = (estado === 'pagado' || estado === 'llamando' || estado === 'atendiendo' || estado === 'atendido');
+
+                const row = document.createElement('div');
+                row.className = "row";
+                
+                // Lógica del botón:
+                // Si el estado es 'llegado', el botón está activo.
+                // Si el estado es 'pendiente', el botón está deshabilitado.
+                let accionContenido = '';
+                if (!esHistorial) {
+                    if (estado === 'llegado') {
+                        accionContenido = `<button class="btn-pay" onclick="confirmarPago('${id}', '${p.nombre}')">PAGAR</button>`;
+                    } else {
+                        accionContenido = `<button class="btn-pay btn-disabled" title="Esperando registro en Tótem">PAGAR</button>`;
+                    }
+                } else {
+                    accionContenido = `<span class="check">✔</span>`;
+                }
+
+                row.innerHTML = `
+                    <div class="name">${p.nombre}</div>
+                    <div class="doc">Dr. ${p.doctor_id.split('@')[0].toUpperCase()}</div>
+                    <div class="hora">${p.hora_consulta}</div>
+                    <div class="actions">${accionContenido}</div>
                 `;
 
-                // Lógica de separación:
-                // Si ya pagó o ya está con el doctor, va a la lista de abajo (Historial)
-                if (estado === 'pagado' || estado === 'llamando' || estado === 'atendiendo' || estado === 'atendido') {
-                    atendidosDiv.innerHTML += rowHtml;
+                if (esHistorial) {
+                    atendidosDiv.appendChild(row);
                     contAtendidos++;
                 } else {
-                    esperaDiv.innerHTML += rowHtml;
+                    esperaDiv.appendChild(row);
                     contEspera++;
                 }
             });
 
             if(contEspera === 0) esperaDiv.innerHTML = '<div class="empty-msg">No hay pacientes pendientes.</div>';
-            if(contAtendidos === 0) atendidosDiv.innerHTML = '<div class="empty-msg">No hay registros de pago.</div>';
+            if(contAtendidos === 0) atendidosDiv.innerHTML = '<div class="empty-msg">No hay pagos registrados hoy.</div>';
         });
 
-        window.pagar = async (id) => {
-            await updateDoc(doc(db, "agendados", id), { estado: "pagado" });
+        // Función con confirmación para evitar errores
+        window.confirmarPago = async (id, nombre) => {
+            const respuesta = confirm(`¿Confirmar que el paciente ${nombre} ha realizado el pago?`);
+            if (respuesta) {
+                try {
+                    await updateDoc(doc(db, "agendados", id), { estado: "pagado" });
+                } catch (e) {
+                    alert("Error al procesar: " + e.message);
+                }
+            }
         };
     </script>
 </body>
