@@ -3,118 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recepción - Control de Flujo</title>
+    <title>Agenda Médica - Recepción</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-page: #4a4a4a;      
-            --bg-card: #1c1c1c;      
+            --bg-page: #4a4a4a;
+            --bg-card: #1c1c1c;
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
-            --color-recepcion: #FFB347; 
-            --color-pagado: #48BB78;    
+            --color-recepcion: #FFB347;
+            --color-pagado: #48BB78;
             --border-color: rgba(255, 255, 255, 0.1);
-            --radius: 24px;
+            --radius-box: 24px;
+            --radius-card: 16px;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-page);
-            color: var(--text-main);
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .agenda-container { background-color: var(--bg-card); padding: 40px; border-radius: var(--radius-box); width: 95%; max-width: 1200px; box-shadow: 0 40px 100px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
+        
+        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 30px; letter-spacing: -1.5px; text-align: center; }
 
-        .container {
-            background-color: var(--bg-card);
-            padding: 40px;
-            border-radius: var(--radius);
-            width: 100%;
-            max-width: 900px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-            border: 1px solid var(--border-color);
-            margin-bottom: 30px;
-        }
+        .agenda-header, .paciente-row { display: flex; align-items: center; padding: 15px 20px; }
+        .col-paciente { flex: 2; text-align: left; }
+        .col-rut      { flex: 1.2; text-align: center; }
+        .col-doctor   { flex: 1.5; text-align: center; } /* Columna para el nombre del doctor */
+        .col-hora     { flex: 0.8; text-align: center; }
+        .col-estado   { flex: 1.2; text-align: center; }
+        .col-acciones { flex: 1; text-align: right; }
 
-        h2 { 
-            font-size: 1.4rem; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .agenda-header { border-bottom: 2px solid var(--border-color); margin-bottom: 10px; }
+        .agenda-header div { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
 
-        .title-espera { color: var(--color-recepcion); }
-        .title-atendidos { color: var(--color-pagado); }
+        .paciente-row { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: var(--radius-card); margin-bottom: 8px; transition: 0.2s; }
+        .paciente-name { font-weight: 700; font-size: 1.05rem; }
+        .doctor-name { color: #fdfd96; font-weight: 600; font-size: 0.9rem; } /* Estilo para el nombre del doctor */
 
-        .row {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
-            margin-bottom: 10px;
-        }
+        .txt-estado { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; }
+        .st-llegado { color: var(--color-recepcion); }
+        .st-pagado  { color: var(--color-pagado); }
 
-        .name { flex: 2; font-weight: 700; }
-        .doc { flex: 1.5; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
-        .hora { flex: 0.8; font-weight: 600; text-align: center; }
-        .actions { flex: 1; text-align: right; }
-
-        /* Botón Pagar Activo */
-        .btn-pay {
-            background-color: var(--color-pagado);
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 10px;
-            font-weight: 800;
-            font-size: 0.75rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: 0.2s;
-        }
-
-        /* Botón Pagar Desactivado (Antes del Tótem) */
-        .btn-disabled {
-            background-color: #333;
-            color: #666;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .btn-pay:not(.btn-disabled):hover { filter: brightness(1.1); transform: scale(1.05); }
-        .check { color: var(--color-pagado); font-weight: 800; font-size: 1.2rem; }
-
-        .empty-msg { color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 20px; }
+        button { cursor: pointer; transition: 0.2s; border: none; font-family: 'Inter', sans-serif; padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; color: white; }
+        .btn-pay { background: var(--color-pagado); }
+        .btn-pay:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        
+        .footer-tools { margin-top: 40px; text-align: center; }
+        .btn-logout { background: #d4d4a1; color: #FFFFFF; padding: 12px 24px; border-radius: 10px; font-weight: 800; }
     </style>
-</head>
-<body>
-
-    <div class="container">
-        <h2 class="title-espera">● PACIENTES EN ESPERA (REGISTRO TÓTEM)</h2>
-        <div id="lista-espera">
-            <div class="empty-msg">Cargando agenda...</div>
-        </div>
-    </div>
-
-    <div class="container" style="opacity: 0.9;">
-        <h2 class="title-atendidos">✔ HISTORIAL DE PAGOS Y ATENCIÓN</h2>
-        <div id="lista-atendidos">
-            <div class="empty-msg">No hay movimientos registrados.</div>
-        </div>
-    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -126,76 +65,86 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const q = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
+        // Diccionario para guardar nombres de doctores y evitar consultas repetidas
+        const nombresDoctores = {};
 
-        onSnapshot(q, (snapshot) => {
-            const esperaDiv = document.getElementById('lista-espera');
-            const atendidosDiv = document.getElementById('lista-atendidos');
-            
-            esperaDiv.innerHTML = "";
-            atendidosDiv.innerHTML = "";
-
-            let contEspera = 0;
-            let contAtendidos = 0;
-
-            snapshot.forEach(docSnap => {
-                const p = docSnap.data();
-                const id = docSnap.id;
-                const estado = p.estado || 'pendiente';
-
-                // Solo movemos a la lista de abajo si ya pagó o ya está siendo atendido/llamado
-                const esHistorial = (estado === 'pagado' || estado === 'llamando' || estado === 'atendiendo' || estado === 'atendido');
-
-                const row = document.createElement('div');
-                row.className = "row";
-                
-                // Lógica del botón:
-                // Si el estado es 'llegado', el botón está activo.
-                // Si el estado es 'pendiente', el botón está deshabilitado.
-                let accionContenido = '';
-                if (!esHistorial) {
-                    if (estado === 'llegado') {
-                        accionContenido = `<button class="btn-pay" onclick="confirmarPago('${id}', '${p.nombre}')">PAGAR</button>`;
-                    } else {
-                        accionContenido = `<button class="btn-pay btn-disabled" title="Esperando registro en Tótem">PAGAR</button>`;
-                    }
-                } else {
-                    accionContenido = `<span class="check">✔</span>`;
+        async function obtenerNombreDoctor(email) {
+            if (nombresDoctores[email]) return nombresDoctores[email];
+            try {
+                const docRef = doc(db, "doctores", email.toLowerCase().trim());
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    nombresDoctores[email] = docSnap.data().nombre;
+                    return nombresDoctores[email];
                 }
+            } catch (e) { console.error("Error obteniendo doctor:", e); }
+            return email; // Si falla, muestra el email
+        }
 
-                row.innerHTML = `
-                    <div class="name">${p.nombre}</div>
-                    <div class="doc">Dr. ${p.doctor_id.split('@')[0].toUpperCase()}</div>
-                    <div class="hora">${p.hora_consulta}</div>
-                    <div class="actions">${accionContenido}</div>
-                `;
+        window.marcarPagado = async (id) => {
+            try {
+                await updateDoc(doc(db, "agendados", id), { estado: 'pagado' });
+            } catch (e) { console.error(e); }
+        };
 
-                if (esHistorial) {
-                    atendidosDiv.appendChild(row);
-                    contAtendidos++;
-                } else {
-                    esperaDiv.appendChild(row);
-                    contEspera++;
+        onAuthStateChanged(auth, (user) => {
+            if (!user) { location.href = "login.html"; return; }
+
+            const q = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
+            
+            onSnapshot(q, async (snapshot) => {
+                const container = document.getElementById('agenda-lista');
+                container.innerHTML = "";
+                
+                for (const docSnap of snapshot.docs) {
+                    const p = docSnap.data();
+                    const id = docSnap.id;
+                    const estado = p.estado || 'pendiente';
+                    
+                    // Solo mostrar pacientes que están en recepción o pagados
+                    if (estado !== 'llegado' && estado !== 'pagado') continue;
+
+                    const nombreDoctor = await obtenerNombreDoctor(p.doctor_id);
+                    const estadoTexto = (estado === 'llegado') ? 'En Recepción' : 'Pagado';
+
+                    const row = document.createElement('div');
+                    row.className = 'paciente-row';
+                    row.innerHTML = `
+                        <div class="col-paciente paciente-name">${p.nombre}</div>
+                        <div class="col-rut">${p.rut}</div>
+                        <div class="col-doctor doctor-name">${nombreDoctor}</div>
+                        <div class="col-hora">${p.hora_consulta || '--:--'}</div>
+                        <div class="col-estado"><span class="txt-estado st-${estado}">${estadoTexto}</span></div>
+                        <div class="col-acciones">
+                            ${estado === 'llegado' ? `<button class="btn-pay" onclick="marcarPagado('${id}')">PAGAR</button>` : ''}
+                        </div>
+                    `;
+                    container.appendChild(row);
                 }
             });
-
-            if(contEspera === 0) esperaDiv.innerHTML = '<div class="empty-msg">No hay pacientes pendientes.</div>';
-            if(contAtendidos === 0) atendidosDiv.innerHTML = '<div class="empty-msg">No hay pagos registrados hoy.</div>';
         });
 
-        // Función con confirmación para evitar errores
-        window.confirmarPago = async (id, nombre) => {
-            const respuesta = confirm(`¿Confirmar que el paciente ${nombre} ha realizado el pago?`);
-            if (respuesta) {
-                try {
-                    await updateDoc(doc(db, "agendados", id), { estado: "pagado" });
-                } catch (e) {
-                    alert("Error al procesar: " + e.message);
-                }
-            }
-        };
+        document.getElementById('btnLogout').onclick = () => signOut(auth).then(() => location.href = "login.html");
     </script>
+</head>
+<body>
+    <div class="agenda-container">
+        <h1>Panel de Recepción</h1>
+        <div class="agenda-header">
+            <div class="col-paciente">Paciente</div>
+            <div class="col-rut">RUT</div>
+            <div class="col-doctor">Doctor Asignado</div>
+            <div class="col-hora">Cita</div>
+            <div class="col-estado">Estado</div>
+            <div class="col-acciones">Acción</div>
+        </div>
+        <div id="agenda-lista"></div>
+        <div class="footer-tools">
+            <button class="btn-logout" id="btnLogout">Cerrar Sesión</button>
+        </div>
+    </div>
 </body>
 </html>
