@@ -12,7 +12,7 @@
             --bg-card: #1c1c1c;      
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
-            --color-soft-yellow: #fdfd96; /* Amarillo muy suave (pastel) */
+            --color-soft-yellow: #fdfd96; 
             --color-recepcion: #FFB347; 
             --color-pagado: #48BB78;    
             --color-llamando: #4299E1;  
@@ -48,15 +48,16 @@
 
         h1 { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
         
-        /* NOMBRE DEL DOCTOR: Más grande, amarillo suave, sin línea */
+        /* NOMBRE DEL DOCTOR: Mayúsculas, Negrita y Amarillo Suave */
         .user-name { 
             color: var(--color-soft-yellow); 
-            font-size: 1.2rem; 
-            font-weight: 500; 
+            font-size: 1.3rem; 
+            font-weight: 900; /* Negrita fuerte */
+            text-transform: uppercase; /* Forzar mayúsculas */
             margin-top: 15px;
             margin-bottom: 40px; 
             text-align: center; 
-            letter-spacing: 0.5px;
+            letter-spacing: 1.5px;
             display: block;
         }
 
@@ -91,23 +92,24 @@
         
         .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
         
-        .footer-tools { margin-top: 40px; text-align: center; }
+        .footer-tools { margin-top: 50px; text-align: center; }
 
-        /* BOTÓN CERRAR SESIÓN: Resaltado con amarillo suave */
+        /* BOTÓN CERRAR SESIÓN: Estilo similar a los botones de acción pero Amarillo */
         .btn-logout { 
-            background: transparent; 
-            border: 1px solid var(--color-soft-yellow); 
-            color: var(--color-soft-yellow); 
-            padding: 10px 20px; 
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            opacity: 0.8;
+            background: var(--color-soft-yellow); 
+            color: #1c1c1c; /* Texto oscuro para contraste con el amarillo claro */
+            padding: 12px 24px; 
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(253, 253, 150, 0.2);
         }
         .btn-logout:hover {
-            background: var(--color-soft-yellow);
-            color: #000;
-            opacity: 1;
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(253, 253, 150, 0.3);
         }
     </style>
 
