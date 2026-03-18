@@ -174,9 +174,43 @@
         const modal = document.getElementById('modalConfirmacion');
         const btn = document.getElementById('btnConfirmar');
 
+        function validarRUT(rut) {
+            rut = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+
+            if (!/^\d{7,8}[0-9K]$/.test(rut)) return false;
+
+            const cuerpo = rut.slice(0, -1);
+            const dvIngresado = rut.slice(-1);
+
+            let suma = 0;
+            let multiplo = 2;
+
+            for (let i = cuerpo.length - 1; i >= 0; i--) {
+                suma += parseInt(cuerpo[i], 10) * multiplo;
+                multiplo = multiplo < 7 ? multiplo + 1 : 2;
+            }
+
+            const resto = suma % 11;
+            const dvEsperadoNum = 11 - resto;
+
+            let dvEsperado = '';
+            if (dvEsperadoNum === 11) dvEsperado = '0';
+            else if (dvEsperadoNum === 10) dvEsperado = 'K';
+            else dvEsperado = String(dvEsperadoNum);
+
+            return dvIngresado === dvEsperado;
+        }
+
         btn.addEventListener('click', async () => {
             let rutLimpio = input.value.trim().replace(/[\.-]/g, '').toUpperCase();
             if (!rutLimpio) return;
+
+            if (!validarRUT(rutLimpio)) {
+                alert("RUT inválido. Verifique e intente nuevamente.");
+                input.focus();
+                input.select();
+                return;
+            }
 
             btn.disabled = true;
             btn.innerText = "Procesando...";
@@ -200,7 +234,6 @@
                         hora_llegada: ahora24
                     });
 
-                    // --- LÓGICA DE BÚSQUEDA DE DOCTOR ---
                     let nombreDoctorMostrar = "No asignado";
                     let ubicacionMostrar = "Por confirmar";
                     
@@ -212,7 +245,6 @@
                         if (docSnapDoc.exists()) {
                             const dData = docSnapDoc.data();
                             nombreDoctorMostrar = dData.nombre;
-                            // AQUÍ APUNTAMOS A LA BASE DE DOCTORES PARA PISO Y CONSULTA
                             ubicacionMostrar = `Piso ${dData.piso} - Consulta ${dData.consulta}`;
                         } else {
                             nombreDoctorMostrar = "Dr(a). " + idBuscado.split('@')[0].toUpperCase();
