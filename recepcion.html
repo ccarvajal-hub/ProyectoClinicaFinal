@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recepción - Lista Maestra</title>
+    <title>Recepción - Control de Flujo</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -11,8 +11,8 @@
             --bg-card: #1c1c1c;      
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
-            --color-recepcion: #FFB347; /* Ámbar Suave */
-            --color-pagado: #48BB78;    /* Esmeralda */
+            --color-recepcion: #FFB347; 
+            --color-pagado: #48BB78;    
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
         }
@@ -22,81 +22,84 @@
             background-color: var(--bg-page);
             color: var(--text-main);
             margin: 0;
+            padding: 40px 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            min-height: 100vh;
-            padding: 20px;
         }
 
         .container {
             background-color: var(--bg-card);
-            padding: 50px 40px;
+            padding: 40px;
             border-radius: var(--radius);
             width: 100%;
             max-width: 900px;
             box-shadow: 0 30px 60px rgba(0,0,0,0.4);
             border: 1px solid var(--border-color);
+            margin-bottom: 30px;
         }
 
-        h1 { text-align: center; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 10px; font-size: 2.2rem; }
-        .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 40px; font-size: 0.9rem; }
+        h2 { 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title-espera { color: var(--color-recepcion); }
+        .title-atendidos { color: var(--color-pagado); }
 
         .row {
             display: flex;
             align-items: center;
-            padding: 18px 25px;
+            padding: 15px 20px;
             background: rgba(255,255,255,0.02);
             border: 1px solid var(--border-color);
-            border-radius: 18px;
+            border-radius: 15px;
             margin-bottom: 10px;
-            gap: 15px;
         }
 
-        .name { flex: 2; font-weight: 700; font-size: 1.1rem; }
-        .doc-info { flex: 1.5; color: var(--text-muted); font-size: 0.85rem; }
-        
-        .status {
-            flex: 1.2;
-            font-size: 0.8rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            text-align: center;
-        }
-
-        /* COLORES DE ESTADO */
-        .st-pendiente { color: #555; }
-        .st-llegado { color: var(--color-recepcion); }
-        .st-pagado { color: var(--color-pagado); }
-
-        .action-area {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-        }
+        .name { flex: 2; font-weight: 700; }
+        .doc { flex: 1.5; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+        .hora { flex: 0.8; font-weight: 600; text-align: center; }
+        .actions { flex: 1; text-align: right; }
 
         .btn-pay {
             background-color: var(--color-pagado);
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
+            padding: 8px 16px;
+            border-radius: 8px;
             font-weight: 800;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             cursor: pointer;
-            transition: 0.2s;
+            text-transform: uppercase;
         }
 
-        .btn-pay:hover { transform: scale(1.05); filter: brightness(1.1); }
-        .check-mark { color: var(--color-pagado); font-size: 1.5rem; font-weight: 800; }
+        .btn-pay:hover { filter: brightness(1.1); transform: scale(1.05); }
+        .check { color: var(--color-pagado); font-weight: 800; font-size: 1.2rem; }
+
+        .empty-msg { color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>Recepción</h1>
-        <div class="subtitle">Lista Maestra de Pacientes del Día</div>
-        <div id="lista-recepcion">
-            </div>
+        <h2 class="title-espera">● PACIENTES EN ESPERA</h2>
+        <div id="lista-espera">
+            <div class="empty-msg">Cargando agenda...</div>
+        </div>
+    </div>
+
+    <div class="container" style="opacity: 0.8;">
+        <h2 class="title-atendidos">✔ PACIENTES ATENDIDOS (PAGADOS)</h2>
+        <div id="lista-atendidos">
+            <div class="empty-msg">No hay pagos registrados hoy.</div>
+        </div>
     </div>
 
     <script type="module">
@@ -115,43 +118,53 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Escuchamos TODOS los pacientes de la colección 'agendados'
+        // Escuchamos la base de datos
         const q = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
 
         onSnapshot(q, (snapshot) => {
-            const list = document.getElementById('lista-recepcion');
-            list.innerHTML = "";
+            const esperaDiv = document.getElementById('lista-espera');
+            const atendidosDiv = document.getElementById('lista-atendidos');
             
+            esperaDiv.innerHTML = "";
+            atendidosDiv.innerHTML = "";
+
+            let contEspera = 0;
+            let contAtendidos = 0;
+
             snapshot.forEach(docSnap => {
                 const p = docSnap.data();
                 const id = docSnap.id;
                 const estado = p.estado || 'pendiente';
-                
-                // Mapeo de texto de estado
-                let textoEstado = 'Pendiente';
-                if (estado === 'llegado') textoEstado = 'En Recepción';
-                if (estado === 'pagado') textoEstado = 'Pagado';
-                // Si el doctor ya lo llamó o atendió, no es necesario que Recepción lo gestione más
-                if (estado === 'llamando' || estado === 'atendiendo' || estado === 'atendido') return;
 
-                const div = document.createElement('div');
-                div.className = "row";
-                
-                div.innerHTML = `
-                    <div class="name">${p.nombre}</div>
-                    <div class="doc-info">${p.doctor_id.split('@')[0].toUpperCase()}</div>
-                    <div class="status st-${estado}">${textoEstado}</div>
-                    <div class="action-area">
-                        ${estado === 'llegado' 
-                            ? `<button class="btn-pay" onclick="confirmarPago('${id}')">PAGAR</button>` 
-                            : (estado === 'pagado' ? '<span class="check-mark">✔</span>' : '')}
+                const rowHtml = `
+                    <div class="row">
+                        <div class="name">${p.nombre}</div>
+                        <div class="doc">Dr. ${p.doctor_id.split('@')[0]}</div>
+                        <div class="hora">${p.hora_consulta}</div>
+                        <div class="actions">
+                            ${estado !== 'pagado' && estado !== 'llamando' && estado !== 'atendiendo' && estado !== 'atendido'
+                                ? `<button class="btn-pay" onclick="pagar('${id}')">PAGAR</button>` 
+                                : `<span class="check">✔</span>`}
+                        </div>
                     </div>
                 `;
-                list.appendChild(div);
+
+                // Lógica de separación:
+                // Si ya pagó o ya está con el doctor, va a la lista de abajo (Historial)
+                if (estado === 'pagado' || estado === 'llamando' || estado === 'atendiendo' || estado === 'atendido') {
+                    atendidosDiv.innerHTML += rowHtml;
+                    contAtendidos++;
+                } else {
+                    esperaDiv.innerHTML += rowHtml;
+                    contEspera++;
+                }
             });
+
+            if(contEspera === 0) esperaDiv.innerHTML = '<div class="empty-msg">No hay pacientes pendientes.</div>';
+            if(contAtendidos === 0) atendidosDiv.innerHTML = '<div class="empty-msg">No hay registros de pago.</div>';
         });
 
-        window.confirmarPago = async (id) => {
+        window.pagar = async (id) => {
             await updateDoc(doc(db, "agendados", id), { estado: "pagado" });
         };
     </script>
