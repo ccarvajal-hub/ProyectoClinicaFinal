@@ -15,8 +15,6 @@
             --color-pagado: #48BB78;    
             --color-llamando: #4299E1;  
             --color-atendiendo: #9F7AEA; 
-            --color-finalizado: #81E6D9; 
-            --red-cancel: #FC8181;   
             --border-color: rgba(255, 255, 255, 0.1); 
             --radius: 24px;
         }
@@ -34,80 +32,76 @@
 
         .container {
             background-color: var(--bg-card);
-            padding: 40px;
+            padding: 30px;
             border-radius: var(--radius);
             width: 100%;
-            max-width: 1000px;
+            max-width: 1100px;
             box-shadow: 0 30px 60px rgba(0,0,0,0.4);
             border: 1px solid var(--border-color);
             margin-bottom: 30px;
         }
 
-        h1 { font-size: 2rem; font-weight: 800; margin-bottom: 10px; text-align: center; }
-        
-        .user-name { 
-            color: #FFFFFF; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; 
-            margin-bottom: 30px; text-align: center; display: block; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); 
-        }
+        h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 5px; text-align: center; }
+        .user-name { color: #FFFFFF; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; margin-bottom: 25px; text-align: center; display: block; opacity: 0.9; }
 
-        h2 { 
-            font-size: 1.2rem; font-weight: 800; text-transform: uppercase; 
-            letter-spacing: 1px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
-        }
+        h2 { font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         .title-espera { color: var(--color-llamando); }
-        .title-historial { color: var(--color-finalizado); }
+        .title-historial { color: var(--color-pagado); }
 
-        .row {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
-            margin-bottom: 10px;
-        }
+        /* Estructura de Columnas Restaurada */
+        .header, .row { display: flex; align-items: center; padding: 12px 20px; }
+        .header { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border-color); margin-bottom: 10px; }
+        
+        .col-name { flex: 2; }
+        .col-rut  { flex: 1.2; text-align: center; }
+        .col-info { flex: 1.5; text-align: center; } /* Piso / Consulta */
+        .col-hora { flex: 0.8; text-align: center; }
+        .col-est  { flex: 1; text-align: center; }
+        .col-acts { flex: 1.5; text-align: right; }
 
-        .name { flex: 2; font-weight: 700; }
-        .hora { flex: 0.8; font-weight: 600; text-align: center; color: var(--text-muted); }
-        .estado { flex: 1.2; text-align: center; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; }
-        .actions { flex: 2; text-align: right; display: flex; justify-content: flex-end; gap: 8px; }
+        .row { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 8px; font-size: 0.9rem; }
+        .name-txt { font-weight: 700; }
+        .rut-txt { color: var(--text-muted); font-family: monospace; }
+        .info-txt { color: #fdfd96; font-weight: 600; font-size: 0.8rem; }
 
-        /* Colores de estados */
+        .st-txt { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; }
         .st-llegado { color: var(--color-recepcion); }
         .st-pagado { color: var(--color-pagado); }
         .st-llamando { color: var(--color-llamando); }
         .st-atendiendo { color: var(--color-atendiendo); }
-        .st-atendido { color: var(--color-finalizado); }
+        .st-atendido { color: var(--text-muted); }
 
-        /* Botones */
-        button { cursor: pointer; border: none; font-family: 'Inter', sans-serif; padding: 8px 14px; border-radius: 8px; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: white; transition: 0.2s; }
+        button { cursor: pointer; border: none; font-family: 'Inter', sans-serif; padding: 7px 12px; border-radius: 6px; font-weight: 800; font-size: 0.65rem; text-transform: uppercase; color: white; transition: 0.2s; }
         .btn-call { background: var(--color-llamando); }
-        .btn-wait { background: var(--color-atendiendo); }
-        .btn-done { background: var(--color-pagado); }
-        .btn-delete { background: transparent; color: var(--red-cancel); font-size: 1.1rem; padding: 0 10px; }
-        button:hover { filter: brightness(1.1); transform: scale(1.02); }
+        .btn-atn { background: var(--color-atendiendo); }
+        .btn-fin { background: var(--color-pagado); }
+        .btn-del { background: transparent; color: #FC8181; font-size: 1rem; margin-left: 10px; }
 
-        .btn-logout { background: #d4d4a1; margin-top: 20px; padding: 12px 24px; }
-        .empty-msg { color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 20px; }
+        .btn-logout { background: #d4d4a1; margin-top: 10px; padding: 10px 20px; font-size: 0.75rem; }
+        .empty { color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 15px; }
     </style>
 </head>
 <body>
 
     <h1>AGENDA MÉDICA</h1>
-    <div class="user-name" id="display-name">Cargando doctor...</div>
+    <div class="user-name" id="display-name">Cargando...</div>
 
     <div class="container">
         <h2 class="title-espera">● PACIENTES POR ATENDER</h2>
-        <div id="lista-espera">
-            <div class="empty-msg">Cargando pacientes...</div>
+        <div class="header">
+            <div class="col-name">Paciente</div>
+            <div class="col-rut">RUT</div>
+            <div class="col-info">Ubicación</div>
+            <div class="col-hora">Cita</div>
+            <div class="col-est">Estado</div>
+            <div class="col-acts">Acción</div>
         </div>
+        <div id="lista-espera"></div>
     </div>
 
     <div class="container" style="opacity: 0.8;">
-        <h2 class="title-historial">✔ HISTORIAL DE ATENCIÓN (HOY)</h2>
-        <div id="lista-historial">
-            <div class="empty-msg">No hay pacientes finalizados.</div>
-        </div>
+        <h2 class="title-historial">✔ HISTORIAL DE HOY</h2>
+        <div id="lista-historial"></div>
     </div>
 
     <button class="btn-logout" id="btnLogout">Cerrar Sesión</button>
@@ -130,11 +124,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let nombreDoc = "";
-        let boxDoc = "";
+        let nombreDoc = "", boxDoc = "";
 
         window.cambiarEstado = async (id, nuevo, nombre = "") => {
-            if (nuevo === 'llamando' && !confirm(`¿Llamar a ${nombre}?`)) return;
             try {
                 await updateDoc(doc(db, "agendados", id), { estado: nuevo });
                 if (nuevo === 'llamando') {
@@ -153,15 +145,13 @@
         onAuthStateChanged(auth, async (user) => {
             if (!user) { location.href = "login.html"; return; }
 
-            // Cargar Info Doctor
             const dSnap = await getDoc(doc(db, "doctores", user.email.toLowerCase().trim()));
             if (dSnap.exists()) {
                 nombreDoc = dSnap.data().nombre;
                 boxDoc = `Piso ${dSnap.data().piso} - Consulta ${dSnap.data().consulta}`;
-                document.getElementById('display-name').innerText = nombreDoc;
+                document.getElementById('display-name').innerText = `DR. ${nombreDoc}`;
             }
 
-            // Escuchar Pacientes
             const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
             onSnapshot(q, (snapshot) => {
                 const esperaDiv = document.getElementById('lista-espera');
@@ -180,18 +170,18 @@
                     
                     let botones = '';
                     if (estado === 'pagado') botones = `<button class="btn-call" onclick="cambiarEstado('${id}','llamando','${p.nombre}')">Llamar</button>`;
-                    else if (estado === 'llamando') botones = `<button class="btn-wait" onclick="cambiarEstado('${id}','atendiendo')">Atendiendo</button>`;
-                    else if (estado === 'atendiendo') botones = `<button class="btn-done" onclick="cambiarEstado('${id}','atendido')">Finalizar</button>`;
-
-                    const estadoTexto = (estado === 'llegado') ? 'En Recepción' : estado;
+                    else if (estado === 'llamando') botones = `<button class="btn-atn" onclick="cambiarEstado('${id}','atendiendo')">Atender</button>`;
+                    else if (estado === 'atendiendo') botones = `<button class="btn-fin" onclick="cambiarEstado('${id}','atendido')">Finalizar</button>`;
 
                     row.innerHTML = `
-                        <div class="name">${p.nombre}</div>
-                        <div class="hora">${p.hora_consulta}</div>
-                        <div class="estado st-${estado}">${estadoTexto}</div>
-                        <div class="actions">
+                        <div class="col-name name-txt">${p.nombre}</div>
+                        <div class="col-rut rut-txt">${p.rut}</div>
+                        <div class="col-info info-txt">${boxDoc}</div>
+                        <div class="col-hora">${p.hora_consulta}</div>
+                        <div class="col-est st-txt st-${estado}">${estado === 'llegado' ? 'En Recepción' : estado}</div>
+                        <div class="col-acts">
                             ${botones}
-                            <button class="btn-delete" onclick="eliminar('${id}','${p.nombre}')">✕</button>
+                            <button class="btn-del" onclick="eliminar('${id}','${p.nombre}')">✕</button>
                         </div>
                     `;
 
@@ -199,8 +189,8 @@
                     else { esperaDiv.appendChild(row); cE++; }
                 });
 
-                if(cE === 0) esperaDiv.innerHTML = '<div class="empty-msg">No hay pacientes en espera.</div>';
-                if(cH === 0) historialDiv.innerHTML = '<div class="empty-msg">No hay atenciones finalizadas.</div>';
+                if(cE === 0) esperaDiv.innerHTML = '<div class="empty">No hay pacientes por atender.</div>';
+                if(cH === 0) historialDiv.innerHTML = '<div class="empty">No hay historial hoy.</div>';
             });
         });
     </script>
