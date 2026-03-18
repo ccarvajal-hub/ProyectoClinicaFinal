@@ -23,12 +23,43 @@
             --radius-card: 16px;
         }
 
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .agenda-container { background-color: var(--bg-card); padding: 40px; border-radius: var(--radius-box); width: 95%; max-width: 1200px; box-shadow: 0 40px 100px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-page); 
+            color: var(--text-main); 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+
+        .agenda-container { 
+            background-color: var(--bg-card); 
+            padding: 40px; 
+            border-radius: var(--radius-box); 
+            width: 95%; 
+            max-width: 1200px; 
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
+            border: 1px solid var(--border-color); 
+        }
+
         h1 { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
         
-        /* ESTILO PARA EL NOMBRE DEL DOCTOR */
-        .user-name { color: var(--color-llamando); font-size: 1.3rem; font-weight: 700; margin-bottom: 40px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        /* ESTILO REFINADO PARA EL NOMBRE DEL DOCTOR */
+        .user-name { 
+            color: #bbbbbb; 
+            font-size: 0.95rem; 
+            font-weight: 400; 
+            margin-top: 10px;
+            margin-bottom: 40px; 
+            text-align: center; 
+            letter-spacing: 0.5px;
+            display: block;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 15px;
+        }
 
         .agenda-header, .paciente-row { display: flex; align-items: center; padding: 15px 20px; }
         .col-paciente { flex: 2; text-align: left; }
@@ -82,7 +113,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Variables globales para los datos del doctor
         let nombreDoctorReal = "";
         let ubicacionDoctor = "";
 
@@ -102,11 +132,9 @@
                 
                 if (nuevoEstado === 'llamando') {
                     const ahora24 = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-                    // Enviamos el llamado a la TV usando los datos del perfil del Doctor
                     await updateDoc(doc(db, "turnos", "actual"), { 
                         paciente: nombrePaciente, 
-                        box: ubicacionDoctor, // Se llena automáticamente desde el perfil
+                        box: ubicacionDoctor, 
                         doctor: nombreDoctorReal, 
                         hora_llamado: ahora24
                     });
@@ -123,7 +151,7 @@
         onAuthStateChanged(auth, async (user) => {
             if (!user) { location.href = "login.html"; return; }
             
-            // --- BUSCAR DATOS REALES DEL DOCTOR ---
+            // BUSCAR DATOS DEL DOCTOR
             try {
                 const docRef = doc(db, "doctores", user.email.toLowerCase().trim());
                 const docSnap = await getDoc(docRef);
@@ -132,13 +160,12 @@
                     const d = docSnap.data();
                     nombreDoctorReal = d.nombre;
                     ubicacionDoctor = `Piso ${d.piso} - Consulta ${d.consulta}`;
-                    document.getElementById('display-name').innerText = nombreDoctorReal;
+                    document.getElementById('display-name').innerText = "Médico: " + nombreDoctorReal;
                 } else {
-                    // Respaldo si no está en la base de datos
                     nombreDoctorReal = user.email;
                     document.getElementById('display-name').innerText = user.email;
                 }
-            } catch (e) { console.error("Error cargando perfil:", e); }
+            } catch (e) { console.error(e); }
 
             const q = query(
                 collection(db, "agendados"), 
@@ -186,7 +213,7 @@
 <body>
     <div class="agenda-container">
         <h1>Agenda Médica</h1>
-        <div class="user-name" id="display-name">Cargando...</div>
+        <div class="user-name" id="display-name">Cargando médico...</div>
         <div class="agenda-header">
             <div class="col-paciente">Paciente</div>
             <div class="col-rut">RUT</div>
