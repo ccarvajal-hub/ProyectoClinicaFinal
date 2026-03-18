@@ -307,10 +307,10 @@
         }
 
         function seleccionarCitaCorrecta(docs) {
-            const estadosValidos = ['agendado', 'confirmado', 'llegado'];
+            const estadosValidos = ['pendiente', 'agendado', 'confirmado', 'llegado'];
 
             const citasValidas = docs.filter(item => {
-                const estado = (item.data().estado || '').toLowerCase();
+                const estado = (item.data().estado || '').toLowerCase().trim();
                 return estadosValidos.includes(estado);
             });
 
@@ -332,6 +332,12 @@
             }
         }
 
+        function resetearInputRUT() {
+            cancelarResetInput();
+            input.value = '';
+            input.focus();
+        }
+
         function programarResetInput() {
             cancelarResetInput();
 
@@ -342,6 +348,7 @@
             resetTimer = setTimeout(() => {
                 if (!btn.disabled && modal.style.display !== 'flex') {
                     input.value = '';
+                    input.focus();
                 }
             }, 10000);
         }
@@ -361,13 +368,14 @@
             cancelarResetInput();
 
             const rutLimpio = limpiarRUT(input.value);
-            if (!rutLimpio) return;
+            if (!rutLimpio) {
+                resetearInputRUT();
+                return;
+            }
 
             if (!validarRUT(rutLimpio)) {
                 alert("RUT inválido. Verifique e intente nuevamente.");
-                input.focus();
-                input.select();
-                programarResetInput();
+                resetearInputRUT();
                 return;
             }
 
@@ -390,7 +398,7 @@
 
                     if (!citaSeleccionada) {
                         alert("No tiene una cita válida para hoy.");
-                        programarResetInput();
+                        resetearInputRUT();
                         return;
                     }
 
@@ -433,12 +441,12 @@
                     input.value = '';
                 } else {
                     alert("No se encontró una cita para hoy con ese RUT.");
-                    programarResetInput();
+                    resetearInputRUT();
                 }
             } catch (error) {
                 console.error(error);
                 alert("Error al procesar.");
-                programarResetInput();
+                resetearInputRUT();
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Confirmar Llegada";
@@ -447,8 +455,12 @@
 
         window.cerrarModal = () => {
             modal.style.display = 'none';
-            cancelarResetInput();
+            resetearInputRUT();
         };
+
+        window.addEventListener('load', () => {
+            input.focus();
+        });
     </script>
 </body>
 </html>
