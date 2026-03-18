@@ -71,7 +71,6 @@
             margin-top: 25px;
         }
 
-        /* MODAL DE CONFIRMACIÓN */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -183,7 +182,6 @@
             btn.innerText = "Procesando...";
 
             try {
-                // 1. BUSCAR AL PACIENTE
                 const q = query(collection(db, "agendados"), where("rut", "==", rutLimpio));
                 const querySnapshot = await getDocs(q);
 
@@ -191,7 +189,6 @@
                     const docSnap = querySnapshot.docs[0];
                     const p = docSnap.data();
 
-                    // 2. ACTUALIZAR LLEGADA (Hora 24h)
                     const ahora24 = new Date().toLocaleTimeString('es-CL', { 
                         hour: '2-digit', 
                         minute: '2-digit', 
@@ -203,43 +200,37 @@
                         hora_llegada: ahora24
                     });
 
-                    // 3. BUSCAR NOMBRE REAL DEL DOCTOR EN LA NUEVA COLECCIÓN
+                    // --- LÓGICA DE BÚSQUEDA DE DOCTOR ---
                     let nombreDoctorMostrar = "No asignado";
+                    let ubicacionMostrar = "Por confirmar";
                     
                     if (p.doctor_id) {
                         const idBuscado = p.doctor_id.trim().toLowerCase();
-                        console.log("Intentando buscar doctor con ID:", idBuscado);
-
                         const docRefDoc = doc(db, "doctores", idBuscado);
                         const docSnapDoc = await getDoc(docRefDoc);
 
                         if (docSnapDoc.exists()) {
-                            nombreDoctorMostrar = docSnapDoc.data().nombre;
-                            console.log("¡Doctor encontrado!", nombreDoctorMostrar);
+                            const dData = docSnapDoc.data();
+                            nombreDoctorMostrar = dData.nombre;
+                            // AQUÍ APUNTAMOS A LA BASE DE DOCTORES PARA PISO Y CONSULTA
+                            ubicacionMostrar = `Piso ${dData.piso} - Consulta ${dData.consulta}`;
                         } else {
-                            console.warn("No existe documento en 'doctores' para:", idBuscado);
-                            // Respaldo amigable si no existe en la BD
                             nombreDoctorMostrar = "Dr(a). " + idBuscado.split('@')[0].toUpperCase();
                         }
                     }
 
-                    // 4. ASIGNAR VALORES AL MODAL
                     document.getElementById('resNombre').innerText = p.nombre;
                     document.getElementById('resDoctor').innerText = nombreDoctorMostrar;
-                    
-                    // Priorizar ubicación de la colección doctores si existe, sino usar la de agendados
-                    const ubicacion = (p.piso && p.consulta) ? `${p.piso} - Consulta ${p.consulta}` : "Por confirmar";
-                    document.getElementById('resUbicacion').innerText = ubicacion;
+                    document.getElementById('resUbicacion').innerText = ubicacionMostrar;
 
-                    // 5. MOSTRAR MODAL
                     modal.style.display = 'flex';
                     input.value = "";
                 } else {
-                    alert("RUT no encontrado en la agenda de hoy.");
+                    alert("RUT no encontrado.");
                 }
             } catch (error) {
-                console.error("Error crítico en Tótem:", error);
-                alert("Hubo un error al confirmar. Intente nuevamente.");
+                console.error(error);
+                alert("Error al procesar.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Confirmar Llegada";
