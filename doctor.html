@@ -12,6 +12,7 @@
             --bg-card: #1c1c1c;      
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
+            --color-soft-yellow: #fdfd96; /* Amarillo muy suave (pastel) */
             --color-recepcion: #FFB347; 
             --color-pagado: #48BB78;    
             --color-llamando: #4299E1;  
@@ -47,18 +48,16 @@
 
         h1 { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
         
-        /* ESTILO REFINADO PARA EL NOMBRE DEL DOCTOR */
+        /* NOMBRE DEL DOCTOR: Más grande, amarillo suave, sin línea */
         .user-name { 
-            color: #bbbbbb; 
-            font-size: 0.95rem; 
-            font-weight: 400; 
-            margin-top: 10px;
+            color: var(--color-soft-yellow); 
+            font-size: 1.2rem; 
+            font-weight: 500; 
+            margin-top: 15px;
             margin-bottom: 40px; 
             text-align: center; 
             letter-spacing: 0.5px;
             display: block;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            padding-top: 15px;
         }
 
         .agenda-header, .paciente-row { display: flex; align-items: center; padding: 15px 20px; }
@@ -91,8 +90,25 @@
         .btn-delete { background: transparent; color: var(--red-cancel); font-size: 1.2rem; font-weight: 800; width: 34px; }
         
         .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        
         .footer-tools { margin-top: 40px; text-align: center; }
-        .btn-logout { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 16px; border-radius: 10px; }
+
+        /* BOTÓN CERRAR SESIÓN: Resaltado con amarillo suave */
+        .btn-logout { 
+            background: transparent; 
+            border: 1px solid var(--color-soft-yellow); 
+            color: var(--color-soft-yellow); 
+            padding: 10px 20px; 
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .btn-logout:hover {
+            background: var(--color-soft-yellow);
+            color: #000;
+            opacity: 1;
+        }
     </style>
 
     <script type="module">
@@ -151,7 +167,6 @@
         onAuthStateChanged(auth, async (user) => {
             if (!user) { location.href = "login.html"; return; }
             
-            // BUSCAR DATOS DEL DOCTOR
             try {
                 const docRef = doc(db, "doctores", user.email.toLowerCase().trim());
                 const docSnap = await getDoc(docRef);
@@ -160,7 +175,7 @@
                     const d = docSnap.data();
                     nombreDoctorReal = d.nombre;
                     ubicacionDoctor = `Piso ${d.piso} - Consulta ${d.consulta}`;
-                    document.getElementById('display-name').innerText = "Médico: " + nombreDoctorReal;
+                    document.getElementById('display-name').innerText = nombreDoctorReal;
                 } else {
                     nombreDoctorReal = user.email;
                     document.getElementById('display-name').innerText = user.email;
@@ -213,7 +228,7 @@
 <body>
     <div class="agenda-container">
         <h1>Agenda Médica</h1>
-        <div class="user-name" id="display-name">Cargando médico...</div>
+        <div class="user-name" id="display-name">Cargando...</div>
         <div class="agenda-header">
             <div class="col-paciente">Paciente</div>
             <div class="col-rut">RUT</div>
@@ -223,7 +238,9 @@
             <div class="col-acciones">Acciones</div>
         </div>
         <div id="agenda-lista"></div>
-        <div class="footer-tools"><button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button></div>
+        <div class="footer-tools">
+            <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
     </div>
 </body>
 </html>
