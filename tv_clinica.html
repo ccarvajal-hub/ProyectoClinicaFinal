@@ -15,7 +15,6 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; overflow: hidden; }
         .layout { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 30px; height: 95vh; }
 
-        /* Panel Izquierdo: Llamado Actual */
         .main-call {
             background: var(--card); border-radius: 30px; display: flex; flex-direction: column;
             justify-content: center; align-items: center; text-align: center;
@@ -24,17 +23,8 @@
         .main-call h1 { font-size: 5rem; margin: 0; color: var(--accent); text-transform: uppercase; }
         .main-call .paciente { font-size: 7.5rem; font-weight: 900; margin: 20px 0; line-height: 1; text-transform: uppercase; }
         .main-call .doctor-info { font-size: 2.8rem; font-weight: 700; color: #FFB347; text-transform: uppercase; }
-        
-        /* Piso y Consulta en MAYÚSCULAS y NEGRITA */
-        .main-call .box-info { 
-            font-size: 2.2rem; 
-            color: var(--muted); 
-            margin-top: 15px; 
-            text-transform: uppercase; 
-            font-weight: 800; 
-        }
+        .main-call .box-info { font-size: 2.2rem; color: var(--muted); margin-top: 15px; text-transform: uppercase; font-weight: 800; }
 
-        /* Panel Derecho: Historial */
         .history { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 30px; display: flex; flex-direction: column; }
         .history h2 { font-size: 2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
         
@@ -47,13 +37,10 @@
             animation: slideIn 0.5s ease-out;
         }
         
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .hist-name { font-weight: 800; font-size: 1.5rem; text-transform: uppercase; }
-        .hist-doc { font-size: 0.85rem; color: #FFB347; font-weight: 600; text-transform: uppercase; margin-top: 4px; opacity: 0.9; }
+        .hist-doc { font-size: 0.85rem; color: #FFB347; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
         .hist-meta { font-size: 1.3rem; color: #48BB78; font-weight: 900; text-align: right; align-self: center; text-transform: uppercase; }
 
         .flash { animation: pulse 1.2s infinite; }
@@ -76,7 +63,9 @@
         </div>
     </div>
 
-    <audio id="snd"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+    <audio id="snd" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -94,13 +83,12 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const cacheDoctores = {};
-        let ultimoId = "";
+        let ultimoPacienteLlamado = "";
 
         async function infoDoc(email) {
             if (!email) return { nombre: "DOCTOR", consulta: "---" };
             const cleanEmail = email.toLowerCase().trim();
             if (cacheDoctores[cleanEmail]) return cacheDoctores[cleanEmail];
-            
             try {
                 const d = await getDoc(doc(db, "doctores", cleanEmail));
                 if (d.exists()) {
@@ -111,56 +99,60 @@
             return { nombre: cleanEmail.split('@')[0], consulta: "---" };
         }
 
+        // 1. LLAMADO ACTUAL Y SONIDO
         onSnapshot(doc(db, "turnos", "actual"), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                if (data.paciente !== ultimoId) {
-                    document.getElementById('snd').play();
+                
+                // Solo suena si el nombre del paciente es diferente al último
+                if (data.paciente && data.paciente !== ultimoPacienteLlamado) {
+                    const audio = document.getElementById('snd');
+                    audio.currentTime = 0; 
+                    audio.play().catch(e => console.log("Interacción requerida para audio"));
+                    
                     document.getElementById('container-llamado').classList.add('flash');
                     setTimeout(() => document.getElementById('container-llamado').classList.remove('flash'), 5000);
-                    ultimoId = data.paciente;
+                    
+                    ultimoPacienteLlamado = data.paciente;
                 }
-                document.getElementById('tv-paciente').innerText = data.paciente;
-                document.getElementById('tv-doctor').innerText = "DR. " + data.doctor;
-                document.getElementById('tv-box').innerText = data.box;
+
+                document.getElementById('tv-paciente').innerText = data.paciente || "---";
+                document.getElementById('tv-doctor').innerText = data.doctor ? "DR. " + data.doctor : "---";
+                document.getElementById('tv-box').innerText = data.box || "---";
             }
         });
 
-        // Query: Traemos los últimos 6 atendidos
-        const q = query(
+        // 2. HISTORIAL ORDENADO POR TIEMPO (Descendente)
+        const qHist = query(
             collection(db, "agendados"), 
             where("estado", "in", ["atendiendo", "atendido"]),
+            orderBy("ultimo_llamado", "desc"), // Campo de tiempo real
             limit(6)
         );
 
-        onSnapshot(q, async (snapshot) => {
+        onSnapshot(qHist, async (snapshot) => {
             const lista = document.getElementById('historial-lista');
+            lista.innerHTML = "";
             
-            // Obtenemos los datos y los metemos en un array para ordenar nosotros mismos
-            const items = [];
             for (const docSnap of snapshot.docs) {
                 const p = docSnap.data();
                 const d = await infoDoc(p.doctor_id);
-                items.push({ nombre: p.nombre, doctor: d.nombre, consulta: d.consulta });
-            }
-
-            // IMPORTANTE: Limpiamos y mostramos. 
-            // Como onSnapshot no garantiza orden cronológico sin un campo de tiempo,
-            // invertimos el array para que el "último detectado" aparezca arriba.
-            lista.innerHTML = "";
-            items.reverse().forEach(item => {
+                
                 const row = document.createElement('div');
                 row.className = "hist-row";
                 row.innerHTML = `
                     <div>
-                        <div class="hist-name">${item.nombre}</div>
-                        <div class="hist-doc">DR. ${item.doctor}</div>
+                        <div class="hist-name">${p.nombre}</div>
+                        <div class="hist-doc">DR. ${d.nombre}</div>
                     </div>
-                    <div class="hist-meta">CONSULTA ${item.consulta}</div>
+                    <div class="hist-meta">CONSULTA ${d.consulta}</div>
                 `;
                 lista.appendChild(row);
-            });
+            }
         });
+
+        // Desbloquear audio en el primer click (necesario en Chrome/TVs)
+        window.onclick = () => { document.getElementById('snd').play().then(() => document.getElementById('snd').pause()); };
     </script>
 </body>
 </html>
