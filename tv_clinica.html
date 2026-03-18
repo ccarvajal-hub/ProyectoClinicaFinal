@@ -15,6 +15,7 @@
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; overflow: hidden; }
         .layout { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 30px; height: 95vh; }
 
+        /* Panel Izquierdo: Llamado Actual */
         .main-call {
             background: var(--card); border-radius: 30px; display: flex; flex-direction: column;
             justify-content: center; align-items: center; text-align: center;
@@ -23,8 +24,16 @@
         .main-call h1 { font-size: 5rem; margin: 0; color: var(--accent); text-transform: uppercase; }
         .main-call .paciente { font-size: 7.5rem; font-weight: 900; margin: 20px 0; line-height: 1; text-transform: uppercase; }
         .main-call .doctor-info { font-size: 2.8rem; font-weight: 700; color: #FFB347; text-transform: uppercase; }
-        .main-call .box-info { font-size: 2.2rem; color: var(--muted); margin-top: 15px; text-transform: uppercase; font-weight: 800; }
+        
+        .main-call .box-info { 
+            font-size: 2.2rem; 
+            color: var(--muted); 
+            margin-top: 15px; 
+            text-transform: uppercase; 
+            font-weight: 800; 
+        }
 
+        /* Panel Derecho: Historial */
         .history { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 30px; display: flex; flex-direction: column; }
         .history h2 { font-size: 2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
         
@@ -37,10 +46,13 @@
             animation: slideIn 0.5s ease-out;
         }
         
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .hist-name { font-weight: 800; font-size: 1.5rem; text-transform: uppercase; }
-        .hist-doc { font-size: 0.85rem; color: #FFB347; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
+        .hist-doc { font-size: 0.85rem; color: #FFB347; font-weight: 600; text-transform: uppercase; margin-top: 4px; opacity: 0.9; }
         .hist-meta { font-size: 1.3rem; color: #48BB78; font-weight: 900; text-align: right; align-self: center; text-transform: uppercase; }
 
         .flash { animation: pulse 1.2s infinite; }
@@ -63,9 +75,7 @@
         </div>
     </div>
 
-    <audio id="snd" preload="auto">
-        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="snd" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -99,34 +109,30 @@
             return { nombre: cleanEmail.split('@')[0], consulta: "---" };
         }
 
-        // 1. LLAMADO ACTUAL Y SONIDO
+        // LLAMADO ACTUAL
         onSnapshot(doc(db, "turnos", "actual"), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                
-                // Solo suena si el nombre del paciente es diferente al último
                 if (data.paciente && data.paciente !== ultimoPacienteLlamado) {
                     const audio = document.getElementById('snd');
-                    audio.currentTime = 0; 
-                    audio.play().catch(e => console.log("Interacción requerida para audio"));
+                    audio.currentTime = 0;
+                    audio.play().catch(() => console.log("Click en pantalla para activar sonido"));
                     
                     document.getElementById('container-llamado').classList.add('flash');
                     setTimeout(() => document.getElementById('container-llamado').classList.remove('flash'), 5000);
-                    
                     ultimoPacienteLlamado = data.paciente;
                 }
-
                 document.getElementById('tv-paciente').innerText = data.paciente || "---";
                 document.getElementById('tv-doctor').innerText = data.doctor ? "DR. " + data.doctor : "---";
                 document.getElementById('tv-box').innerText = data.box || "---";
             }
         });
 
-        // 2. HISTORIAL ORDENADO POR TIEMPO (Descendente)
+        // HISTORIAL: Ordenado estrictamente por el momento del click "Llamar"
         const qHist = query(
             collection(db, "agendados"), 
-            where("estado", "in", ["atendiendo", "atendido"]),
-            orderBy("ultimo_llamado", "desc"), // Campo de tiempo real
+            where("estado", "in", ["llamando", "atendiendo", "atendido"]),
+            orderBy("ultimo_llamado", "desc"),
             limit(6)
         );
 
@@ -136,8 +142,9 @@
             
             for (const docSnap of snapshot.docs) {
                 const p = docSnap.data();
+                if (!p.ultimo_llamado) continue;
+
                 const d = await infoDoc(p.doctor_id);
-                
                 const row = document.createElement('div');
                 row.className = "hist-row";
                 row.innerHTML = `
@@ -151,8 +158,11 @@
             }
         });
 
-        // Desbloquear audio en el primer click (necesario en Chrome/TVs)
-        window.onclick = () => { document.getElementById('snd').play().then(() => document.getElementById('snd').pause()); };
+        // Activar audio con el primer toque
+        window.onclick = () => { 
+            const a = document.getElementById('snd');
+            a.play().then(() => a.pause());
+        };
     </script>
 </body>
 </html>
