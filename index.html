@@ -185,4 +185,54 @@
             appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
         };
 
-        const
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const input = document.getElementById('rutInput');
+        const modal = document.getElementById('modalConfirmacion');
+        const btn = document.getElementById('btnConfirmar');
+
+        btn.addEventListener('click', async () => {
+            let rutLimpio = input.value.trim().replace(/[\.-]/g, '').toUpperCase();
+            if (!rutLimpio) return;
+
+            btn.disabled = true;
+            btn.innerText = "Procesando...";
+
+            try {
+                const q = query(collection(db, "agendados"), where("rut", "==", rutLimpio));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const docSnap = querySnapshot.docs[0];
+                    const p = docSnap.data();
+                    const ahora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    await updateDoc(doc(db, "agendados", docSnap.id), {
+                        estado: "llegado",
+                        hora_llegada: ahora
+                    });
+
+                    document.getElementById('resNombre').innerText = p.nombre;
+                    document.getElementById('resDoctor').innerText = "Dr(a). " + p.doctor_id.split('@')[0].toUpperCase();
+                    document.getElementById('resUbicacion').innerText = `${p.piso} - Consulta ${p.consulta}`;
+
+                    modal.style.display = 'flex';
+                    input.value = "";
+                } else {
+                    alert("RUT no encontrado.");
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Confirmar Llegada";
+            }
+        });
+
+        window.cerrarModal = () => {
+            modal.style.display = 'none';
+        };
+    </script>
+</body>
+</html>
