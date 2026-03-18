@@ -22,9 +22,17 @@
             border: 4px solid var(--accent); box-shadow: 0 0 50px rgba(66, 153, 225, 0.2);
         }
         .main-call h1 { font-size: 5rem; margin: 0; color: var(--accent); text-transform: uppercase; }
-        .main-call .paciente { font-size: 7rem; font-weight: 900; margin: 20px 0; line-height: 1; text-transform: uppercase; }
-        .main-call .doctor-info { font-size: 2.5rem; font-weight: 700; color: #FFB347; text-transform: uppercase; }
-        .main-call .box-info { font-size: 2rem; color: var(--muted); margin-top: 10px; }
+        .main-call .paciente { font-size: 7.5rem; font-weight: 900; margin: 20px 0; line-height: 1; text-transform: uppercase; }
+        .main-call .doctor-info { font-size: 2.8rem; font-weight: 700; color: #FFB347; text-transform: uppercase; }
+        
+        /* Piso y Consulta en MAYÚSCULAS y NEGRITA */
+        .main-call .box-info { 
+            font-size: 2.2rem; 
+            color: var(--muted); 
+            margin-top: 15px; 
+            text-transform: uppercase; 
+            font-weight: 800; 
+        }
 
         /* Panel Derecho: Historial */
         .history { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 30px; display: flex; flex-direction: column; }
@@ -34,22 +42,22 @@
 
         .hist-row {
             display: grid; grid-template-columns: 1fr auto;
-            background: rgba(0,0,0,0.2); padding: 15px 20px;
-            border-radius: 15px; margin-bottom: 10px; border-left: 5px solid var(--accent);
+            background: rgba(0,0,0,0.2); padding: 18px 25px;
+            border-radius: 15px; margin-bottom: 12px; border-left: 6px solid var(--accent);
             animation: slideIn 0.5s ease-out;
         }
         
         @keyframes slideIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .hist-name { font-weight: 700; font-size: 1.4rem; text-transform: uppercase; }
-        .hist-doc { font-size: 0.85rem; color: #FFB347; font-weight: 600; text-transform: uppercase; margin-top: 2px; opacity: 0.9; }
-        .hist-meta { font-size: 1.2rem; color: #48BB78; font-weight: 800; text-align: right; align-self: center; }
+        .hist-name { font-weight: 800; font-size: 1.5rem; text-transform: uppercase; }
+        .hist-doc { font-size: 0.85rem; color: #FFB347; font-weight: 600; text-transform: uppercase; margin-top: 4px; opacity: 0.9; }
+        .hist-meta { font-size: 1.3rem; color: #48BB78; font-weight: 900; text-align: right; align-self: center; text-transform: uppercase; }
 
-        .flash { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        .flash { animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -72,7 +80,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, collection, query, where, limit, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, limit, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -113,42 +121,45 @@
                     ultimoId = data.paciente;
                 }
                 document.getElementById('tv-paciente').innerText = data.paciente;
-                // Agregamos "DR. " antes del nombre en la pantalla grande
                 document.getElementById('tv-doctor').innerText = "DR. " + data.doctor;
                 document.getElementById('tv-box').innerText = data.box;
             }
         });
 
-        // Query de historial
+        // Query: Traemos los últimos 6 atendidos
         const q = query(
             collection(db, "agendados"), 
             where("estado", "in", ["atendiendo", "atendido"]),
-            limit(5)
+            limit(6)
         );
 
         onSnapshot(q, async (snapshot) => {
             const lista = document.getElementById('historial-lista');
-            lista.innerHTML = "";
             
-            // Convertimos a array para poder invertir el orden
-            const docs = snapshot.docs;
-            
-            // Invertimos la lista para que el más nuevo esté arriba
-            for (const docSnap of docs.reverse()) {
+            // Obtenemos los datos y los metemos en un array para ordenar nosotros mismos
+            const items = [];
+            for (const docSnap of snapshot.docs) {
                 const p = docSnap.data();
                 const d = await infoDoc(p.doctor_id);
-                
+                items.push({ nombre: p.nombre, doctor: d.nombre, consulta: d.consulta });
+            }
+
+            // IMPORTANTE: Limpiamos y mostramos. 
+            // Como onSnapshot no garantiza orden cronológico sin un campo de tiempo,
+            // invertimos el array para que el "último detectado" aparezca arriba.
+            lista.innerHTML = "";
+            items.reverse().forEach(item => {
                 const row = document.createElement('div');
                 row.className = "hist-row";
                 row.innerHTML = `
                     <div>
-                        <div class="hist-name">${p.nombre}</div>
-                        <div class="hist-doc">DR. ${d.nombre}</div>
+                        <div class="hist-name">${item.nombre}</div>
+                        <div class="hist-doc">DR. ${item.doctor}</div>
                     </div>
-                    <div class="hist-meta">Consulta ${d.consulta}</div>
+                    <div class="hist-meta">CONSULTA ${item.consulta}</div>
                 `;
                 lista.appendChild(row);
-            }
+            });
         });
     </script>
 </body>
