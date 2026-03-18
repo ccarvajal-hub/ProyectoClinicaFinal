@@ -166,12 +166,12 @@
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
-            authDomain: "llamado-cliente.firebaseapp.com",
-            projectId: "llamado-cliente",
-            storageBucket: "llamado-cliente.appspot.com",
-            messagingSenderId: "444376711880",
-            appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_AUTH_DOMAIN",
+            projectId: "TU_PROJECT_ID",
+            storageBucket: "TU_STORAGE_BUCKET",
+            messagingSenderId: "TU_MESSAGING_SENDER_ID",
+            appId: "TU_APP_ID"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -236,12 +236,56 @@
             return dvIngresado === dvEsperado;
         }
 
+        function obtenerFechaHoyChile() {
+            const partes = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/Santiago',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).formatToParts(new Date());
+
+            const year = partes.find(p => p.type === 'year').value;
+            const month = partes.find(p => p.type === 'month').value;
+            const day = partes.find(p => p.type === 'day').value;
+
+            return `${year}-${month}-${day}`;
+        }
+
+        function horaATotalMinutos(hora) {
+            if (!hora || typeof hora !== 'string') return 999999;
+
+            const [hh, mm] = hora.split(':').map(Number);
+
+            if (Number.isNaN(hh) || Number.isNaN(mm)) return 999999;
+
+            return (hh * 60) + mm;
+        }
+
+        function seleccionarCitaCorrecta(docs) {
+            const estadosValidos = ['agendado', 'confirmado', 'llegado'];
+
+            const citasValidas = docs.filter(item => {
+                const estado = (item.data().estado || '').toLowerCase();
+                return estadosValidos.includes(estado);
+            });
+
+            if (citasValidas.length === 0) return null;
+
+            citasValidas.sort((a, b) => {
+                const horaA = horaATotalMinutos(a.data().hora_consulta);
+                const horaB = horaATotalMinutos(b.data().hora_consulta);
+                return horaA - horaB;
+            });
+
+            return citasValidas[0];
+        }
+
         input.addEventListener('input', () => {
             input.value = formatearRUT(input.value);
         });
 
         btn.addEventListener('click', async () => {
-            let rutLimpio = limpiarRUT(input.value);
+            const rutLimpio = limpiarRUT(input.value);
             if (!rutLimpio) return;
 
             if (!validarRUT(rutLimpio)) {
@@ -255,11 +299,25 @@
             btn.innerText = "Procesando...";
 
             try {
-                const q = query(collection(db, "agendados"), where("rut", "==", rutLimpio));
+                const fechaHoy = obtenerFechaHoyChile();
+
+                const q = query(
+                    collection(db, "agendados"),
+                    where("rut", "==", rutLimpio),
+                    where("fecha_turno", "==", fechaHoy)
+                );
+
                 const querySnapshot = await getDocs(q);
 
                 if (!querySnapshot.empty) {
-                    const docSnap = querySnapshot.docs[0];
+                    const citaSeleccionada = seleccionarCitaCorrecta(querySnapshot.docs);
+
+                    if (!citaSeleccionada) {
+                        alert("No tiene una cita válida para hoy.");
+                        return;
+                    }
+
+                    const docSnap = citaSeleccionada;
                     const p = docSnap.data();
 
                     const ahora24 = new Date().toLocaleTimeString('es-CL', { 
@@ -297,11 +355,17 @@
                     modal.style.display = 'flex';
                     input.value = "";
                 } else {
-                    alert("RUT no encontrado.");
+                    alert("No se encontró una cita para hoy con ese RUT.");
                 }
             } catch (error) {
                 console.error(error);
                 alert("Error al procesar.");
+
+                /*
+                  Si Firebase te pide crear un índice para la consulta
+                  rut + fecha_turno, abre el link que aparece en la consola
+                  y créalo una sola vez.
+                */
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Confirmar Llegada";
