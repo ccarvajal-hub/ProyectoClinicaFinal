@@ -80,12 +80,14 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Formateador de RUT
         window.formatearRut = (rut) => {
             if (!rut) return "---";
             let v = rut.replace(/[.-]/g, '');
             return v.slice(0,-1).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + v.slice(-1).toUpperCase();
         };
 
+        // Función de cambio de estado con formato 24h explícito
         window.cambiarEstado = async (id, nuevoEstado, nombre = null, infoBox = null) => {
             if (nuevoEstado === 'llamando') {
                 const confirmar = confirm(`¿Desea LLAMAR a ${nombre} a la pantalla de TV?`);
@@ -93,18 +95,16 @@
             }
 
             try {
-                // Actualizar estado del paciente
                 await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
                 
                 if (nuevoEstado === 'llamando') {
-                    // Generar hora en formato 24hrs (hour12: false)
+                    // SEGURO: Formato 24 Horas
                     const ahora24 = new Date().toLocaleTimeString('es-CL', { 
                         hour: '2-digit', 
                         minute: '2-digit', 
                         hour12: false 
                     });
 
-                    // Enviar datos a la TV
                     await updateDoc(doc(db, "turnos", "actual"), { 
                         paciente: nombre, 
                         box: infoBox,
@@ -140,6 +140,17 @@
                     const estado = p.estado || 'pendiente';
                     let labelEstado = estado === 'llegado' ? 'En Recepción' : estado;
 
+                    // Formatear hora de llegada a 24h por si viene en AM/PM desde el Tótem
+                    let hLlegada = p.hora_llegada || '--:--';
+                    if (hLlegada.includes('AM') || hLlegada.includes('PM')) {
+                        // Limpieza rápida para visualización
+                        const [time, modifier] = hLlegada.split(' ');
+                        let [hours, minutes] = time.split(':');
+                        if (hours === '12') hours = '00';
+                        if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+                        hLlegada = `${hours}:${minutes}`;
+                    }
+
                     let accionesHTML = '';
                     if (estado === 'pagado') {
                         accionesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} - ${p.consulta}')">LLAMAR</button>`;
@@ -155,7 +166,7 @@
                         <div class="col-paciente paciente-name">${p.nombre}</div>
                         <div class="col-rut paciente-rut">${window.formatearRut(p.rut)}</div>
                         <div class="col-hora-c text-muted">${p.hora_consulta || '--:--'}</div>
-                        <div class="col-hora-ll" style="color:var(--color-recepcion); font-weight:600;">${p.hora_llegada || '--:--'}</div>
+                        <div class="col-hora-ll" style="color:var(--color-recepcion); font-weight:600;">${hLlegada}</div>
                         <div class="col-estado"><span class="txt-estado st-${estado}">${labelEstado}</span></div>
                         <div class="col-acciones">
                             ${accionesHTML}
@@ -164,8 +175,6 @@
                     `;
                     container.appendChild(row);
                 });
-            }, (error) => {
-                console.log("Error en tiempo real o índice:", error);
             });
         });
     </script>
@@ -177,7 +186,7 @@
         <div class="agenda-header">
             <div class="col-paciente">Paciente</div>
             <div class="col-rut">RUT</div>
-            <div class="col-hora-c">Cita</div>
+            <div class="col-hora-c">Cita (24h)</div>
             <div class="col-hora-ll">Llegada</div>
             <div class="col-estado">Estado</div>
             <div class="col-acciones">Acciones</div>
