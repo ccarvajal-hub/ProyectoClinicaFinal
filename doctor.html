@@ -35,7 +35,7 @@
             padding: 30px;
             border-radius: var(--radius);
             width: 100%;
-            max-width: 1100px;
+            max-width: 1200px;
             box-shadow: 0 30px 60px rgba(0,0,0,0.4);
             border: 1px solid var(--border-color);
             margin-bottom: 30px;
@@ -48,21 +48,22 @@
         .title-espera { color: var(--color-llamando); }
         .title-historial { color: var(--color-pagado); }
 
-        /* Estructura de Columnas Restaurada */
         .header, .row { display: flex; align-items: center; padding: 12px 20px; }
         .header { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border-color); margin-bottom: 10px; }
         
         .col-name { flex: 2; }
         .col-rut  { flex: 1.2; text-align: center; }
-        .col-info { flex: 1.5; text-align: center; } /* Piso / Consulta */
-        .col-hora { flex: 0.8; text-align: center; }
+        .col-info { flex: 1.2; text-align: center; } 
+        .col-hora { flex: 0.8; text-align: center; } /* Hora Cita */
+        .col-llegada { flex: 0.8; text-align: center; } /* Hora Registro Tótem */
         .col-est  { flex: 1; text-align: center; }
         .col-acts { flex: 1.5; text-align: right; }
 
-        .row { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 8px; font-size: 0.9rem; }
-        .name-txt { font-weight: 700; }
-        .rut-txt { color: var(--text-muted); font-family: monospace; }
-        .info-txt { color: #fdfd96; font-weight: 600; font-size: 0.8rem; }
+        .row { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 8px; font-size: 0.85rem; }
+        .name-txt { font-weight: 700; font-size: 0.95rem; }
+        .rut-txt { color: var(--text-muted); font-family: 'Inter', sans-serif; font-weight: 600; }
+        .info-txt { color: #fdfd96; font-weight: 600; font-size: 0.75rem; }
+        .llegada-txt { color: var(--color-recepcion); font-weight: 700; }
 
         .st-txt { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; }
         .st-llegado { color: var(--color-recepcion); }
@@ -77,7 +78,7 @@
         .btn-fin { background: var(--color-pagado); }
         .btn-del { background: transparent; color: #FC8181; font-size: 1rem; margin-left: 10px; }
 
-        .btn-logout { background: #d4d4a1; margin-top: 10px; padding: 10px 20px; font-size: 0.75rem; }
+        .btn-logout { background: #d4d4a1; margin-top: 10px; padding: 10px 20px; font-size: 0.75rem; color: #333; }
         .empty { color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 15px; }
     </style>
 </head>
@@ -93,6 +94,7 @@
             <div class="col-rut">RUT</div>
             <div class="col-info">Ubicación</div>
             <div class="col-hora">Cita</div>
+            <div class="col-llegada">Llegada</div>
             <div class="col-est">Estado</div>
             <div class="col-acts">Acción</div>
         </div>
@@ -125,6 +127,16 @@
         const db = getFirestore(app);
 
         let nombreDoc = "", boxDoc = "";
+
+        // Función para formatear RUT a 12.345.678-9
+        function formatRut(rut) {
+            if (!rut) return "---";
+            let value = rut.replace(/\./g, '').replace('-', '');
+            if (value.length < 2) return value;
+            let cuerpo = value.slice(0, -1);
+            let dv = value.slice(-1).toUpperCase();
+            return cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + dv;
+        }
 
         window.cambiarEstado = async (id, nuevo, nombre = "") => {
             try {
@@ -175,9 +187,10 @@
 
                     row.innerHTML = `
                         <div class="col-name name-txt">${p.nombre}</div>
-                        <div class="col-rut rut-txt">${p.rut}</div>
+                        <div class="col-rut rut-txt">${formatRut(p.rut)}</div>
                         <div class="col-info info-txt">${boxDoc}</div>
-                        <div class="col-hora">${p.hora_consulta}</div>
+                        <div class="col-hora">${p.hora_consulta || '--:--'}</div>
+                        <div class="col-llegada llegada-txt">${p.hora_llegada || '--:--'}</div>
                         <div class="col-est st-txt st-${estado}">${estado === 'llegado' ? 'En Recepción' : estado}</div>
                         <div class="col-acts">
                             ${botones}
