@@ -27,17 +27,22 @@
         .main-call .box-info { font-size: 2rem; color: var(--muted); margin-top: 10px; }
 
         /* Panel Derecho: Historial */
-        .history { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 30px; }
+        .history { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 30px; display: flex; flex-direction: column; }
         .history h2 { font-size: 2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
         
+        #historial-lista { display: flex; flex-direction: column; } /* Mantiene el flujo normal (el primero arriba) */
+
         .hist-row {
             display: grid; grid-template-columns: 1fr auto;
             background: rgba(0,0,0,0.2); padding: 15px 20px;
             border-radius: 15px; margin-bottom: 10px; border-left: 5px solid var(--accent);
         }
         .hist-name { font-weight: 700; font-size: 1.4rem; text-transform: uppercase; }
-        .hist-doc { font-size: 1.1rem; color: #FFB347; font-weight: 600; }
-        .hist-meta { font-size: 1.2rem; color: #48BB78; font-weight: 800; text-align: right; }
+        
+        /* Nombre del doctor un poco más pequeño */
+        .hist-doc { font-size: 0.95rem; color: #FFB347; font-weight: 600; text-transform: uppercase; margin-top: 2px; }
+        
+        .hist-meta { font-size: 1.2rem; color: #48BB78; font-weight: 800; text-align: right; align-self: center; }
 
         .flash { animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
@@ -63,7 +68,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, collection, query, where, limit, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, limit, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -81,13 +86,17 @@
 
         async function infoDoc(email) {
             if (!email) return { nombre: "DOCTOR", consulta: "---" };
-            if (cacheDoctores[email]) return cacheDoctores[email];
-            const d = await getDoc(doc(db, "doctores", email.toLowerCase().trim()));
-            if (d.exists()) {
-                cacheDoctores[email] = { nombre: d.data().nombre, consulta: d.data().consulta };
-                return cacheDoctores[email];
-            }
-            return { nombre: email.split('@')[0], consulta: "---" };
+            const cleanEmail = email.toLowerCase().trim();
+            if (cacheDoctores[cleanEmail]) return cacheDoctores[cleanEmail];
+            
+            try {
+                const d = await getDoc(doc(db, "doctores", cleanEmail));
+                if (d.exists()) {
+                    cacheDoctores[cleanEmail] = { nombre: d.data().nombre, consulta: d.data().consulta };
+                    return cacheDoctores[cleanEmail];
+                }
+            } catch (e) { console.error(e); }
+            return { nombre: cleanEmail.split('@')[0], consulta: "---" };
         }
 
         onSnapshot(doc(db, "turnos", "actual"), (docSnap) => {
@@ -105,19 +114,28 @@
             }
         });
 
-        const q = query(collection(db, "agendados"), where("estado", "in", ["atendiendo", "atendido"]), limit(5));
+        // Query limitada a los últimos 5, pero ordenamos por hora de consulta para el flujo
+        const q = query(
+            collection(db, "agendados"), 
+            where("estado", "in", ["atendiendo", "atendido"]),
+            limit(5)
+        );
+
         onSnapshot(q, async (snapshot) => {
             const lista = document.getElementById('historial-lista');
             lista.innerHTML = "";
+            
+            // Recorremos los documentos (onSnapshot los trae en el orden de la query)
             for (const docSnap of snapshot.docs) {
                 const p = docSnap.data();
                 const d = await infoDoc(p.doctor_id);
+                
                 const row = document.createElement('div');
                 row.className = "hist-row";
                 row.innerHTML = `
                     <div>
                         <div class="hist-name">${p.nombre}</div>
-                        <div class="hist-doc">${d.nombre}</div>
+                        <div class="hist-doc">Dr. ${d.nombre}</div>
                     </div>
                     <div class="hist-meta">Consulta ${d.consulta}</div>
                 `;
