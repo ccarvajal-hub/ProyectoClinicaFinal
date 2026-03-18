@@ -54,15 +54,15 @@
         .col-name { flex: 2; }
         .col-rut  { flex: 1.2; text-align: center; }
         .col-info { flex: 1.2; text-align: center; } 
-        .col-hora { flex: 0.8; text-align: center; } /* Hora Cita */
-        .col-llegada { flex: 0.8; text-align: center; } /* Hora Registro Tótem */
+        .col-hora { flex: 0.8; text-align: center; } 
+        .col-llegada { flex: 0.8; text-align: center; } 
         .col-est  { flex: 1; text-align: center; }
         .col-acts { flex: 1.5; text-align: right; }
 
         .row { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 8px; font-size: 0.85rem; }
         .name-txt { font-weight: 700; font-size: 0.95rem; }
-        .rut-txt { color: var(--text-muted); font-family: 'Inter', sans-serif; font-weight: 600; }
-        .info-txt { color: #fdfd96; font-weight: 600; font-size: 0.75rem; }
+        .rut-txt { color: var(--text-muted); font-weight: 600; }
+        .info-txt { color: #fdfd96; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
         .llegada-txt { color: var(--color-recepcion); font-weight: 700; }
 
         .st-txt { font-size: 0.7rem; font-weight: 900; text-transform: uppercase; }
@@ -72,13 +72,13 @@
         .st-atendiendo { color: var(--color-atendiendo); }
         .st-atendido { color: var(--text-muted); }
 
-        button { cursor: pointer; border: none; font-family: 'Inter', sans-serif; padding: 7px 12px; border-radius: 6px; font-weight: 800; font-size: 0.65rem; text-transform: uppercase; color: white; transition: 0.2s; }
+        button { cursor: pointer; border: none; font-family: 'Inter', sans-serif; padding: 8px 14px; border-radius: 6px; font-weight: 800; font-size: 0.65rem; text-transform: uppercase; color: white; transition: 0.2s; }
         .btn-call { background: var(--color-llamando); }
         .btn-atn { background: var(--color-atendiendo); }
         .btn-fin { background: var(--color-pagado); }
-        .btn-del { background: transparent; color: #FC8181; font-size: 1rem; margin-left: 10px; }
+        .btn-del { background: transparent; color: #FC8181; font-size: 1.1rem; margin-left: 10px; font-weight: 400; }
 
-        .btn-logout { background: #d4d4a1; margin-top: 10px; padding: 10px 20px; font-size: 0.75rem; color: #333; }
+        .btn-logout { background: #d4d4a1; margin-top: 10px; padding: 10px 20px; font-size: 0.75rem; color: #333; font-weight: 800; border-radius: 8px; }
         .empty { color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 15px; }
     </style>
 </head>
@@ -101,7 +101,7 @@
         <div id="lista-espera"></div>
     </div>
 
-    <div class="container" style="opacity: 0.8;">
+    <div class="container" style="opacity: 0.85;">
         <h2 class="title-historial">✔ HISTORIAL DE HOY</h2>
         <div id="lista-historial"></div>
     </div>
@@ -131,7 +131,7 @@
         // Función para formatear RUT a 12.345.678-9
         function formatRut(rut) {
             if (!rut) return "---";
-            let value = rut.replace(/\./g, '').replace('-', '');
+            let value = rut.toString().replace(/\./g, '').replace('-', '');
             if (value.length < 2) return value;
             let cuerpo = value.slice(0, -1);
             let dv = value.slice(-1).toUpperCase();
@@ -140,12 +140,26 @@
 
         window.cambiarEstado = async (id, nuevo, nombre = "") => {
             try {
-                await updateDoc(doc(db, "agendados", id), { estado: nuevo });
+                const updateData = { estado: nuevo };
+
+                // LA CLAVE: Solo grabamos tiempo de llamado cuando se presiona LLAMAR
                 if (nuevo === 'llamando') {
-                    const hora = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
-                    await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: boxDoc, doctor: nombreDoc, hora_llamado: hora });
+                    const ahora = new Date().getTime(); 
+                    updateData.ultimo_llamado = ahora; // Esto ordena la TV
+
+                    const horaActual = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    
+                    // Actualizar el doc "actual" para la TV
+                    await updateDoc(doc(db, "turnos", "actual"), { 
+                        paciente: nombre, 
+                        box: boxDoc, 
+                        doctor: nombreDoc, 
+                        hora_llamado: horaActual 
+                    });
                 }
-            } catch (e) { console.error(e); }
+
+                await updateDoc(doc(db, "agendados", id), updateData);
+            } catch (e) { console.error("Error al cambiar estado:", e); }
         };
 
         window.eliminar = async (id, nombre) => {
@@ -157,13 +171,16 @@
         onAuthStateChanged(auth, async (user) => {
             if (!user) { location.href = "login.html"; return; }
 
+            // Obtener info del doctor
             const dSnap = await getDoc(doc(db, "doctores", user.email.toLowerCase().trim()));
             if (dSnap.exists()) {
-                nombreDoc = dSnap.data().nombre;
-                boxDoc = `Piso ${dSnap.data().piso} - Consulta ${dSnap.data().consulta}`;
+                const data = dSnap.data();
+                nombreDoc = data.nombre;
+                boxDoc = `PISO ${data.piso} - CONSULTA ${data.consulta}`;
                 document.getElementById('display-name').innerText = `DR. ${nombreDoc}`;
             }
 
+            // Escuchar pacientes
             const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
             onSnapshot(q, (snapshot) => {
                 const esperaDiv = document.getElementById('lista-espera');
@@ -181,9 +198,13 @@
                     row.className = "row";
                     
                     let botones = '';
-                    if (estado === 'pagado') botones = `<button class="btn-call" onclick="cambiarEstado('${id}','llamando','${p.nombre}')">Llamar</button>`;
-                    else if (estado === 'llamando') botones = `<button class="btn-atn" onclick="cambiarEstado('${id}','atendiendo')">Atender</button>`;
-                    else if (estado === 'atendiendo') botones = `<button class="btn-fin" onclick="cambiarEstado('${id}','atendido')">Finalizar</button>`;
+                    if (estado === 'pagado') {
+                        botones = `<button class="btn-call" onclick="cambiarEstado('${id}','llamando','${p.nombre}')">Llamar</button>`;
+                    } else if (estado === 'llamando') {
+                        botones = `<button class="btn-atn" onclick="cambiarEstado('${id}','atendiendo')">Atender</button>`;
+                    } else if (estado === 'atendiendo') {
+                        botones = `<button class="btn-fin" onclick="cambiarEstado('${id}','atendido')">Finalizar</button>`;
+                    }
 
                     row.innerHTML = `
                         <div class="col-name name-txt">${p.nombre}</div>
@@ -202,7 +223,7 @@
                     else { esperaDiv.appendChild(row); cE++; }
                 });
 
-                if(cE === 0) esperaDiv.innerHTML = '<div class="empty">No hay pacientes por atender.</div>';
+                if(cE === 0) esperaDiv.innerHTML = '<div class="empty">No hay pacientes en espera.</div>';
                 if(cH === 0) historialDiv.innerHTML = '<div class="empty">No hay historial hoy.</div>';
             });
         });
