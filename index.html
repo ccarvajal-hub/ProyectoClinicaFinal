@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tótem de Atención - Clínica</title>
+    <title>Tótem de Atención - Confirmación de Llegada</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-page: #4a4a4a;
             --bg-card: #1c1c1c;
             --text-main: #FFFFFF;
+            --text-muted: #A0A0A0;
             --blue-accent: #4682B4;
             --green-accent: #48BB78;
             --border-color: rgba(255, 255, 255, 0.1);
@@ -39,115 +40,144 @@
             border: 1px solid var(--border-color);
         }
 
-        h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1.5px; }
-        p { color: #A0A0A0; margin-bottom: 40px; }
+        h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -2px; }
+        .instruction { color: var(--text-muted); margin-bottom: 40px; font-size: 1.1rem; }
+
+        .input-group { position: relative; margin-bottom: 30px; }
 
         input {
             width: 100%;
-            padding: 20px;
+            padding: 24px;
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid var(--border-color);
-            border-radius: 15px;
+            border-radius: 18px;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             text-align: center;
-            margin-bottom: 25px;
             box-sizing: border-box;
             outline: none;
-            transition: 0.3s;
+            transition: all 0.3s ease;
+            font-weight: 700;
         }
 
-        input:focus { border-color: var(--blue-accent); background: rgba(255, 255, 255, 0.08); }
+        input:focus { border-color: var(--blue-accent); background: rgba(255, 255, 255, 0.08); box-shadow: 0 0 20px rgba(70, 130, 180, 0.2); }
 
         .btn-confirm {
             width: 100%;
-            padding: 20px;
+            padding: 22px;
             background-color: var(--blue-accent);
             color: white;
             border: none;
-            border-radius: 15px;
-            font-size: 1.2rem;
+            border-radius: 18px;
+            font-size: 1.3rem;
             font-weight: 800;
             cursor: pointer;
             text-transform: uppercase;
             transition: 0.2s;
+            letter-spacing: 1px;
         }
 
+        .btn-confirm:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .btn-confirm:active { transform: scale(0.98); }
 
-        /* ESTILOS DEL MODAL (RECUADRO DE CONFIRMACIÓN) */
+        /* MODAL DE CONFIRMACIÓN (RECUADRO) */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none; /* Se activa con JS */
+            background: rgba(0,0,0,0.9);
+            display: none; 
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
         }
 
         .modal-content {
             background: var(--bg-card);
-            padding: 40px;
+            padding: 45px;
             border-radius: var(--radius);
             border: 2px solid var(--green-accent);
-            max-width: 400px;
+            max-width: 450px;
             width: 90%;
             text-align: center;
-            animation: slideUp 0.4s ease-out;
+            box-shadow: 0 0 50px rgba(72, 187, 120, 0.2);
+            animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes popUp {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
-        .modal-content h2 { color: var(--green-accent); font-size: 1.8rem; margin-top: 0; }
-        .info-box { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin: 20px 0; text-align: left; }
-        .info-item { margin-bottom: 10px; font-size: 1.1rem; }
-        .info-label { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; display: block; }
-        .info-value { font-weight: 700; color: white; }
+        .modal-content h2 { color: var(--green-accent); font-size: 2rem; margin: 0 0 25px 0; font-weight: 800; }
+        
+        .info-box { 
+            background: rgba(255,255,255,0.03); 
+            padding: 25px; 
+            border-radius: 20px; 
+            margin-bottom: 30px; 
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .info-item { margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
+        .info-item:last-child { margin-bottom: 0; border: none; }
+        
+        .info-label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+        .info-value { font-weight: 700; color: white; font-size: 1.2rem; }
 
         .btn-close {
             background: var(--green-accent);
             color: white;
             border: none;
-            padding: 12px 30px;
-            border-radius: 10px;
+            padding: 16px 40px;
+            border-radius: 12px;
             font-weight: 800;
+            font-size: 1rem;
             cursor: pointer;
-            margin-top: 10px;
+            width: 100%;
+            transition: 0.2s;
         }
+
+        .btn-close:hover { filter: brightness(1.1); }
     </style>
 </head>
 <body>
 
     <div class="totem-card">
         <h1>Bienvenido</h1>
-        <p>Ingrese su RUT para confirmar llegada</p>
-        <input type="text" id="rutInput" placeholder="12.345.678-K">
+        <p class="instruction">Por favor, ingrese su RUT para confirmar su hora médica.</p>
+        
+        <div class="input-group">
+            <input type="text" id="rutInput" placeholder="12.345.678-K" autocomplete="off">
+        </div>
+        
         <button class="btn-confirm" id="btnConfirmar">Confirmar Llegada</button>
     </div>
 
     <div class="modal-overlay" id="modalConfirmacion">
         <div class="modal-content">
-            <h2>¡Llegada Confirmada!</h2>
+            <h2>¡CONFIRMADO!</h2>
+            
             <div class="info-box">
                 <div class="info-item">
                     <span class="info-label">Paciente</span>
                     <span class="info-value" id="resNombre">---</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Doctor(a)</span>
+                    <span class="info-label">Médico Asignado</span>
                     <span class="info-value" id="resDoctor">---</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Ubicación</span>
+                    <span class="info-label">Ubicación de Consulta</span>
                     <span class="info-value" id="resUbicacion">---</span>
                 </div>
             </div>
-            <p style="font-size: 0.8rem;">Por favor, diríjase a recepción para el pago.</p>
+            
+            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem;">
+                Diríjase a <strong>Recepción</strong> para finalizar su ingreso y realizar el pago.
+            </p>
+            
             <button class="btn-close" onclick="cerrarModal()">ENTENDIDO</button>
         </div>
     </div>
@@ -170,35 +200,53 @@
 
         const input = document.getElementById('rutInput');
         const modal = document.getElementById('modalConfirmacion');
+        const btn = document.getElementById('btnConfirmar');
 
-        document.getElementById('btnConfirmar').addEventListener('click', async () => {
-            let rut = input.value.trim().replace(/\./g, '').toUpperCase();
-            if (!rut) return;
+        btn.addEventListener('click', async () => {
+            // LIMPIEZA TOTAL: Quita puntos, guiones y espacios para la búsqueda
+            let rutLimpio = input.value.trim().replace(/[\.-]/g, '').toUpperCase();
+            
+            if (!rutLimpio) {
+                alert("Por favor ingrese un RUT");
+                return;
+            }
 
-            const q = query(collection(db, "agendados"), where("rut", "==", rut));
-            const querySnapshot = await getDocs(q);
+            btn.disabled = true;
+            btn.innerText = "Buscando...";
 
-            if (!querySnapshot.empty) {
-                const docSnap = querySnapshot.docs[0];
-                const p = docSnap.data();
-                
-                // Actualizar estado en Firebase
-                const ahora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                await updateDoc(doc(db, "agendados", docSnap.id), {
-                    estado: "llegado",
-                    hora_llegada: ahora
-                });
+            try {
+                // Buscamos el RUT exacto
+                const q = query(collection(db, "agendados"), where("rut", "==", rutLimpio));
+                const querySnapshot = await getDocs(q);
 
-                // Llenar Modal
-                document.getElementById('resNombre').innerText = p.nombre;
-                document.getElementById('resDoctor').innerText = "Dr(a). " + p.doctor_id.split('@')[0].toUpperCase();
-                document.getElementById('resUbicacion').innerText = `${p.piso} - Consulta ${p.consulta}`;
+                if (!querySnapshot.empty) {
+                    const docSnap = querySnapshot.docs[0];
+                    const p = docSnap.data();
+                    
+                    // Actualizamos estado a 'llegado'
+                    const ahora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    await updateDoc(doc(db, "agendados", docSnap.id), {
+                        estado: "llegado",
+                        hora_llegada: ahora
+                    });
 
-                // Mostrar Modal
-                modal.style.display = 'flex';
-                input.value = "";
-            } else {
-                alert("RUT no encontrado en la agenda de hoy.");
+                    // Cargamos datos al recuadro
+                    document.getElementById('resNombre').innerText = p.nombre;
+                    document.getElementById('resDoctor').innerText = "Dr(a). " + p.doctor_id.split('@')[0].toUpperCase();
+                    document.getElementById('resUbicacion').innerText = `${p.piso} - Consulta ${p.consulta}`;
+
+                    // Mostramos el recuadro
+                    modal.style.display = 'flex';
+                    input.value = "";
+                } else {
+                    alert("No se encontró una cita para el RUT: " + input.value + "\n\nPor favor, acérquese a mesón.");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error de conexión. Intente nuevamente.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Confirmar Llegada";
             }
         });
 
