@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recepción - Validación de Pagos</title>
+    <title>Recepción - Lista Maestra</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -11,9 +11,8 @@
             --bg-card: #1c1c1c;      
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
-            --blue-accent: #4682B4; 
-            --green-accent: #1DB954;
-            --orange-accent: #f59e0b;
+            --color-recepcion: #FFB347; /* Ámbar Suave */
+            --color-pagado: #48BB78;    /* Esmeralda */
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
         }
@@ -35,81 +34,74 @@
             padding: 50px 40px;
             border-radius: var(--radius);
             width: 100%;
-            max-width: 750px; /* Un poco más estrecho para centrar el contenido */
+            max-width: 900px;
             box-shadow: 0 30px 60px rgba(0,0,0,0.4);
             border: 1px solid var(--border-color);
         }
 
-        h1 { text-align: center; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 40px; font-size: 2rem; }
+        h1 { text-align: center; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 10px; font-size: 2.2rem; }
+        .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 40px; font-size: 0.9rem; }
 
         .row {
             display: flex;
             align-items: center;
-            padding: 22px 30px; /* Más aire interno */
-            background: rgba(255,255,255,0.03);
+            padding: 18px 25px;
+            background: rgba(255,255,255,0.02);
             border: 1px solid var(--border-color);
             border-radius: 18px;
-            margin-bottom: 12px;
-            gap: 10px;
+            margin-bottom: 10px;
+            gap: 15px;
         }
 
-        .name { 
-            flex: 2; 
-            font-weight: 700; 
-            font-size: 1.15rem; 
-            letter-spacing: -0.5px;
-        }
-
+        .name { flex: 2; font-weight: 700; font-size: 1.1rem; }
+        .doc-info { flex: 1.5; color: var(--text-muted); font-size: 0.85rem; }
+        
         .status {
-            flex: 1.5;
+            flex: 1.2;
             font-size: 0.8rem;
             font-weight: 800;
             text-transform: uppercase;
             text-align: center;
         }
 
-        .tag-llegado { color: var(--orange-accent); }
-        .tag-pagado { color: var(--green-accent); opacity: 0.8; }
+        /* COLORES DE ESTADO */
+        .st-pendiente { color: #555; }
+        .st-llegado { color: var(--color-recepcion); }
+        .st-pagado { color: var(--color-pagado); }
 
         .action-area {
             flex: 1;
-            text-align: center; /* Centrado dentro de su columna */
             display: flex;
             justify-content: center;
         }
 
         .btn-pay {
-            background-color: var(--green-accent);
+            background-color: var(--color-pagado);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
+            padding: 10px 20px;
+            border-radius: 10px;
             font-weight: 800;
             font-size: 0.75rem;
-            text-transform: uppercase;
             cursor: pointer;
             transition: 0.2s;
         }
 
-        .btn-pay:hover { transform: translateY(-2px); opacity: 0.9; }
-
-        .check-mark { 
-            color: var(--green-accent); 
-            font-size: 1.5rem; 
-            display: flex;
-            align-items: center;
-        }
+        .btn-pay:hover { transform: scale(1.05); filter: brightness(1.1); }
+        .check-mark { color: var(--color-pagado); font-size: 1.5rem; font-weight: 800; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Recepción</h1>
-        <div id="lista-recepcion"></div>
+        <div class="subtitle">Lista Maestra de Pacientes del Día</div>
+        <div id="lista-recepcion">
+            </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -123,29 +115,39 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        onSnapshot(collection(db, "agendados"), (snapshot) => {
+        // Escuchamos TODOS los pacientes de la colección 'agendados'
+        const q = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
+
+        onSnapshot(q, (snapshot) => {
             const list = document.getElementById('lista-recepcion');
             list.innerHTML = "";
             
             snapshot.forEach(docSnap => {
                 const p = docSnap.data();
-                if (p.estado === 'llegado' || p.estado === 'pagado') {
-                    const div = document.createElement('div');
-                    div.className = "row";
-                    
-                    const textoEstado = p.estado === 'llegado' ? 'En Recepción' : 'Pagado';
-                    
-                    div.innerHTML = `
-                        <div class="name">${p.nombre}</div>
-                        <div class="status tag-${p.estado}">${textoEstado}</div>
-                        <div class="action-area">
-                            ${p.estado === 'llegado' 
-                                ? `<button class="btn-pay" onclick="confirmarPago('${docSnap.id}')">PAGAR</button>` 
-                                : '<span class="check-mark">✔</span>'}
-                        </div>
-                    `;
-                    list.appendChild(div);
-                }
+                const id = docSnap.id;
+                const estado = p.estado || 'pendiente';
+                
+                // Mapeo de texto de estado
+                let textoEstado = 'Pendiente';
+                if (estado === 'llegado') textoEstado = 'En Recepción';
+                if (estado === 'pagado') textoEstado = 'Pagado';
+                // Si el doctor ya lo llamó o atendió, no es necesario que Recepción lo gestione más
+                if (estado === 'llamando' || estado === 'atendiendo' || estado === 'atendido') return;
+
+                const div = document.createElement('div');
+                div.className = "row";
+                
+                div.innerHTML = `
+                    <div class="name">${p.nombre}</div>
+                    <div class="doc-info">${p.doctor_id.split('@')[0].toUpperCase()}</div>
+                    <div class="status st-${estado}">${textoEstado}</div>
+                    <div class="action-area">
+                        ${estado === 'llegado' 
+                            ? `<button class="btn-pay" onclick="confirmarPago('${id}')">PAGAR</button>` 
+                            : (estado === 'pagado' ? '<span class="check-mark">✔</span>' : '')}
+                    </div>
+                `;
+                list.appendChild(div);
             });
         });
 
