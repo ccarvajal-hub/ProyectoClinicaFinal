@@ -3,64 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recepción - Gestión de Pacientes</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>Panel de Recepción</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-page: #4a4a4a;
-            --bg-card: #1c1c1c;
-            --text-main: #FFFFFF;
-            --text-muted: #A0A0A0;
-            --color-recepcion: #FFB347;
-            --color-pagado: #48BB78;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --radius-box: 24px;
-            --radius-card: 16px;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #333;
+            color: white;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
 
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .agenda-container { background-color: var(--bg-card); padding: 40px; border-radius: var(--radius-box); width: 95%; max-width: 1200px; border: 1px solid var(--border-color); }
-        
-        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 30px; text-align: center; }
+        .container {
+            background-color: #1a1a1a;
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 1400px; /* Volvemos al ancho de la imagen */
+            text-align: center;
+        }
 
-        .agenda-header, .paciente-row { display: flex; align-items: center; padding: 15px 20px; }
-        .col-paciente { flex: 2; text-align: left; }
-        .col-rut      { flex: 1.2; text-align: center; }
-        .col-doctor   { flex: 1.5; text-align: center; } 
-        .col-hora     { flex: 0.8; text-align: center; }
-        .col-estado   { flex: 1.2; text-align: center; }
-        .col-acciones { flex: 1; text-align: right; }
+        h1 { font-size: 3rem; margin-bottom: 40px; }
 
-        .agenda-header { border-bottom: 2px solid var(--border-color); margin-bottom: 10px; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; }
+        .header, .row {
+            display: flex;
+            justify-content:间;
+            padding: 15px 0;
+            border-bottom: 1px solid #444;
+            font-size: 0.9rem;
+        }
 
-        .paciente-row { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: var(--radius-card); margin-bottom: 8px; }
-        .paciente-name { font-weight: 700; font-size: 1.05rem; }
-        .doctor-name { color: #fdfd96; font-weight: 600; font-size: 0.9rem; } 
+        .header {
+            font-weight: 800;
+            color: #888;
+            text-transform: uppercase;
+            border-bottom: 2px solid #444;
+        }
 
-        .txt-estado { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; }
-        .st-llegado { color: var(--color-recepcion); }
-        .st-pagado  { color: var(--color-pagado); }
+        /* Columnas originales */
+        .col-paciente { flex: 2; text-align: left; padding-left: 20px; }
+        .col-rut      { flex: 1.5; text-align: center; }
+        .col-doctor   { flex: 1.5; text-align: center; }
+        .col-cita     { flex: 1; text-align: center; }
+        .col-estado   { flex: 1.5; text-align: center; }
+        .col-accion   { flex: 1; text-align: right; padding-right: 20px; }
 
-        button { cursor: pointer; border: none; font-family: 'Inter', sans-serif; padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; color: white; background: var(--color-pagado); }
+        .row { align-items: center; }
+
+        .btn-pagar {
+            background-color: #48BB78;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .status-llegado { color: #FFB347; font-weight: bold; }
+        .status-pagado { color: #48BB78; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="agenda-container">
+
+    <div class="container">
         <h1>Panel de Recepción</h1>
-        <div class="agenda-header">
+        
+        <div class="header">
             <div class="col-paciente">Paciente</div>
-            <div class="col-rut">RUT</div>
+            <div class="col-rut">Rut</div>
             <div class="col-doctor">Doctor</div>
-            <div class="col-hora">Cita</div>
+            <div class="col-cita">Cita</div>
             <div class="col-estado">Estado</div>
-            <div class="col-acciones">Acción</div>
+            <div class="col-accion">Acción</div>
         </div>
-        <div id="agenda-lista"></div>
+
+        <div id="lista-pacientes"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -74,58 +100,54 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const nombresDoctores = {};
+        // Cache para no pedir el nombre del doctor muchas veces
+        const doctoresCache = {};
 
         async function obtenerNombreDoctor(email) {
             if (!email) return "No asignado";
-            if (nombresDoctores[email]) return nombresDoctores[email];
+            if (doctoresCache[email]) return doctoresCache[email];
+            
             try {
                 const docRef = doc(db, "doctores", email.toLowerCase().trim());
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    nombresDoctores[email] = docSnap.data().nombre;
-                    return nombresDoctores[email];
+                    doctoresCache[email] = docSnap.data().nombre;
+                    return doctoresCache[email];
                 }
             } catch (e) { console.error(e); }
-            return email;
+            return email; 
         }
 
-        window.marcarPagado = async (id) => {
-            try {
-                await updateDoc(doc(db, "agendados", id), { estado: 'pagado' });
-            } catch (e) { console.error(e); }
+        window.pagarTurno = async (id) => {
+            await updateDoc(doc(db, "agendados", id), { estado: 'pagado' });
         };
 
-        // Escucha simplificada sin Auth
-        const q = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
-        
-        onSnapshot(q, async (snapshot) => {
-            const container = document.getElementById('agenda-lista');
-            container.innerHTML = "";
-            
+        onSnapshot(collection(db, "agendados"), async (snapshot) => {
+            const lista = document.getElementById('lista-pacientes');
+            lista.innerHTML = "";
+
             for (const docSnap of snapshot.docs) {
                 const p = docSnap.data();
-                const id = docSnap.id;
-                const estado = p.estado || 'pendiente';
-                
-                if (estado !== 'llegado' && estado !== 'pagado') continue;
+                if (p.estado === 'llegado' || p.estado === 'pagado') {
+                    
+                    const nombreDoc = await obtenerNombreDoctor(p.doctor_id);
+                    const estadoTexto = p.estado === 'llegado' ? 'En Recepción' : 'Pagado';
+                    const estadoClase = p.estado === 'llegado' ? 'status-llegado' : 'status-pagado';
 
-                const nombreDoc = await obtenerNombreDoctor(p.doctor_id);
-                const estadoTexto = (estado === 'llegado') ? 'En Recepción' : 'Pagado';
-
-                const row = document.createElement('div');
-                row.className = 'paciente-row';
-                row.innerHTML = `
-                    <div class="col-paciente paciente-name">${p.nombre}</div>
-                    <div class="col-rut">${p.rut}</div>
-                    <div class="col-doctor doctor-name">${nombreDoc}</div>
-                    <div class="col-hora">${p.hora_consulta || '--:--'}</div>
-                    <div class="col-estado"><span class="txt-estado st-${estado}">${estadoTexto}</span></div>
-                    <div class="col-acciones">
-                        ${estado === 'llegado' ? `<button onclick="marcarPagado('${id}')">PAGAR</button>` : ''}
-                    </div>
-                `;
-                container.appendChild(row);
+                    const div = document.createElement('div');
+                    div.className = 'row';
+                    div.innerHTML = `
+                        <div class="col-paciente"><b>${p.nombre}</b></div>
+                        <div class="col-rut">${p.rut}</div>
+                        <div class="col-doctor">${nombreDoc}</div>
+                        <div class="col-cita">${p.hora_consulta || '--:--'}</div>
+                        <div class="col-estado <span class="${estadoClase}">${estadoTexto}</span></div>
+                        <div class="col-accion">
+                            ${p.estado === 'llegado' ? `<button class="btn-pagar" onclick="pagarTurno('${docSnap.id}')">PAGAR</button>` : ''}
+                        </div>
+                    `;
+                    lista.appendChild(div);
+                }
             }
         });
     </script>
