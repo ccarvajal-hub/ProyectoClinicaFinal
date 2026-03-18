@@ -126,7 +126,14 @@
     <div class="totem-card">
         <h1>Bienvenido</h1>
         <p class="instruction">Ingrese su RUT para confirmar su llegada.</p>
-        <input type="text" id="rutInput" placeholder="12.345.678-K" autocomplete="off">
+        <input 
+            type="text" 
+            id="rutInput" 
+            placeholder="12.345.678-K" 
+            autocomplete="off"
+            autocapitalize="characters"
+            maxlength="12"
+        >
         <button class="btn-confirm" id="btnConfirmar">Confirmar Llegada</button>
     </div>
 
@@ -174,8 +181,36 @@
         const modal = document.getElementById('modalConfirmacion');
         const btn = document.getElementById('btnConfirmar');
 
+        function limpiarRUT(rut) {
+            return rut.replace(/[^0-9kK]/g, '').toUpperCase();
+        }
+
+        function formatearRUT(rut) {
+            const limpio = limpiarRUT(rut).slice(0, 9);
+
+            if (limpio.length <= 1) return limpio;
+
+            const cuerpo = limpio.slice(0, -1);
+            const dv = limpio.slice(-1);
+
+            let cuerpoFormateado = '';
+            let contador = 0;
+
+            for (let i = cuerpo.length - 1; i >= 0; i--) {
+                cuerpoFormateado = cuerpo[i] + cuerpoFormateado;
+                contador++;
+
+                if (contador === 3 && i !== 0) {
+                    cuerpoFormateado = '.' + cuerpoFormateado;
+                    contador = 0;
+                }
+            }
+
+            return `${cuerpoFormateado}-${dv}`;
+        }
+
         function validarRUT(rut) {
-            rut = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+            rut = limpiarRUT(rut);
 
             if (!/^\d{7,8}[0-9K]$/.test(rut)) return false;
 
@@ -201,8 +236,12 @@
             return dvIngresado === dvEsperado;
         }
 
+        input.addEventListener('input', () => {
+            input.value = formatearRUT(input.value);
+        });
+
         btn.addEventListener('click', async () => {
-            let rutLimpio = input.value.trim().replace(/[\.-]/g, '').toUpperCase();
+            let rutLimpio = limpiarRUT(input.value);
             if (!rutLimpio) return;
 
             if (!validarRUT(rutLimpio)) {
