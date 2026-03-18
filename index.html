@@ -71,6 +71,7 @@
             margin-top: 25px;
         }
 
+        /* MODAL MATE */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -155,7 +156,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Agregamos getDoc para buscar al doctor individualmente
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -188,20 +190,37 @@
                     const docSnap = querySnapshot.docs[0];
                     const p = docSnap.data();
 
-                    // --- CAMBIO AQUÍ: HORA EN 24 HORAS PARA LA LLEGADA ---
+                    // 1. Obtener hora en 24h
                     const ahora24 = new Date().toLocaleTimeString('es-CL', { 
                         hour: '2-digit', 
                         minute: '2-digit', 
                         hour12: false 
                     });
                     
+                    // 2. Actualizar llegada del paciente
                     await updateDoc(doc(db, "agendados", docSnap.id), {
                         estado: "llegado",
                         hora_llegada: ahora24
                     });
 
+                    // --- NUEVA LÓGICA: BUSCAR NOMBRE REAL DEL DOCTOR ---
+                    let nombreDoctorMostrar = p.doctor_id; // Valor por defecto (el email)
+                    try {
+                        const docRefDoc = doc(db, "doctores", p.doctor_id);
+                        const docSnapDoc = await getDoc(docRefDoc);
+                        if (docSnapDoc.exists()) {
+                            nombreDoctorMostrar = docSnapDoc.data().nombre;
+                        } else {
+                            // Si no existe en la colección, formateamos el email un poco
+                            nombreDoctorMostrar = "Dr(a). " + p.doctor_id.split('@')[0].toUpperCase();
+                        }
+                    } catch (err) {
+                        console.log("Error buscando doctor:", err);
+                    }
+
+                    // 3. Mostrar datos en el modal
                     document.getElementById('resNombre').innerText = p.nombre;
-                    document.getElementById('resDoctor').innerText = "Dr(a). " + p.doctor_id.split('@')[0].toUpperCase();
+                    document.getElementById('resDoctor').innerText = nombreDoctorMostrar;
                     document.getElementById('resUbicacion').innerText = `${p.piso} - Consulta ${p.consulta}`;
 
                     modal.style.display = 'flex';
