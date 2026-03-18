@@ -11,12 +11,16 @@
             --bg-page: #4a4a4a;      
             --bg-card: #1c1c1c;      
             --text-main: #FFFFFF;
-            --text-muted: #A0A0A0;   
-            --blue-accent: #4682B4; 
-            --green-accent: #1DB954;
-            --orange-accent: #f59e0b;
-            --purple-accent: #a78bfa;
-            --red-accent: #ef4444;   
+            --text-muted: #A0A0A0;
+            
+            /* Nueva Paleta Suavizada pero Fuerte */
+            --color-recepcion: #FFB347; /* Ámbar Suave */
+            --color-pagado: #48BB78;    /* Esmeralda */
+            --color-llamando: #4299E1;  /* Azul Cielo */
+            --color-atendiendo: #9F7AEA; /* Lavanda/Violeta */
+            --color-finalizado: #718096; /* Gris Azulado */
+            
+            --red-cancel: #FC8181;   
             --border-color: rgba(255, 255, 255, 0.1); 
             --radius-box: 24px;
             --radius-card: 16px;
@@ -75,21 +79,25 @@
         /* ESTADOS EN TEXTO PLANO */
         .txt-estado { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
         .st-pendiente  { color: #666; }
-        .st-llegado    { color: var(--orange-accent); }
-        .st-pagado     { color: var(--green-accent); }
-        .st-llamando   { color: var(--blue-accent); }
-        .st-atendiendo { color: var(--purple-accent); }
-        .st-atendido   { color: #444; }
+        .st-llegado    { color: var(--color-recepcion); }
+        .st-pagado     { color: var(--color-pagado); }
+        .st-llamando   { color: var(--color-llamando); }
+        .st-atendiendo { color: var(--color-atendiendo); }
+        .st-atendido   { color: var(--color-finalizado); }
 
-        /* BOTONES */
+        /* BOTONES CON NUEVOS COLORES */
         button { cursor: pointer; transition: 0.2s; border: none; font-family: 'Inter', sans-serif; }
         .btn-action { padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: white; }
-        .btn-call { background: var(--blue-accent); }
-        .btn-wait { background: var(--purple-accent); }
-        .btn-done { background: var(--green-accent); }
-        .btn-delete { background: transparent; color: var(--red-accent); font-size: 1.2rem; font-weight: 800; width: 34px; }
         
-        .btn-action:hover { opacity: 0.9; }
+        .btn-call { background: var(--color-llamando); }
+        .btn-wait { background: var(--color-atendiendo); }
+        .btn-done { background: var(--color-pagado); } /* Reutilizamos el verde suave para finalizar */
+        
+        .btn-delete { background: transparent; color: var(--red-cancel); font-size: 1.2rem; font-weight: 800; width: 34px; }
+        
+        .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-delete:hover { transform: scale(1.2); }
+
         .footer-tools { margin-top: 40px; text-align: center; }
         .btn-logout { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 16px; border-radius: 10px; }
     </style>
@@ -122,7 +130,6 @@
             try {
                 await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
                 if (nuevoEstado === 'llamando') {
-                    // Actualizamos la colección 'turnos' para la TV
                     await updateDoc(doc(db, "turnos", "actual"), { paciente: nombre, box: infoBox });
                 }
             } catch (e) { console.error(e); }
@@ -138,7 +145,6 @@
             if (!user) { location.href = "login.html"; return; }
             document.getElementById('email-display').innerText = user.email;
             
-            // FILTRO POR DOCTOR
             const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
             
             onSnapshot(q, (snapshot) => {
@@ -154,7 +160,6 @@
                     if (estado === 'llegado') labelEstado = 'En Recepción';
 
                     let accionesHTML = '';
-                    // REGLA: El botón llamar SOLO aparece si el estado es PAGADO
                     if (estado === 'pagado') {
                         accionesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} - ${p.consulta}')">LLAMAR</button>`;
                     } else if (estado === 'llamando') {
@@ -169,7 +174,7 @@
                         <div class="col-paciente paciente-name">${p.nombre}</div>
                         <div class="col-rut paciente-rut">${window.formatearRut(p.rut)}</div>
                         <div class="col-hora-c text-muted">${p.hora_consulta || '--:--'}</div>
-                        <div class="col-hora-ll" style="color:var(--orange-accent); font-weight:600;">${p.hora_llegada || '--:--'}</div>
+                        <div class="col-hora-ll" style="color:var(--color-recepcion); font-weight:600;">${p.hora_llegada || '--:--'}</div>
                         <div class="col-estado">
                             <span class="txt-estado st-${estado}">${labelEstado}</span>
                         </div>
