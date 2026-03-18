@@ -224,6 +224,8 @@
         const modal = document.getElementById('modalConfirmacion');
         const btn = document.getElementById('btnConfirmar');
 
+        let resetTimer = null;
+
         function limpiarRUT(rut) {
             return rut.replace(/[^0-9kK]/g, '').toUpperCase();
         }
@@ -323,11 +325,41 @@
             return citasValidas[0];
         }
 
+        function cancelarResetInput() {
+            if (resetTimer) {
+                clearTimeout(resetTimer);
+                resetTimer = null;
+            }
+        }
+
+        function programarResetInput() {
+            cancelarResetInput();
+
+            if (!input.value.trim()) return;
+            if (btn.disabled) return;
+            if (modal.style.display === 'flex') return;
+
+            resetTimer = setTimeout(() => {
+                if (!btn.disabled && modal.style.display !== 'flex') {
+                    input.value = '';
+                }
+            }, 10000);
+        }
+
         input.addEventListener('input', () => {
             input.value = formatearRUT(input.value);
+            programarResetInput();
+        });
+
+        input.addEventListener('focus', () => {
+            if (input.value.trim()) {
+                programarResetInput();
+            }
         });
 
         btn.addEventListener('click', async () => {
+            cancelarResetInput();
+
             const rutLimpio = limpiarRUT(input.value);
             if (!rutLimpio) return;
 
@@ -335,6 +367,7 @@
                 alert("RUT inválido. Verifique e intente nuevamente.");
                 input.focus();
                 input.select();
+                programarResetInput();
                 return;
             }
 
@@ -357,6 +390,7 @@
 
                     if (!citaSeleccionada) {
                         alert("No tiene una cita válida para hoy.");
+                        programarResetInput();
                         return;
                     }
 
@@ -396,13 +430,15 @@
                     document.getElementById('resUbicacion').innerText = ubicacionMostrar;
 
                     modal.style.display = 'flex';
-                    input.value = "";
+                    input.value = '';
                 } else {
                     alert("No se encontró una cita para hoy con ese RUT.");
+                    programarResetInput();
                 }
             } catch (error) {
                 console.error(error);
                 alert("Error al procesar.");
+                programarResetInput();
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Confirmar Llegada";
@@ -411,6 +447,7 @@
 
         window.cerrarModal = () => {
             modal.style.display = 'none';
+            cancelarResetInput();
         };
     </script>
 </body>
