@@ -71,7 +71,7 @@
             margin-top: 25px;
         }
 
-        /* MODAL MATE */
+        /* MODAL DE CONFIRMACIÓN */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -110,14 +110,15 @@
 
         .btn-close {
             background: var(--green-muted);
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.9);
             border: none;
-            padding: 16px 40px;
+            padding: 18px 40px;
             border-radius: 12px;
             font-weight: 800;
             font-size: 1rem;
             cursor: pointer;
             width: 100%;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -156,7 +157,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        // Agregamos getDoc para buscar al doctor individualmente
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -183,6 +183,7 @@
             btn.innerText = "Procesando...";
 
             try {
+                // 1. BUSCAR AL PACIENTE
                 const q = query(collection(db, "agendados"), where("rut", "==", rutLimpio));
                 const querySnapshot = await getDocs(q);
 
@@ -190,46 +191,55 @@
                     const docSnap = querySnapshot.docs[0];
                     const p = docSnap.data();
 
-                    // 1. Obtener hora en 24h
+                    // 2. ACTUALIZAR LLEGADA (Hora 24h)
                     const ahora24 = new Date().toLocaleTimeString('es-CL', { 
                         hour: '2-digit', 
                         minute: '2-digit', 
                         hour12: false 
                     });
                     
-                    // 2. Actualizar llegada del paciente
                     await updateDoc(doc(db, "agendados", docSnap.id), {
                         estado: "llegado",
                         hora_llegada: ahora24
                     });
 
-                    // --- NUEVA LÓGICA: BUSCAR NOMBRE REAL DEL DOCTOR ---
-                    let nombreDoctorMostrar = p.doctor_id; // Valor por defecto (el email)
-                    try {
-                        const docRefDoc = doc(db, "doctores", p.doctor_id);
+                    // 3. BUSCAR NOMBRE REAL DEL DOCTOR EN LA NUEVA COLECCIÓN
+                    let nombreDoctorMostrar = "No asignado";
+                    
+                    if (p.doctor_id) {
+                        const idBuscado = p.doctor_id.trim().toLowerCase();
+                        console.log("Intentando buscar doctor con ID:", idBuscado);
+
+                        const docRefDoc = doc(db, "doctores", idBuscado);
                         const docSnapDoc = await getDoc(docRefDoc);
+
                         if (docSnapDoc.exists()) {
                             nombreDoctorMostrar = docSnapDoc.data().nombre;
+                            console.log("¡Doctor encontrado!", nombreDoctorMostrar);
                         } else {
-                            // Si no existe en la colección, formateamos el email un poco
-                            nombreDoctorMostrar = "Dr(a). " + p.doctor_id.split('@')[0].toUpperCase();
+                            console.warn("No existe documento en 'doctores' para:", idBuscado);
+                            // Respaldo amigable si no existe en la BD
+                            nombreDoctorMostrar = "Dr(a). " + idBuscado.split('@')[0].toUpperCase();
                         }
-                    } catch (err) {
-                        console.log("Error buscando doctor:", err);
                     }
 
-                    // 3. Mostrar datos en el modal
+                    // 4. ASIGNAR VALORES AL MODAL
                     document.getElementById('resNombre').innerText = p.nombre;
                     document.getElementById('resDoctor').innerText = nombreDoctorMostrar;
-                    document.getElementById('resUbicacion').innerText = `${p.piso} - Consulta ${p.consulta}`;
+                    
+                    // Priorizar ubicación de la colección doctores si existe, sino usar la de agendados
+                    const ubicacion = (p.piso && p.consulta) ? `${p.piso} - Consulta ${p.consulta}` : "Por confirmar";
+                    document.getElementById('resUbicacion').innerText = ubicacion;
 
+                    // 5. MOSTRAR MODAL
                     modal.style.display = 'flex';
                     input.value = "";
                 } else {
-                    alert("RUT no encontrado.");
+                    alert("RUT no encontrado en la agenda de hoy.");
                 }
             } catch (error) {
-                console.error(error);
+                console.error("Error crítico en Tótem:", error);
+                alert("Hubo un error al confirmar. Intente nuevamente.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Confirmar Llegada";
