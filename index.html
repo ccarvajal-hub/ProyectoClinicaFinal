@@ -12,7 +12,7 @@
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
             --blue-accent: #4682B4;
-            --green-muted: #2D6A4F; /* Verde bosque mate, sin brillo */
+            --green-muted: #2D6A4F; 
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
         }
@@ -71,7 +71,6 @@
             margin-top: 25px;
         }
 
-        /* MODAL MATE */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -108,10 +107,9 @@
         .info-label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 4px; }
         .info-value { font-weight: 700; color: white; font-size: 1.2rem; }
 
-        /* BOTÓN ENTENDIDO - AHORA MATE Y BAJO EN BRILLO */
         .btn-close {
             background: var(--green-muted);
-            color: rgba(255, 255, 255, 0.8); /* Texto ligeramente grisáceo para quitar impacto */
+            color: rgba(255, 255, 255, 0.8);
             border: none;
             padding: 16px 40px;
             border-radius: 12px;
@@ -119,12 +117,6 @@
             font-size: 1rem;
             cursor: pointer;
             width: 100%;
-            transition: background 0.2s;
-        }
-
-        .btn-close:hover { 
-            background: #24533e; 
-            color: #ffffff;
         }
     </style>
 </head>
@@ -195,11 +187,17 @@
                 if (!querySnapshot.empty) {
                     const docSnap = querySnapshot.docs[0];
                     const p = docSnap.data();
-                    const ahora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    // --- CAMBIO AQUÍ: HORA EN 24 HORAS PARA LA LLEGADA ---
+                    const ahora24 = new Date().toLocaleTimeString('es-CL', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: false 
+                    });
                     
                     await updateDoc(doc(db, "agendados", docSnap.id), {
                         estado: "llegado",
-                        hora_llegada: ahora
+                        hora_llegada: ahora24
                     });
 
                     document.getElementById('resNombre').innerText = p.nombre;
