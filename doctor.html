@@ -5,113 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda Médica - Panel Doctor</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    
     <style>
         :root {
-            --bg-page: #4a4a4a;      
-            --bg-card: #1c1c1c;      
-            --text-main: #FFFFFF;
-            --text-muted: #A0A0A0;
-            --color-recepcion: #FFB347; 
-            --color-pagado: #48BB78;    
-            --color-llamando: #4299E1;  
-            --color-atendiendo: #9F7AEA; 
-            --color-finalizado: #81E6D9; 
-            --red-cancel: #FC8181;   
-            --border-color: rgba(255, 255, 255, 0.1); 
-            --radius-box: 24px;
-            --radius-card: 16px;
+            --bg-page: #4a4a4a; --bg-card: #1c1c1c; --text-main: #FFFFFF; --text-muted: #A0A0A0;
+            --color-recepcion: #FFB347; --color-pagado: #48BB78; --color-llamando: #4299E1;
+            --color-atendiendo: #9F7AEA; --color-finalizado: #81E6D9; --red-cancel: #FC8181;
+            --border-color: rgba(255, 255, 255, 0.1); --radius-box: 24px; --radius-card: 16px;
         }
-
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-page); 
-            color: var(--text-main); 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            padding: 20px; 
-        }
-
-        .agenda-container { 
-            background-color: var(--bg-card); 
-            padding: 40px; 
-            border-radius: var(--radius-box); 
-            width: 95%; 
-            max-width: 1200px; 
-            box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
-            border: 1px solid var(--border-color); 
-        }
-
-        h1 { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
-        
-        .user-name { 
-            color: #FFFFFF; 
-            font-size: 1.4rem; 
-            font-weight: 900; 
-            text-transform: uppercase; 
-            margin-top: 15px;
-            margin-bottom: 40px; 
-            text-align: center; 
-            letter-spacing: 0; /* Espaciado eliminado */
-            display: block;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .agenda-container { background-color: var(--bg-card); padding: 40px; border-radius: var(--radius-box); width: 95%; max-width: 1200px; border: 1px solid var(--border-color); }
+        h1 { font-size: 2.2rem; font-weight: 800; margin: 0; text-align: center; }
+        .user-name { color: #FFFFFF; font-size: 1.4rem; font-weight: 900; text-transform: uppercase; margin: 15px 0 40px 0; text-align: center; display: block; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
         .agenda-header, .paciente-row { display: flex; align-items: center; padding: 15px 20px; }
         .col-paciente { flex: 2; text-align: left; }
-        .col-rut      { flex: 1.2; text-align: center; }
-        .col-hora-c   { flex: 0.8; text-align: center; }
-        .col-hora-ll  { flex: 0.8; text-align: center; }
-        .col-estado   { flex: 1.2; text-align: center; }
-        .col-acciones { flex: 1.5; text-align: right; display: flex; justify-content: flex-end; gap: 10px; min-height: 45px; }
-
-        .agenda-header { border-bottom: 2px solid var(--border-color); margin-bottom: 10px; }
-        .agenda-header div { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
-
+        .col-rut { flex: 1.2; text-align: center; }
+        .col-hora-c, .col-hora-ll { flex: 0.8; text-align: center; }
+        .col-estado { flex: 1.2; text-align: center; }
+        .col-acciones { flex: 1.5; text-align: right; display: flex; justify-content: flex-end; gap: 10px; }
+        .agenda-header { border-bottom: 2px solid var(--border-color); margin-bottom: 10px; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; }
         .paciente-row { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: var(--radius-card); margin-bottom: 8px; }
-        .row-finalizado { opacity: 0.6; background: rgba(0,0,0,0.2); }
-
+        .row-finalizado { opacity: 0.6; }
         .paciente-name { font-weight: 700; font-size: 1.05rem; }
         .txt-estado { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; }
-        
-        /* Ajuste de estados */
-        .st-llegado    { color: var(--color-recepcion); }
-        .st-pagado     { color: var(--color-pagado); }
-        .st-llamando   { color: var(--color-llamando); }
+        .st-llegado { color: var(--color-recepcion); }
+        .st-pagado { color: var(--color-pagado); }
+        .st-llamando { color: var(--color-llamando); }
         .st-atendiendo { color: var(--color-atendiendo); }
-        .st-atendido   { color: var(--color-finalizado); }
-
+        .st-atendido { color: var(--color-finalizado); }
         button { cursor: pointer; transition: 0.2s; border: none; font-family: 'Inter', sans-serif; }
         .btn-action { padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: white; }
         .btn-call { background: var(--color-llamando); }
         .btn-wait { background: var(--color-atendiendo); }
-        .btn-done { background: var(--color-pagado); } 
-        .btn-delete { background: transparent; color: var(--red-cancel); font-size: 1.2rem; font-weight: 800; width: 34px; }
-        
-        .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        
+        .btn-done { background: var(--color-pagado); }
+        .btn-delete { background: transparent; color: var(--red-cancel); font-size: 1.2rem; font-weight: 800; }
         .footer-tools { margin-top: 50px; text-align: center; }
-
-        .btn-logout { 
-            background: #d4d4a1; 
-            color: #FFFFFF; 
-            padding: 12px 24px; 
-            border-radius: 10px;
-            font-weight: 800;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .btn-logout:hover { filter: brightness(0.9); }
+        .btn-logout { background: #d4d4a1; color: #FFFFFF; padding: 12px 24px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; }
     </style>
+</head>
+<body>
+    <div class="agenda-container">
+        <h1>Agenda Médica</h1>
+        <div class="user-name" id="display-name">Cargando...</div>
+        <div class="agenda-header">
+            <div class="col-paciente">Paciente</div><div class="col-rut">RUT</div><div class="col-hora-c">Cita</div><div class="col-hora-ll">Llegada</div><div class="col-estado">Estado</div><div class="col-acciones">Acciones</div>
+        </div>
+        <div id="agenda-lista"></div>
+        <div class="footer-tools"><button class="btn-logout" id="btnLogout">Cerrar Sesión</button></div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -125,3 +70,83 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        let nombreDoctorReal = "";
+        let ubicacionDoctor = "";
+
+        // Funciones Globales (unidas al objeto window para que los botones las vean)
+        window.formatearRut = (rut) => {
+            if (!rut) return "---";
+            let v = rut.replace(/[.-]/g, '');
+            return v.slice(0,-1).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + v.slice(-1).toUpperCase();
+        };
+
+        window.cambiarEstado = async (id, nuevoEstado, nombrePaciente = null) => {
+            if (nuevoEstado === 'llamando' && !confirm(`¿Desea LLAMAR a ${nombrePaciente}?`)) return;
+            try {
+                await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
+                if (nuevoEstado === 'llamando') {
+                    const ahora = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    await updateDoc(doc(db, "turnos", "actual"), { 
+                        paciente: nombrePaciente, box: ubicacionDoctor, doctor: nombreDoctorReal, hora_llamado: ahora 
+                    });
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        window.cancelar = async (id, nombre) => {
+            if (confirm(`¿Eliminar a ${nombre}?`)) await deleteDoc(doc(db, "agendados", id));
+        };
+
+        document.getElementById('btnLogout').onclick = () => signOut(auth).then(() => location.href = "login.html");
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { location.href = "login.html"; return; }
+            
+            // Cargar datos del doctor
+            const docRef = doc(db, "doctores", user.email.toLowerCase().trim());
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                nombreDoctorReal = docSnap.data().nombre;
+                ubicacionDoctor = `Piso ${docSnap.data().piso} - Consulta ${docSnap.data().consulta}`;
+                document.getElementById('display-name').innerText = nombreDoctorReal;
+            } else {
+                nombreDoctorReal = user.email;
+                document.getElementById('display-name').innerText = user.email;
+            }
+
+            // Escuchar pacientes (QUITAMOS EL ORDERBY PARA EVITAR ERRORES)
+            const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email));
+            
+            onSnapshot(q, (snapshot) => {
+                const container = document.getElementById('agenda-lista');
+                container.innerHTML = "";
+                
+                snapshot.forEach((docSnap) => {
+                    const p = docSnap.data();
+                    const id = docSnap.id;
+                    const estado = p.estado || 'pendiente';
+                    const estadoTexto = (estado === 'llegado') ? 'En Recepción' : estado;
+                    
+                    let accionesHTML = '';
+                    if (estado === 'pagado') accionesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}')">LLAMAR</button>`;
+                    else if (estado === 'llamando') accionesHTML = `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
+                    else if (estado === 'atendiendo') accionesHTML = `<button class="btn-action btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>`;
+
+                    const row = document.createElement('div');
+                    row.className = `paciente-row ${estado === 'atendido' ? 'row-finalizado' : ''}`;
+                    row.innerHTML = `
+                        <div class="col-paciente paciente-name">${p.nombre}</div>
+                        <div class="col-rut">${window.formatearRut(p.rut)}</div>
+                        <div class="col-hora-c text-muted">${p.hora_consulta || '--:--'}</div>
+                        <div class="col-hora-ll" style="color:var(--color-recepcion); font-weight:600;">${p.hora_llegada || '--:--'}</div>
+                        <div class="col-estado"><span class="txt-estado st-${estado}">${estadoTexto}</span></div>
+                        <div class="col-acciones">${accionesHTML}<button class="btn-delete" onclick="cancelar('${id}', '${p.nombre}')">✕</button></div>
+                    `;
+                    container.appendChild(row);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
