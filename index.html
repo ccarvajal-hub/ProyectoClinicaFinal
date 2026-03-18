@@ -3,17 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tótem de Autoatención - Bienvenida</title>
+    <title>Tótem de Atención - Clínica</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
         :root {
-            --bg-page: #4a4a4a;      
-            --bg-card: #1c1c1c;      
+            --bg-page: #4a4a4a;
+            --bg-card: #1c1c1c;
             --text-main: #FFFFFF;
-            --text-muted: #A0A0A0;
-            --blue-accent: #4682B4;  
-            --green-accent: #1DB954;
+            --blue-accent: #4682B4;
+            --green-accent: #48BB78;
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
         }
@@ -27,104 +25,136 @@
             align-items: center;
             height: 100vh;
             color: var(--text-main);
+            overflow: hidden;
         }
 
-        .totem-container {
+        .totem-card {
             background-color: var(--bg-card);
             padding: 60px 40px;
             border-radius: var(--radius);
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 500px;
             text-align: center;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
         }
 
-        h1 { 
-            font-size: 2.5rem; 
-            font-weight: 800; 
-            margin-bottom: 10px; 
-            letter-spacing: -1.5px; 
-        }
-
-        p { 
-            color: var(--text-muted); 
-            font-size: 1.1rem; 
-            margin-bottom: 40px; 
-        }
-
-        .input-group {
-            margin-bottom: 30px;
-        }
+        h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1.5px; }
+        p { color: #A0A0A0; margin-bottom: 40px; }
 
         input {
             width: 100%;
-            padding: 22px;
+            padding: 20px;
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
+            border: 2px solid var(--border-color);
             border-radius: 15px;
             color: white;
-            font-size: 1.8rem; /* Más grande para que el RUT luzca */
+            font-size: 1.5rem;
             text-align: center;
+            margin-bottom: 25px;
             box-sizing: border-box;
             outline: none;
-            transition: 0.2s;
-            letter-spacing: 1px;
-            font-weight: 700;
+            transition: 0.3s;
         }
 
-        input:focus {
-            border-color: var(--blue-accent);
-            background: rgba(255, 255, 255, 0.08);
-        }
+        input:focus { border-color: var(--blue-accent); background: rgba(255, 255, 255, 0.08); }
 
-        /* Botón con el azul mate exacto */
         .btn-confirm {
             width: 100%;
-            padding: 22px;
+            padding: 20px;
             background-color: var(--blue-accent);
             color: white;
             border: none;
             border-radius: 15px;
             font-size: 1.2rem;
             font-weight: 800;
-            text-transform: uppercase;
             cursor: pointer;
+            text-transform: uppercase;
             transition: 0.2s;
-            letter-spacing: 1px;
         }
 
-        .btn-confirm:hover {
-            opacity: 0.95;
-            transform: translateY(-2px);
+        .btn-confirm:active { transform: scale(0.98); }
+
+        /* ESTILOS DEL MODAL (RECUADRO DE CONFIRMACIÓN) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none; /* Se activa con JS */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
         }
 
-        .success-msg {
-            color: var(--green-accent);
-            font-weight: 700;
-            margin-top: 25px;
-            display: none;
-            font-size: 1.1rem;
+        .modal-content {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: var(--radius);
+            border: 2px solid var(--green-accent);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-content h2 { color: var(--green-accent); font-size: 1.8rem; margin-top: 0; }
+        .info-box { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin: 20px 0; text-align: left; }
+        .info-item { margin-bottom: 10px; font-size: 1.1rem; }
+        .info-label { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; display: block; }
+        .info-value { font-weight: 700; color: white; }
+
+        .btn-close {
+            background: var(--green-accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <div class="totem-container">
+    <div class="totem-card">
         <h1>Bienvenido</h1>
-        <p>Ingrese su RUT para anunciar su llegada</p>
+        <p>Ingrese su RUT para confirmar llegada</p>
+        <input type="text" id="rutInput" placeholder="12.345.678-K">
+        <button class="btn-confirm" id="btnConfirmar">Confirmar Llegada</button>
+    </div>
 
-        <div class="input-group">
-            <input type="text" id="rutInput" placeholder="12.345.678-K" maxlength="12">
+    <div class="modal-overlay" id="modalConfirmacion">
+        <div class="modal-content">
+            <h2>¡Llegada Confirmada!</h2>
+            <div class="info-box">
+                <div class="info-item">
+                    <span class="info-label">Paciente</span>
+                    <span class="info-value" id="resNombre">---</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Doctor(a)</span>
+                    <span class="info-value" id="resDoctor">---</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Ubicación</span>
+                    <span class="info-value" id="resUbicacion">---</span>
+                </div>
+            </div>
+            <p style="font-size: 0.8rem;">Por favor, diríjase a recepción para el pago.</p>
+            <button class="btn-close" onclick="cerrarModal()">ENTENDIDO</button>
         </div>
-
-        <button class="btn-confirm" id="confirmBtn">Confirmar Llegada</button>
-        <div id="success-text" class="success-msg">✔ Llegada registrada correctamente</div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -138,59 +168,43 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const rutInput = document.getElementById('rutInput');
-        const confirmBtn = document.getElementById('confirmBtn');
-        const successText = document.getElementById('success-text');
+        const input = document.getElementById('rutInput');
+        const modal = document.getElementById('modalConfirmacion');
 
-        // FUNCIÓN PARA FORMATEAR RUT AUTOMÁTICAMENTE (12.345.678-K)
-        rutInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\./g, '').replace(/-/g, '').toUpperCase();
-            if (value.length > 1) {
-                let cv = value.slice(0, -1);
-                let dv = value.slice(-1);
-                value = cv.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + dv;
-            }
-            e.target.value = value;
-        });
+        document.getElementById('btnConfirmar').addEventListener('click', async () => {
+            let rut = input.value.trim().replace(/\./g, '').toUpperCase();
+            if (!rut) return;
 
-        confirmBtn.addEventListener('click', async () => {
-            // Limpiamos el RUT para buscar en la base de datos (solo números y letra)
-            let rawRut = rutInput.value.replace(/[.-]/g, '').toUpperCase();
-            
-            if (rawRut.length < 8) {
-                alert("Por favor ingrese un RUT válido.");
-                return;
-            }
+            const q = query(collection(db, "agendados"), where("rut", "==", rut));
+            const querySnapshot = await getDocs(q);
 
-            try {
-                const q = query(collection(db, "agendados"), where("rut", "==", rawRut));
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    alert("No se encontró una cita agendada para este RUT hoy.");
-                    return;
-                }
-
-                const ahora = new Date();
-                const horaLlegada = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
-
-                querySnapshot.forEach(async (docSnap) => {
-                    await updateDoc(doc(db, "agendados", docSnap.id), {
-                        estado: "llegado",
-                        hora_llegada: horaLlegada
-                    });
+            if (!querySnapshot.empty) {
+                const docSnap = querySnapshot.docs[0];
+                const p = docSnap.data();
+                
+                // Actualizar estado en Firebase
+                const ahora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                await updateDoc(doc(db, "agendados", docSnap.id), {
+                    estado: "llegado",
+                    hora_llegada: ahora
                 });
 
-                successText.style.display = "block";
-                rutInput.value = "";
-                
-                setTimeout(() => { successText.style.display = "none"; }, 5000);
+                // Llenar Modal
+                document.getElementById('resNombre').innerText = p.nombre;
+                document.getElementById('resDoctor').innerText = "Dr(a). " + p.doctor_id.split('@')[0].toUpperCase();
+                document.getElementById('resUbicacion').innerText = `${p.piso} - Consulta ${p.consulta}`;
 
-            } catch (error) {
-                console.error("Error:", error);
-                alert("Error al registrar llegada.");
+                // Mostrar Modal
+                modal.style.display = 'flex';
+                input.value = "";
+            } else {
+                alert("RUT no encontrado en la agenda de hoy.");
             }
         });
+
+        window.cerrarModal = () => {
+            modal.style.display = 'none';
+        };
     </script>
 </body>
 </html>
