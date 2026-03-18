@@ -12,7 +12,6 @@
             --bg-card: #1c1c1c;      
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
-            --color-soft-yellow: #fdfd96; 
             --color-recepcion: #FFB347; 
             --color-pagado: #48BB78;    
             --color-llamando: #4299E1;  
@@ -48,19 +47,17 @@
 
         h1 { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
         
-        /* NOMBRE DEL DOCTOR: Blanco, Elegante, con Sombra Sutil */
         .user-name { 
             color: #FFFFFF; 
-            font-size: 1.2rem; 
-            font-weight: 800; 
+            font-size: 1.4rem; 
+            font-weight: 900; 
             text-transform: uppercase; 
             margin-top: 15px;
             margin-bottom: 40px; 
             text-align: center; 
-            letter-spacing: 3px; /* Espaciado elegante */
+            letter-spacing: 0; /* Espaciado eliminado */
             display: block;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Profundidad suave */
-            opacity: 0.9;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
         .agenda-header, .paciente-row { display: flex; align-items: center; padding: 15px 20px; }
@@ -78,7 +75,9 @@
         .row-finalizado { opacity: 0.6; background: rgba(0,0,0,0.2); }
 
         .paciente-name { font-weight: 700; font-size: 1.05rem; }
-        .txt-estado { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
+        .txt-estado { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; }
+        
+        /* Ajuste de estados */
         .st-llegado    { color: var(--color-recepcion); }
         .st-pagado     { color: var(--color-pagado); }
         .st-llamando   { color: var(--color-llamando); }
@@ -96,9 +95,8 @@
         
         .footer-tools { margin-top: 50px; text-align: center; }
 
-        /* BOTÓN CERRAR SESIÓN: Color sólido, letras blancas, sin brillos */
         .btn-logout { 
-            background: #d4d4a1; /* Un amarillo ocre mate, más serio */
+            background: #d4d4a1; 
             color: #FFFFFF; 
             padding: 12px 24px; 
             border-radius: 10px;
@@ -106,12 +104,8 @@
             font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: none; /* Quitamos el brillo */
         }
-        .btn-logout:hover {
-            filter: brightness(0.9); /* Se oscurece un poco al pasar el mouse */
-            transform: translateY(0);
-        }
+        .btn-logout:hover { filter: brightness(0.9); }
     </style>
 
     <script type="module">
@@ -131,119 +125,3 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        let nombreDoctorReal = "";
-        let ubicacionDoctor = "";
-
-        window.formatearRut = (rut) => {
-            if (!rut) return "---";
-            let v = rut.replace(/[.-]/g, '');
-            return v.slice(0,-1).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + v.slice(-1).toUpperCase();
-        };
-
-        window.cambiarEstado = async (id, nuevoEstado, nombrePaciente = null) => {
-            if (nuevoEstado === 'llamando') {
-                if (!confirm(`¿Desea LLAMAR a ${nombrePaciente}?`)) return;
-            }
-
-            try {
-                await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
-                
-                if (nuevoEstado === 'llamando') {
-                    const ahora24 = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
-                    await updateDoc(doc(db, "turnos", "actual"), { 
-                        paciente: nombrePaciente, 
-                        box: ubicacionDoctor, 
-                        doctor: nombreDoctorReal, 
-                        hora_llamado: ahora24
-                    });
-                }
-            } catch (e) { console.error(e); }
-        };
-
-        window.cancelar = async (id, nombre) => {
-            if (confirm(`¿Eliminar a ${nombre}?`)) await deleteDoc(doc(db, "agendados", id));
-        };
-
-        window.cerrarSesion = () => signOut(auth).then(() => location.href = "login.html");
-
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) { location.href = "login.html"; return; }
-            
-            try {
-                const docRef = doc(db, "doctores", user.email.toLowerCase().trim());
-                const docSnap = await getDoc(docRef);
-                
-                if (docSnap.exists()) {
-                    const d = docSnap.data();
-                    nombreDoctorReal = d.nombre;
-                    ubicacionDoctor = `Piso ${d.piso} - Consulta ${d.consulta}`;
-                    document.getElementById('display-name').innerText = nombreDoctorReal;
-                } else {
-                    nombreDoctorReal = user.email;
-                    document.getElementById('display-name').innerText = user.email;
-                }
-            } catch (e) { console.error(e); }
-
-            const q = query(
-                collection(db, "agendados"), 
-                where("doctor_id", "==", user.email), 
-                orderBy("hora_consulta", "asc")
-            );
-            
-            onSnapshot(q, (snapshot) => {
-                const container = document.getElementById('agenda-lista');
-                container.innerHTML = "";
-                
-                snapshot.forEach((docSnap) => {
-                    const p = docSnap.data();
-                    const id = docSnap.id;
-                    const estado = p.estado || 'pendiente';
-                    
-                    let accionesHTML = '';
-                    if (estado === 'pagado') {
-                        accionesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}')">LLAMAR</button>`;
-                    } else if (estado === 'llamando') {
-                        accionesHTML = `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
-                    } else if (estado === 'atendiendo') {
-                        accionesHTML = `<button class="btn-action btn-done" onclick="cambiarEstado('${id}', 'atendido')">FINALIZAR</button>`;
-                    }
-
-                    const row = document.createElement('div');
-                    row.className = `paciente-row ${estado === 'atendido' ? 'row-finalizado' : ''}`;
-                    row.innerHTML = `
-                        <div class="col-paciente paciente-name">${p.nombre}</div>
-                        <div class="col-rut">${window.formatearRut(p.rut)}</div>
-                        <div class="col-hora-c text-muted">${p.hora_consulta || '--:--'}</div>
-                        <div class="col-hora-ll" style="color:var(--color-recepcion); font-weight:600;">${p.hora_llegada || '--:--'}</div>
-                        <div class="col-estado"><span class="txt-estado st-${estado}">${estado}</span></div>
-                        <div class="col-acciones">
-                            ${accionesHTML}
-                            <button class="btn-delete" onclick="cancelar('${id}', '${p.nombre}')">✕</button>
-                        </div>
-                    `;
-                    container.appendChild(row);
-                });
-            });
-        });
-    </script>
-</head>
-<body>
-    <div class="agenda-container">
-        <h1>Agenda Médica</h1>
-        <div class="user-name" id="display-name">Cargando...</div>
-        <div class="agenda-header">
-            <div class="col-paciente">Paciente</div>
-            <div class="col-rut">RUT</div>
-            <div class="col-hora-c">Cita</div>
-            <div class="col-hora-ll">Llegada</div>
-            <div class="col-estado">Estado</div>
-            <div class="col-acciones">Acciones</div>
-        </div>
-        <div id="agenda-lista"></div>
-        <div class="footer-tools">
-            <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
-        </div>
-    </div>
-</body>
-</html>
