@@ -68,7 +68,6 @@
         .hora { flex: 0.8; font-weight: 600; text-align: center; }
         .actions { flex: 1; text-align: right; }
 
-        /* Botón Pagar Activo */
         .btn-pay {
             background-color: var(--color-pagado);
             color: white;
@@ -82,7 +81,6 @@
             transition: 0.2s;
         }
 
-        /* Botón Pagar Desactivado (Antes del Tótem) */
         .btn-disabled {
             background-color: #333;
             color: #666;
@@ -114,7 +112,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -128,9 +126,30 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Cache para nombres de doctores
+        const cacheDoctores = {};
+
+        async function obtenerNombreDoctor(email) {
+            if (!email) return "DOCTOR";
+            const cleanEmail = email.toLowerCase().trim();
+            if (cacheDoctores[cleanEmail]) return cacheDoctores[cleanEmail];
+
+            try {
+                const docRef = doc(db, "doctores", cleanEmail);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const nombre = docSnap.data().nombre;
+                    cacheDoctores[cleanEmail] = nombre;
+                    return nombre;
+                }
+            } catch (e) { console.error("Error doctor:", e); }
+            
+            return cleanEmail.split('@')[0].toUpperCase();
+        }
+
         const q = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
 
-        onSnapshot(q, (snapshot) => {
+        onSnapshot(q, async (snapshot) => {
             const esperaDiv = document.getElementById('lista-espera');
             const atendidosDiv = document.getElementById('lista-atendidos');
             
@@ -140,20 +159,18 @@
             let contEspera = 0;
             let contAtendidos = 0;
 
-            snapshot.forEach(docSnap => {
+            // Usamos for...of para poder usar await dentro
+            for (const docSnap of snapshot.docs) {
                 const p = docSnap.data();
                 const id = docSnap.id;
                 const estado = p.estado || 'pendiente';
 
-                // Solo movemos a la lista de abajo si ya pagó o ya está siendo atendido/llamado
                 const esHistorial = (estado === 'pagado' || estado === 'llamando' || estado === 'atendiendo' || estado === 'atendido');
+                const nombreRealDoctor = await obtenerNombreDoctor(p.doctor_id);
 
                 const row = document.createElement('div');
                 row.className = "row";
                 
-                // Lógica del botón:
-                // Si el estado es 'llegado', el botón está activo.
-                // Si el estado es 'pendiente', el botón está deshabilitado.
                 let accionContenido = '';
                 if (!esHistorial) {
                     if (estado === 'llegado') {
@@ -167,7 +184,7 @@
 
                 row.innerHTML = `
                     <div class="name">${p.nombre}</div>
-                    <div class="doc">Dr. ${p.doctor_id.split('@')[0].toUpperCase()}</div>
+                    <div class="doc">Dr. ${nombreRealDoctor}</div>
                     <div class="hora">${p.hora_consulta}</div>
                     <div class="actions">${accionContenido}</div>
                 `;
@@ -179,13 +196,12 @@
                     esperaDiv.appendChild(row);
                     contEspera++;
                 }
-            });
+            }
 
             if(contEspera === 0) esperaDiv.innerHTML = '<div class="empty-msg">No hay pacientes pendientes.</div>';
             if(contAtendidos === 0) atendidosDiv.innerHTML = '<div class="empty-msg">No hay pagos registrados hoy.</div>';
         });
 
-        // Función con confirmación para evitar errores
         window.confirmarPago = async (id, nombre) => {
             const respuesta = confirm(`¿Confirmar que el paciente ${nombre} ha realizado el pago?`);
             if (respuesta) {
