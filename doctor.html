@@ -26,7 +26,9 @@
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
         .agenda-container { background-color: var(--bg-card); padding: 40px; border-radius: var(--radius-box); width: 95%; max-width: 1200px; box-shadow: 0 40px 100px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
         h1 { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
-        .user-email { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 40px; text-align: center; }
+        
+        /* ESTILO PARA EL NOMBRE DEL DOCTOR */
+        .user-name { color: var(--color-llamando); font-size: 1.3rem; font-weight: 700; margin-bottom: 40px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
 
         .agenda-header, .paciente-row { display: flex; align-items: center; padding: 15px 20px; }
         .col-paciente { flex: 2; text-align: left; }
@@ -65,7 +67,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -80,34 +82,32 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Formateador de RUT
+        // Variables globales para los datos del doctor
+        let nombreDoctorReal = "";
+        let ubicacionDoctor = "";
+
         window.formatearRut = (rut) => {
             if (!rut) return "---";
             let v = rut.replace(/[.-]/g, '');
             return v.slice(0,-1).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + v.slice(-1).toUpperCase();
         };
 
-        // Función de cambio de estado con formato 24h explícito
-        window.cambiarEstado = async (id, nuevoEstado, nombre = null, infoBox = null) => {
+        window.cambiarEstado = async (id, nuevoEstado, nombrePaciente = null) => {
             if (nuevoEstado === 'llamando') {
-                const confirmar = confirm(`¿Desea LLAMAR a ${nombre} a la pantalla de TV?`);
-                if (!confirmar) return;
+                if (!confirm(`¿Desea LLAMAR a ${nombrePaciente}?`)) return;
             }
 
             try {
                 await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
                 
                 if (nuevoEstado === 'llamando') {
-                    // SEGURO: Formato 24 Horas
-                    const ahora24 = new Date().toLocaleTimeString('es-CL', { 
-                        hour: '2-digit', 
-                        minute: '2-digit', 
-                        hour12: false 
-                    });
+                    const ahora24 = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+                    // Enviamos el llamado a la TV usando los datos del perfil del Doctor
                     await updateDoc(doc(db, "turnos", "actual"), { 
-                        paciente: nombre, 
-                        box: infoBox,
+                        paciente: nombrePaciente, 
+                        box: ubicacionDoctor, // Se llena automáticamente desde el perfil
+                        doctor: nombreDoctorReal, 
                         hora_llamado: ahora24
                     });
                 }
@@ -120,10 +120,26 @@
 
         window.cerrarSesion = () => signOut(auth).then(() => location.href = "login.html");
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (!user) { location.href = "login.html"; return; }
-            document.getElementById('email-display').innerText = user.email;
             
+            // --- BUSCAR DATOS REALES DEL DOCTOR ---
+            try {
+                const docRef = doc(db, "doctores", user.email.toLowerCase().trim());
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const d = docSnap.data();
+                    nombreDoctorReal = d.nombre;
+                    ubicacionDoctor = `Piso ${d.piso} - Consulta ${d.consulta}`;
+                    document.getElementById('display-name').innerText = nombreDoctorReal;
+                } else {
+                    // Respaldo si no está en la base de datos
+                    nombreDoctorReal = user.email;
+                    document.getElementById('display-name').innerText = user.email;
+                }
+            } catch (e) { console.error("Error cargando perfil:", e); }
+
             const q = query(
                 collection(db, "agendados"), 
                 where("doctor_id", "==", user.email), 
@@ -138,22 +154,10 @@
                     const p = docSnap.data();
                     const id = docSnap.id;
                     const estado = p.estado || 'pendiente';
-                    let labelEstado = estado === 'llegado' ? 'En Recepción' : estado;
-
-                    // Formatear hora de llegada a 24h por si viene en AM/PM desde el Tótem
-                    let hLlegada = p.hora_llegada || '--:--';
-                    if (hLlegada.includes('AM') || hLlegada.includes('PM')) {
-                        // Limpieza rápida para visualización
-                        const [time, modifier] = hLlegada.split(' ');
-                        let [hours, minutes] = time.split(':');
-                        if (hours === '12') hours = '00';
-                        if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
-                        hLlegada = `${hours}:${minutes}`;
-                    }
-
+                    
                     let accionesHTML = '';
                     if (estado === 'pagado') {
-                        accionesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}', '${p.piso} - ${p.consulta}')">LLAMAR</button>`;
+                        accionesHTML = `<button class="btn-action btn-call" onclick="cambiarEstado('${id}', 'llamando', '${p.nombre}')">LLAMAR</button>`;
                     } else if (estado === 'llamando') {
                         accionesHTML = `<button class="btn-action btn-wait" onclick="cambiarEstado('${id}', 'atendiendo')">ATENDIENDO</button>`;
                     } else if (estado === 'atendiendo') {
@@ -164,10 +168,10 @@
                     row.className = `paciente-row ${estado === 'atendido' ? 'row-finalizado' : ''}`;
                     row.innerHTML = `
                         <div class="col-paciente paciente-name">${p.nombre}</div>
-                        <div class="col-rut paciente-rut">${window.formatearRut(p.rut)}</div>
+                        <div class="col-rut">${window.formatearRut(p.rut)}</div>
                         <div class="col-hora-c text-muted">${p.hora_consulta || '--:--'}</div>
-                        <div class="col-hora-ll" style="color:var(--color-recepcion); font-weight:600;">${hLlegada}</div>
-                        <div class="col-estado"><span class="txt-estado st-${estado}">${labelEstado}</span></div>
+                        <div class="col-hora-ll" style="color:var(--color-recepcion); font-weight:600;">${p.hora_llegada || '--:--'}</div>
+                        <div class="col-estado"><span class="txt-estado st-${estado}">${estado}</span></div>
                         <div class="col-acciones">
                             ${accionesHTML}
                             <button class="btn-delete" onclick="cancelar('${id}', '${p.nombre}')">✕</button>
@@ -182,11 +186,11 @@
 <body>
     <div class="agenda-container">
         <h1>Agenda Médica</h1>
-        <div class="user-email" id="email-display">Cargando...</div>
+        <div class="user-name" id="display-name">Cargando...</div>
         <div class="agenda-header">
             <div class="col-paciente">Paciente</div>
             <div class="col-rut">RUT</div>
-            <div class="col-hora-c">Cita (24h)</div>
+            <div class="col-hora-c">Cita</div>
             <div class="col-hora-ll">Llegada</div>
             <div class="col-estado">Estado</div>
             <div class="col-acciones">Acciones</div>
