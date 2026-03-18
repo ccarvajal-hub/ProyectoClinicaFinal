@@ -12,7 +12,7 @@
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
             --blue-accent: #4682B4;
-            --green-muted: #2D6A4F; 
+            --green-muted: #2D6A4F;
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
         }
@@ -40,8 +40,18 @@
             border: 1px solid var(--border-color);
         }
 
-        h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -2px; }
-        .instruction { color: var(--text-muted); margin-bottom: 40px; font-size: 1.1rem; }
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -2px;
+        }
+
+        .instruction {
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
 
         input {
             width: 100%;
@@ -71,11 +81,19 @@
             margin-top: 25px;
         }
 
+        .btn-confirm:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0,0,0,0.85);
-            display: none; 
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -91,21 +109,46 @@
             text-align: center;
         }
 
-        .modal-content h2 { color: #48BB78; font-size: 1.8rem; margin: 0 0 25px 0; font-weight: 800; }
-        
-        .info-box { 
-            background: #252525; 
-            padding: 25px; 
-            border-radius: 20px; 
-            margin-bottom: 30px; 
+        .modal-content h2 {
+            color: #48BB78;
+            font-size: 1.8rem;
+            margin: 0 0 25px 0;
+            font-weight: 800;
+        }
+
+        .info-box {
+            background: #252525;
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 30px;
             text-align: left;
         }
 
-        .info-item { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
-        .info-item:last-child { margin-bottom: 0; border: none; }
-        
-        .info-label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 4px; }
-        .info-value { font-weight: 700; color: white; font-size: 1.2rem; }
+        .info-item {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+            border: none;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-weight: 700;
+            color: white;
+            font-size: 1.2rem;
+        }
 
         .btn-close {
             background: var(--green-muted);
@@ -126,10 +169,10 @@
     <div class="totem-card">
         <h1>Bienvenido</h1>
         <p class="instruction">Ingrese su RUT para confirmar su llegada.</p>
-        <input 
-            type="text" 
-            id="rutInput" 
-            placeholder="12.345.678-K" 
+        <input
+            type="text"
+            id="rutInput"
+            placeholder="12.345.678-K"
             autocomplete="off"
             autocapitalize="characters"
             maxlength="12"
@@ -166,12 +209,12 @@
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            authDomain: "TU_AUTH_DOMAIN",
-            projectId: "TU_PROJECT_ID",
-            storageBucket: "TU_STORAGE_BUCKET",
-            messagingSenderId: "TU_MESSAGING_SENDER_ID",
-            appId: "TU_APP_ID"
+            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
+            authDomain: "llamado-cliente.firebaseapp.com",
+            projectId: "llamado-cliente",
+            storageBucket: "llamado-cliente.appspot.com",
+            messagingSenderId: "444376711880",
+            appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -320,12 +363,12 @@
                     const docSnap = citaSeleccionada;
                     const p = docSnap.data();
 
-                    const ahora24 = new Date().toLocaleTimeString('es-CL', { 
-                        hour: '2-digit', 
-                        minute: '2-digit', 
-                        hour12: false 
+                    const ahora24 = new Date().toLocaleTimeString('es-CL', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
                     });
-                    
+
                     await updateDoc(doc(db, "agendados", docSnap.id), {
                         estado: "llegado",
                         hora_llegada: ahora24
@@ -333,7 +376,7 @@
 
                     let nombreDoctorMostrar = "No asignado";
                     let ubicacionMostrar = "Por confirmar";
-                    
+
                     if (p.doctor_id) {
                         const idBuscado = p.doctor_id.trim().toLowerCase();
                         const docRefDoc = doc(db, "doctores", idBuscado);
@@ -360,12 +403,6 @@
             } catch (error) {
                 console.error(error);
                 alert("Error al procesar.");
-
-                /*
-                  Si Firebase te pide crear un índice para la consulta
-                  rut + fecha_turno, abre el link que aparece en la consola
-                  y créalo una sola vez.
-                */
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Confirmar Llegada";
