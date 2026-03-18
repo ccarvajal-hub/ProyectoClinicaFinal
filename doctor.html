@@ -12,51 +12,23 @@
             --bg-card: #1c1c1c;      
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
-            
-            /* Paleta Suavizada */
             --color-recepcion: #FFB347; 
             --color-pagado: #48BB78;    
             --color-llamando: #4299E1;  
             --color-atendiendo: #9F7AEA; 
-            --color-finalizado: #81E6D9; /* Verde Menta (Nuevo color Atendido) */
-            
+            --color-finalizado: #81E6D9; 
             --red-cancel: #FC8181;   
             --border-color: rgba(255, 255, 255, 0.1); 
             --radius-box: 24px;
             --radius-card: 16px;
         }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-page);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .agenda-container {
-            background-color: var(--bg-card);
-            padding: 40px;
-            border-radius: var(--radius-box);
-            width: 95%; 
-            max-width: 1200px;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.5); 
-            border: 1px solid var(--border-color);
-        }
-
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-page); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .agenda-container { background-color: var(--bg-card); padding: 40px; border-radius: var(--radius-box); width: 95%; max-width: 1200px; box-shadow: 0 40px 100px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
         h1 { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
         .user-email { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 40px; text-align: center; }
 
-        .agenda-header, .paciente-row {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-        }
-
+        .agenda-header, .paciente-row { display: flex; align-items: center; padding: 15px 20px; }
         .col-paciente { flex: 2; text-align: left; }
         .col-rut      { flex: 1.2; text-align: center; }
         .col-hora-c   { flex: 0.8; text-align: center; }
@@ -67,21 +39,11 @@
         .agenda-header { border-bottom: 2px solid var(--border-color); margin-bottom: 10px; }
         .agenda-header div { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
 
-        .paciente-row {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-card);
-            margin-bottom: 8px;
-            transition: opacity 0.3s;
-        }
-
-        /* Estilo para los ya atendidos (Historial) */
+        .paciente-row { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: var(--radius-card); margin-bottom: 8px; }
         .row-finalizado { opacity: 0.6; background: rgba(0,0,0,0.2); }
 
         .paciente-name { font-weight: 700; font-size: 1.05rem; }
-
         .txt-estado { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
-        .st-pendiente  { color: #666; }
         .st-llegado    { color: var(--color-recepcion); }
         .st-pagado     { color: var(--color-pagado); }
         .st-llamando   { color: var(--color-llamando); }
@@ -90,11 +52,9 @@
 
         button { cursor: pointer; transition: 0.2s; border: none; font-family: 'Inter', sans-serif; }
         .btn-action { padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: white; }
-        
         .btn-call { background: var(--color-llamando); }
         .btn-wait { background: var(--color-atendiendo); }
         .btn-done { background: var(--color-pagado); } 
-        
         .btn-delete { background: transparent; color: var(--red-cancel); font-size: 1.2rem; font-weight: 800; width: 34px; }
         
         .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
@@ -126,7 +86,13 @@
             return v.slice(0,-1).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + v.slice(-1).toUpperCase();
         };
 
+        // FUNCIÓN MEJORADA CON CONFIRMACIÓN PARA LLAMADO
         window.cambiarEstado = async (id, nuevoEstado, nombre = null, infoBox = null) => {
+            if (nuevoEstado === 'llamando') {
+                const confirmar = confirm(`¿Desea LLAMAR a ${nombre} a la pantalla de TV?`);
+                if (!confirmar) return;
+            }
+
             try {
                 await updateDoc(doc(db, "agendados", id), { estado: nuevoEstado });
                 if (nuevoEstado === 'llamando') {
@@ -145,7 +111,7 @@
             if (!user) { location.href = "login.html"; return; }
             document.getElementById('email-display').innerText = user.email;
             
-            // Ordenamos por hora de consulta para mantener el historial organizado
+            // Usamos la consulta con orderBy (asegúrate de que el índice esté creado en Firebase)
             const q = query(collection(db, "agendados"), where("doctor_id", "==", user.email), orderBy("hora_consulta", "asc"));
             
             onSnapshot(q, (snapshot) => {
@@ -156,9 +122,7 @@
                     const p = docSnap.data();
                     const id = docSnap.id;
                     const estado = p.estado || 'pendiente';
-                    
-                    let labelEstado = estado;
-                    if (estado === 'llegado') labelEstado = 'En Recepción';
+                    let labelEstado = estado === 'llegado' ? 'En Recepción' : estado;
 
                     let accionesHTML = '';
                     if (estado === 'pagado') {
@@ -176,9 +140,7 @@
                         <div class="col-rut paciente-rut">${window.formatearRut(p.rut)}</div>
                         <div class="col-hora-c text-muted">${p.hora_consulta || '--:--'}</div>
                         <div class="col-hora-ll" style="color:var(--color-recepcion); font-weight:600;">${p.hora_llegada || '--:--'}</div>
-                        <div class="col-estado">
-                            <span class="txt-estado st-${estado}">${labelEstado}</span>
-                        </div>
+                        <div class="col-estado"><span class="txt-estado st-${estado}">${labelEstado}</span></div>
                         <div class="col-acciones">
                             ${accionesHTML}
                             <button class="btn-delete" onclick="cancelar('${id}', '${p.nombre}')">✕</button>
@@ -186,7 +148,7 @@
                     `;
                     container.appendChild(row);
                 });
-            });
+            }, (error) => { console.log("Esperando índice...", error); });
         });
     </script>
 </head>
@@ -194,7 +156,6 @@
     <div class="agenda-container">
         <h1>Agenda Médica</h1>
         <div class="user-email" id="email-display">Cargando...</div>
-        
         <div class="agenda-header">
             <div class="col-paciente">Paciente</div>
             <div class="col-rut">RUT</div>
@@ -204,10 +165,7 @@
             <div class="col-acciones">Acciones</div>
         </div>
         <div id="agenda-lista"></div>
-        
-        <div class="footer-tools">
-            <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
-        </div>
+        <div class="footer-tools"><button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button></div>
     </div>
 </body>
 </html>
