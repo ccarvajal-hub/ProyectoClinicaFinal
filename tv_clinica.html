@@ -22,7 +22,7 @@
             border: 4px solid var(--accent); box-shadow: 0 0 50px rgba(66, 153, 225, 0.2);
         }
         .main-call h1 { font-size: 5rem; margin: 0; color: var(--accent); text-transform: uppercase; }
-        .main-call .paciente { font-size: 7rem; font-weight: 900; margin: 20px 0; line-height: 1; }
+        .main-call .paciente { font-size: 7rem; font-weight: 900; margin: 20px 0; line-height: 1; text-transform: uppercase; }
         .main-call .doctor-info { font-size: 2.5rem; font-weight: 700; color: #FFB347; text-transform: uppercase; }
         .main-call .box-info { font-size: 2rem; color: var(--muted); margin-top: 10px; }
 
@@ -30,18 +30,22 @@
         .history { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 30px; display: flex; flex-direction: column; }
         .history h2 { font-size: 2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
         
-        #historial-lista { display: flex; flex-direction: column; } /* Mantiene el flujo normal (el primero arriba) */
+        #historial-lista { display: flex; flex-direction: column; } 
 
         .hist-row {
             display: grid; grid-template-columns: 1fr auto;
             background: rgba(0,0,0,0.2); padding: 15px 20px;
             border-radius: 15px; margin-bottom: 10px; border-left: 5px solid var(--accent);
+            animation: slideIn 0.5s ease-out;
         }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
         .hist-name { font-weight: 700; font-size: 1.4rem; text-transform: uppercase; }
-        
-        /* Nombre del doctor un poco más pequeño */
-        .hist-doc { font-size: 0.95rem; color: #FFB347; font-weight: 600; text-transform: uppercase; margin-top: 2px; }
-        
+        .hist-doc { font-size: 0.85rem; color: #FFB347; font-weight: 600; text-transform: uppercase; margin-top: 2px; opacity: 0.9; }
         .hist-meta { font-size: 1.2rem; color: #48BB78; font-weight: 800; text-align: right; align-self: center; }
 
         .flash { animation: pulse 1.5s infinite; }
@@ -68,7 +72,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, onSnapshot, collection, query, where, limit, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, query, where, limit, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -109,12 +113,13 @@
                     ultimoId = data.paciente;
                 }
                 document.getElementById('tv-paciente').innerText = data.paciente;
-                document.getElementById('tv-doctor').innerText = data.doctor;
+                // Agregamos "DR. " antes del nombre en la pantalla grande
+                document.getElementById('tv-doctor').innerText = "DR. " + data.doctor;
                 document.getElementById('tv-box').innerText = data.box;
             }
         });
 
-        // Query limitada a los últimos 5, pero ordenamos por hora de consulta para el flujo
+        // Query de historial
         const q = query(
             collection(db, "agendados"), 
             where("estado", "in", ["atendiendo", "atendido"]),
@@ -125,8 +130,11 @@
             const lista = document.getElementById('historial-lista');
             lista.innerHTML = "";
             
-            // Recorremos los documentos (onSnapshot los trae en el orden de la query)
-            for (const docSnap of snapshot.docs) {
+            // Convertimos a array para poder invertir el orden
+            const docs = snapshot.docs;
+            
+            // Invertimos la lista para que el más nuevo esté arriba
+            for (const docSnap of docs.reverse()) {
                 const p = docSnap.data();
                 const d = await infoDoc(p.doctor_id);
                 
@@ -135,7 +143,7 @@
                 row.innerHTML = `
                     <div>
                         <div class="hist-name">${p.nombre}</div>
-                        <div class="hist-doc">Dr. ${d.nombre}</div>
+                        <div class="hist-doc">DR. ${d.nombre}</div>
                     </div>
                     <div class="hist-meta">Consulta ${d.consulta}</div>
                 `;
