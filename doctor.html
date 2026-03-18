@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda Médica - Panel Doctor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -48,17 +48,19 @@
 
         h1 { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1.5px; text-align: center; }
         
-        /* NOMBRE DEL DOCTOR: Mayúsculas, Negrita y Amarillo Suave */
+        /* NOMBRE DEL DOCTOR: Blanco, Elegante, con Sombra Sutil */
         .user-name { 
-            color: var(--color-soft-yellow); 
-            font-size: 1.3rem; 
-            font-weight: 900; /* Negrita fuerte */
-            text-transform: uppercase; /* Forzar mayúsculas */
+            color: #FFFFFF; 
+            font-size: 1.2rem; 
+            font-weight: 800; 
+            text-transform: uppercase; 
             margin-top: 15px;
             margin-bottom: 40px; 
             text-align: center; 
-            letter-spacing: 1.5px;
+            letter-spacing: 3px; /* Espaciado elegante */
             display: block;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Profundidad suave */
+            opacity: 0.9;
         }
 
         .agenda-header, .paciente-row { display: flex; align-items: center; padding: 15px 20px; }
@@ -94,22 +96,21 @@
         
         .footer-tools { margin-top: 50px; text-align: center; }
 
-        /* BOTÓN CERRAR SESIÓN: Estilo similar a los botones de acción pero Amarillo */
+        /* BOTÓN CERRAR SESIÓN: Color sólido, letras blancas, sin brillos */
         .btn-logout { 
-            background: var(--color-soft-yellow); 
-            color: #1c1c1c; /* Texto oscuro para contraste con el amarillo claro */
+            background: #d4d4a1; /* Un amarillo ocre mate, más serio */
+            color: #FFFFFF; 
             padding: 12px 24px; 
             border-radius: 10px;
             font-weight: 800;
             font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(253, 253, 150, 0.2);
+            box-shadow: none; /* Quitamos el brillo */
         }
         .btn-logout:hover {
-            filter: brightness(1.1);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(253, 253, 150, 0.3);
+            filter: brightness(0.9); /* Se oscurece un poco al pasar el mouse */
+            transform: translateY(0);
         }
     </style>
 
