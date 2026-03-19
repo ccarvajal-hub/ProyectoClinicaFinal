@@ -232,7 +232,9 @@
 
         let resetTimer = null;
 
+        // FUNCIÓN MODIFICADA PARA SOPORTAR K/k
         function limpiarRUT(rut) {
+            if (!rut) return '';
             return rut.replace(/[^0-9kK]/g, '').toUpperCase();
         }
 
