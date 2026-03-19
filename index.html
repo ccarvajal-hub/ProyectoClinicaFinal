@@ -452,6 +452,36 @@
             }
         }
 
+        async function buscarCitasHoyPorRut(rutLimpio, fechaHoy) {
+            const resultados = [];
+            const idsVistos = new Set();
+
+            const variantesRUT = [rutLimpio];
+
+            if (rutLimpio.endsWith('K')) {
+                variantesRUT.push(rutLimpio.slice(0, -1) + 'k');
+            }
+
+            for (const rutVariante of variantesRUT) {
+                const q = query(
+                    collection(db, "agendados"),
+                    where("rut", "==", rutVariante),
+                    where("fecha_turno", "==", fechaHoy)
+                );
+
+                const querySnapshot = await getDocs(q);
+
+                querySnapshot.forEach((docSnap) => {
+                    if (!idsVistos.has(docSnap.id)) {
+                        idsVistos.add(docSnap.id);
+                        resultados.push(docSnap);
+                    }
+                });
+            }
+
+            return resultados;
+        }
+
         input.addEventListener('input', () => {
             input.value = formatearRUT(input.value);
             programarResetInput();
@@ -483,22 +513,15 @@
 
             try {
                 const fechaHoy = obtenerFechaHoyChile();
+                const citasHoy = await buscarCitasHoyPorRut(rutLimpio, fechaHoy);
 
-                const q = query(
-                    collection(db, "agendados"),
-                    where("rut", "==", rutLimpio),
-                    where("fecha_turno", "==", fechaHoy)
-                );
-
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
+                if (citasHoy.length === 0) {
                     alert("No se encontró una cita para hoy con ese RUT.");
                     resetearInputRUT();
                     return;
                 }
 
-                const citaSeleccionada = seleccionarCitaCorrecta(querySnapshot.docs);
+                const citaSeleccionada = seleccionarCitaCorrecta(citasHoy);
 
                 if (!citaSeleccionada) {
                     alert("No se encontró una cita válida para hoy con ese RUT.");
