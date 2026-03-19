@@ -15,29 +15,14 @@
         :root {
             --bg-page: #4a4a4a;
             --bg-card: #1c1c1c;
-            --bg-key: #2f2f2f;
-            --bg-key-alt: #3a3a3a;
-            --bg-key-action: #4682B4;
-            --bg-key-danger: #6b3030;
-            --bg-key-success: #2D6A4F;
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
             --blue-accent: #4682B4;
             --green-muted: #2D6A4F;
+            --yellow-accent: #FFB347;
+            --info-accent: #4299E1;
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
-            --keyboard-height: 360px;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
         }
 
         body {
@@ -47,25 +32,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 100vh;
             color: var(--text-main);
             overflow: hidden;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
-        }
-
-        .app-shell {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            transition: padding-bottom 0.25s ease;
-        }
-
-        .app-shell.keyboard-open {
-            padding-bottom: calc(var(--keyboard-height) - 40px);
         }
 
         .totem-card {
@@ -92,11 +61,6 @@
             font-size: 1.1rem;
         }
 
-        .rut-input-wrap {
-            position: relative;
-            width: 100%;
-        }
-
         input {
             width: 100%;
             padding: 24px;
@@ -106,22 +70,9 @@
             color: white;
             font-size: 1.8rem;
             text-align: center;
+            box-sizing: border-box;
             outline: none;
             font-weight: 700;
-            caret-color: transparent;
-            cursor: pointer;
-        }
-
-        input.active {
-            border-color: rgba(70, 130, 180, 0.95);
-            box-shadow: 0 0 0 4px rgba(70, 130, 180, 0.15);
-        }
-
-        .input-hint {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-top: 10px;
-            min-height: 18px;
         }
 
         .btn-confirm {
@@ -145,7 +96,10 @@
 
         .modal-overlay {
             position: fixed;
-            inset: 0;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0,0,0,0.85);
             display: none;
             justify-content: center;
@@ -164,11 +118,22 @@
             text-align: center;
         }
 
-        .modal-content h2 {
-            color: #48BB78;
+        #modalTitulo {
             font-size: 1.8rem;
             margin: 0 0 25px 0;
             font-weight: 800;
+        }
+
+        #modalTitulo.success {
+            color: #48BB78;
+        }
+
+        #modalTitulo.info {
+            color: var(--info-accent);
+        }
+
+        #modalTitulo.warning {
+            color: var(--yellow-accent);
         }
 
         .info-box {
@@ -205,6 +170,12 @@
             font-size: 1.2rem;
         }
 
+        #modalMensaje {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
         .btn-close {
             background: var(--green-muted);
             color: rgba(255, 255, 255, 0.9);
@@ -217,197 +188,27 @@
             width: 100%;
             margin-top: 10px;
         }
-
-        .keyboard-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.35);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.22s ease;
-            z-index: 1500;
-        }
-
-        .keyboard-backdrop.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .keyboard-panel {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            height: var(--keyboard-height);
-            background: linear-gradient(180deg, #2a2a2a 0%, #232323 100%);
-            border-top-left-radius: 28px;
-            border-top-right-radius: 28px;
-            border-top: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 -20px 40px rgba(0,0,0,0.35);
-            transform: translateY(100%);
-            transition: transform 0.24s ease;
-            z-index: 2000;
-            padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
-        }
-
-        .keyboard-panel.open {
-            transform: translateY(0);
-        }
-
-        .keyboard-topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            padding: 0 6px;
-        }
-
-        .keyboard-title {
-            color: var(--text-muted);
-            font-weight: 800;
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .keyboard-hide-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-weight: 800;
-            font-size: 0.9rem;
-            cursor: pointer;
-            padding: 8px 10px;
-            border-radius: 10px;
-        }
-
-        .keyboard-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            height: calc(100% - 44px);
-        }
-
-        .key {
-            border: none;
-            border-radius: 18px;
-            font-family: 'Inter', sans-serif;
-            font-weight: 800;
-            color: white;
-            cursor: pointer;
-            background: var(--bg-key);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-            font-size: 1.6rem;
-        }
-
-        .key:active {
-            transform: scale(0.985);
-        }
-
-        .key.alt {
-            background: var(--bg-key-alt);
-            font-size: 1.15rem;
-        }
-
-        .key.action {
-            background: var(--bg-key-action);
-            font-size: 1.05rem;
-        }
-
-        .key.success {
-            background: var(--bg-key-success);
-            font-size: 1.05rem;
-        }
-
-        .key.danger {
-            background: var(--bg-key-danger);
-            font-size: 1rem;
-        }
-
-        @media (max-width: 640px) {
-            :root {
-                --keyboard-height: 350px;
-            }
-
-            .totem-card {
-                padding: 40px 22px;
-            }
-
-            h1 {
-                font-size: 2.2rem;
-            }
-
-            input {
-                font-size: 1.55rem;
-                padding: 20px;
-            }
-
-            .btn-confirm {
-                font-size: 1.1rem;
-                padding: 18px;
-            }
-        }
     </style>
 </head>
 <body>
 
-    <div class="app-shell" id="appShell">
-        <div class="totem-card">
-            <h1>Bienvenido</h1>
-            <p class="instruction">Ingrese su RUT para confirmar su llegada.</p>
-
-            <div class="rut-input-wrap">
-                <input
-                    type="text"
-                    id="rutInput"
-                    placeholder="12.345.678-K"
-                    autocomplete="off"
-                    autocapitalize="characters"
-                    maxlength="12"
-                    readonly
-                    inputmode="none"
-                >
-                <div class="input-hint" id="inputHint">Toque el campo para ingresar su RUT</div>
-            </div>
-
-            <button class="btn-confirm" id="btnConfirmar">Confirmar Llegada</button>
-        </div>
-    </div>
-
-    <div class="keyboard-backdrop" id="keyboardBackdrop"></div>
-
-    <div class="keyboard-panel" id="keyboardPanel">
-        <div class="keyboard-topbar">
-            <div class="keyboard-title">Ingreso de RUT</div>
-            <button class="keyboard-hide-btn" id="btnOcultarTeclado" type="button">Ocultar</button>
-        </div>
-
-        <div class="keyboard-grid">
-            <button class="key" type="button" data-key="1">1</button>
-            <button class="key" type="button" data-key="2">2</button>
-            <button class="key" type="button" data-key="3">3</button>
-
-            <button class="key" type="button" data-key="4">4</button>
-            <button class="key" type="button" data-key="5">5</button>
-            <button class="key" type="button" data-key="6">6</button>
-
-            <button class="key" type="button" data-key="7">7</button>
-            <button class="key" type="button" data-key="8">8</button>
-            <button class="key" type="button" data-key="9">9</button>
-
-            <button class="key alt" type="button" id="btnBorrar">⌫</button>
-            <button class="key" type="button" data-key="0">0</button>
-            <button class="key alt" type="button" data-key="K">K</button>
-
-            <button class="key danger" type="button" id="btnLimpiar">Limpiar</button>
-            <button class="key action" type="button" id="btnCerrarTeclado">Cerrar</button>
-            <button class="key success" type="button" id="btnConfirmarTeclado">Confirmar</button>
-        </div>
+    <div class="totem-card">
+        <h1>Bienvenido</h1>
+        <p class="instruction">Ingrese su RUT para confirmar su llegada.</p>
+        <input
+            type="text"
+            id="rutInput"
+            placeholder="12.345.678-K"
+            autocomplete="off"
+            autocapitalize="characters"
+            maxlength="12"
+        >
+        <button class="btn-confirm" id="btnConfirmar">Confirmar Llegada</button>
     </div>
 
     <div class="modal-overlay" id="modalConfirmacion">
         <div class="modal-content">
-            <h2>LLEGADA CONFIRMADA</h2>
+            <h2 id="modalTitulo" class="success">LLEGADA CONFIRMADA</h2>
             <div class="info-box">
                 <div class="info-item">
                     <span class="info-label">Paciente</span>
@@ -422,9 +223,7 @@
                     <span class="info-value" id="resUbicacion">---</span>
                 </div>
             </div>
-            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">
-                Por favor, diríjase a Recepción para pagar su atención.
-            </p>
+            <p id="modalMensaje">Por favor, diríjase a Recepción para pagar su atención.</p>
             <button class="btn-close" onclick="cerrarModal()">ENTENDIDO</button>
         </div>
     </div>
@@ -448,79 +247,13 @@
         const input = document.getElementById('rutInput');
         const modal = document.getElementById('modalConfirmacion');
         const btn = document.getElementById('btnConfirmar');
-        const inputHint = document.getElementById('inputHint');
-
-        const appShell = document.getElementById('appShell');
-        const keyboardPanel = document.getElementById('keyboardPanel');
-        const keyboardBackdrop = document.getElementById('keyboardBackdrop');
-        const btnOcultarTeclado = document.getElementById('btnOcultarTeclado');
-        const btnCerrarTeclado = document.getElementById('btnCerrarTeclado');
-        const btnBorrar = document.getElementById('btnBorrar');
-        const btnLimpiar = document.getElementById('btnLimpiar');
-        const btnConfirmarTeclado = document.getElementById('btnConfirmarTeclado');
-        const keyButtons = Array.from(document.querySelectorAll('[data-key]'));
+        const modalTitulo = document.getElementById('modalTitulo');
+        const modalMensaje = document.getElementById('modalMensaje');
 
         let resetTimer = null;
-        let audioContext = null;
+        let modalTimer = null;
 
-        function unlockAudio() {
-            try {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtx) return;
-
-                if (!audioContext) {
-                    audioContext = new AudioCtx();
-                }
-
-                if (audioContext.state === 'suspended') {
-                    audioContext.resume().catch(() => {});
-                }
-            } catch (error) {
-                console.error('Error inicializando audio:', error);
-            }
-        }
-
-        async function reproducirSonidoConfirmacion() {
-            try {
-                unlockAudio();
-                if (!audioContext) return;
-
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
-
-                const now = audioContext.currentTime;
-
-                const master = audioContext.createGain();
-                master.connect(audioContext.destination);
-                master.gain.setValueAtTime(0.0001, now);
-
-                const osc1 = audioContext.createOscillator();
-                const osc2 = audioContext.createOscillator();
-
-                osc1.type = 'sine';
-                osc2.type = 'sine';
-
-                osc1.frequency.setValueAtTime(784, now);
-                osc2.frequency.setValueAtTime(1046.5, now + 0.12);
-
-                osc1.connect(master);
-                osc2.connect(master);
-
-                master.gain.exponentialRampToValueAtTime(0.08, now + 0.02);
-                master.gain.exponentialRampToValueAtTime(0.03, now + 0.10);
-                master.gain.exponentialRampToValueAtTime(0.09, now + 0.16);
-                master.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
-
-                osc1.start(now);
-                osc1.stop(now + 0.14);
-
-                osc2.start(now + 0.12);
-                osc2.stop(now + 0.36);
-            } catch (error) {
-                console.error('Error reproduciendo sonido:', error);
-            }
-        }
+        const MODAL_AUTO_CLOSE_MS = 8000;
 
         function limpiarRUT(rut) {
             return rut.replace(/[^0-9kK]/g, '').toUpperCase();
@@ -602,23 +335,47 @@
             return (hh * 60) + mm;
         }
 
-        function seleccionarCitaCorrecta(docs) {
-            const estadosValidos = ['pendiente', 'agendado', 'confirmado', 'llegado', 'en_recepcion'];
+        function normalizarEstado(estado) {
+            return (estado || 'pendiente').toLowerCase().trim();
+        }
 
-            const citasValidas = docs.filter(item => {
-                const estado = (item.data().estado || '').toLowerCase().trim();
-                return estadosValidos.includes(estado);
-            });
+        function seleccionarCitaCorrecta(docs) {
+            const prioridadEstado = {
+                pendiente: 0,
+                agendado: 0,
+                confirmado: 0,
+                llegado: 1,
+                en_recepcion: 1,
+                pagado: 1,
+                llamando: 1,
+                llamado: 1,
+                atendiendo: 1,
+                atendido: 2
+            };
+
+            const citasValidas = docs
+                .map(item => ({
+                    doc: item,
+                    data: item.data(),
+                    estado: normalizarEstado(item.data().estado)
+                }))
+                .filter(item => item.estado in prioridadEstado);
 
             if (citasValidas.length === 0) return null;
 
             citasValidas.sort((a, b) => {
-                const horaA = horaATotalMinutos(a.data().hora_consulta);
-                const horaB = horaATotalMinutos(b.data().hora_consulta);
+                const prioridadA = prioridadEstado[a.estado];
+                const prioridadB = prioridadEstado[b.estado];
+
+                if (prioridadA !== prioridadB) return prioridadA - prioridadB;
+
+                const horaA = horaATotalMinutos(a.data.hora_consulta);
+                const horaB = horaATotalMinutos(b.data.hora_consulta);
+
                 return horaA - horaB;
             });
 
-            return citasValidas[0];
+            return citasValidas[0].doc;
         }
 
         function cancelarResetInput() {
@@ -628,43 +385,17 @@
             }
         }
 
-        function actualizarHint() {
-            if (keyboardPanel.classList.contains('open')) {
-                inputHint.textContent = input.value
-                    ? 'Use el teclado inferior para completar o corregir su RUT'
-                    : 'Ingrese su RUT con el teclado inferior';
-            } else {
-                inputHint.textContent = input.value
-                    ? 'Toque el campo para seguir editando su RUT'
-                    : 'Toque el campo para ingresar su RUT';
+        function cancelarAutoCierreModal() {
+            if (modalTimer) {
+                clearTimeout(modalTimer);
+                modalTimer = null;
             }
-        }
-
-        function abrirTeclado() {
-            if (btn.disabled) return;
-            if (modal.style.display === 'flex') return;
-
-            keyboardPanel.classList.add('open');
-            keyboardBackdrop.classList.add('open');
-            appShell.classList.add('keyboard-open');
-            input.classList.add('active');
-            actualizarHint();
-            programarResetInput();
-        }
-
-        function cerrarTeclado() {
-            keyboardPanel.classList.remove('open');
-            keyboardBackdrop.classList.remove('open');
-            appShell.classList.remove('keyboard-open');
-            input.classList.remove('active');
-            actualizarHint();
         }
 
         function resetearInputRUT() {
             cancelarResetInput();
             input.value = '';
-            actualizarHint();
-            abrirTeclado();
+            input.focus();
         }
 
         function programarResetInput() {
@@ -677,41 +408,67 @@
             resetTimer = setTimeout(() => {
                 if (!btn.disabled && modal.style.display !== 'flex') {
                     input.value = '';
-                    actualizarHint();
-                    abrirTeclado();
+                    input.focus();
                 }
             }, 10000);
         }
 
-        function insertarCaracter(valor) {
-            const limpioActual = limpiarRUT(input.value);
+        async function obtenerDatosDoctor(doctorId) {
+            let nombreDoctorMostrar = "No asignado";
+            let ubicacionMostrar = "Por confirmar";
 
-            if (limpioActual.length >= 9) return;
+            if (!doctorId) {
+                return { nombreDoctorMostrar, ubicacionMostrar };
+            }
 
-            const nuevo = limpioActual + valor;
-            input.value = formatearRUT(nuevo);
-            actualizarHint();
-            programarResetInput();
+            const idBuscado = doctorId.trim().toLowerCase();
+            const docRefDoc = doc(db, "doctores", idBuscado);
+            const docSnapDoc = await getDoc(docRefDoc);
+
+            if (docSnapDoc.exists()) {
+                const dData = docSnapDoc.data();
+                nombreDoctorMostrar = dData.nombre || "No asignado";
+                ubicacionMostrar = `Piso ${dData.piso} - Consulta ${dData.consulta}`;
+            } else {
+                nombreDoctorMostrar = "Dr(a). " + idBuscado.split('@')[0].toUpperCase();
+            }
+
+            return { nombreDoctorMostrar, ubicacionMostrar };
         }
 
-        function borrarUltimoCaracter() {
-            const limpioActual = limpiarRUT(input.value);
+        function abrirModal({ titulo, tipo, mensaje, nombre, doctor, ubicacion, autoClose = true }) {
+            cancelarAutoCierreModal();
 
-            if (!limpioActual.length) return;
+            modalTitulo.textContent = titulo;
+            modalTitulo.className = tipo;
 
-            const nuevo = limpioActual.slice(0, -1);
-            input.value = formatearRUT(nuevo);
-            actualizarHint();
-            programarResetInput();
-        }
+            document.getElementById('resNombre').innerText = nombre || '---';
+            document.getElementById('resDoctor').innerText = doctor || '---';
+            document.getElementById('resUbicacion').innerText = ubicacion || '---';
+            modalMensaje.textContent = mensaje || '';
 
-        function limpiarCampo() {
+            modal.style.display = 'flex';
             input.value = '';
-            actualizarHint();
-            cancelarResetInput();
+
+            if (autoClose) {
+                modalTimer = setTimeout(() => {
+                    cerrarModal();
+                }, MODAL_AUTO_CLOSE_MS);
+            }
         }
 
-        async function procesarLlegada() {
+        input.addEventListener('input', () => {
+            input.value = formatearRUT(input.value);
+            programarResetInput();
+        });
+
+        input.addEventListener('focus', () => {
+            if (input.value.trim()) {
+                programarResetInput();
+            }
+        });
+
+        btn.addEventListener('click', async () => {
             cancelarResetInput();
 
             const rutLimpio = limpiarRUT(input.value);
@@ -728,7 +485,6 @@
 
             btn.disabled = true;
             btn.innerText = "Procesando...";
-            btnConfirmarTeclado.disabled = true;
 
             try {
                 const fechaHoy = obtenerFechaHoyChile();
@@ -757,6 +513,64 @@
 
                 const docSnap = citaSeleccionada;
                 const p = docSnap.data();
+                const estadoActual = normalizarEstado(p.estado);
+                const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
+
+                if (estadoActual === 'llegado' || estadoActual === 'en_recepcion') {
+                    abrirModal({
+                        titulo: 'LLEGADA YA REGISTRADA',
+                        tipo: 'info',
+                        mensaje: 'Su llegada ya fue registrada. Diríjase a Recepción para continuar.',
+                        nombre: p.nombre,
+                        doctor: nombreDoctorMostrar,
+                        ubicacion: ubicacionMostrar
+                    });
+                    return;
+                }
+
+                if (estadoActual === 'pagado') {
+                    abrirModal({
+                        titulo: 'PAGO YA REGISTRADO',
+                        tipo: 'info',
+                        mensaje: 'Su pago ya fue registrado. Espere el llamado del doctor.',
+                        nombre: p.nombre,
+                        doctor: nombreDoctorMostrar,
+                        ubicacion: ubicacionMostrar
+                    });
+                    return;
+                }
+
+                if (estadoActual === 'llamando' || estadoActual === 'llamado' || estadoActual === 'atendiendo') {
+                    abrirModal({
+                        titulo: 'ATENCIÓN EN CURSO',
+                        tipo: 'warning',
+                        mensaje: 'Su atención ya está en curso. Diríjase a su consulta o espere indicaciones del personal.',
+                        nombre: p.nombre,
+                        doctor: nombreDoctorMostrar,
+                        ubicacion: ubicacionMostrar
+                    });
+                    return;
+                }
+
+                if (estadoActual === 'atendido') {
+                    abrirModal({
+                        titulo: 'ATENCIÓN FINALIZADA',
+                        tipo: 'warning',
+                        mensaje: 'Su atención de hoy ya figura como finalizada. Si necesita ayuda, consulte en Recepción.',
+                        nombre: p.nombre,
+                        doctor: nombreDoctorMostrar,
+                        ubicacion: ubicacionMostrar
+                    });
+                    return;
+                }
+
+                const estadosInicialesValidos = ['pendiente', 'agendado', 'confirmado'];
+
+                if (!estadosInicialesValidos.includes(estadoActual)) {
+                    alert("No tiene una cita disponible para registrar llegada.");
+                    resetearInputRUT();
+                    return;
+                }
 
                 const ahora24 = new Date().toLocaleTimeString('es-CL', {
                     hour: '2-digit',
@@ -769,32 +583,15 @@
                     hora_llegada: ahora24
                 });
 
-                let nombreDoctorMostrar = "No asignado";
-                let ubicacionMostrar = "Por confirmar";
+                abrirModal({
+                    titulo: 'LLEGADA CONFIRMADA',
+                    tipo: 'success',
+                    mensaje: 'Por favor, diríjase a Recepción para pagar su atención.',
+                    nombre: p.nombre,
+                    doctor: nombreDoctorMostrar,
+                    ubicacion: ubicacionMostrar
+                });
 
-                if (p.doctor_id) {
-                    const idBuscado = p.doctor_id.trim().toLowerCase();
-                    const docRefDoc = doc(db, "doctores", idBuscado);
-                    const docSnapDoc = await getDoc(docRefDoc);
-
-                    if (docSnapDoc.exists()) {
-                        const dData = docSnapDoc.data();
-                        nombreDoctorMostrar = dData.nombre;
-                        ubicacionMostrar = `Piso ${dData.piso} - Consulta ${dData.consulta}`;
-                    } else {
-                        nombreDoctorMostrar = "Dr(a). " + idBuscado.split('@')[0].toUpperCase();
-                    }
-                }
-
-                document.getElementById('resNombre').innerText = p.nombre || "---";
-                document.getElementById('resDoctor').innerText = nombreDoctorMostrar;
-                document.getElementById('resUbicacion').innerText = ubicacionMostrar;
-
-                cerrarTeclado();
-                await reproducirSonidoConfirmacion();
-                modal.style.display = 'flex';
-                input.value = '';
-                actualizarHint();
             } catch (error) {
                 console.error(error);
                 alert("Error al procesar.");
@@ -802,65 +599,18 @@
             } finally {
                 btn.disabled = false;
                 btn.innerText = "Confirmar Llegada";
-                btnConfirmarTeclado.disabled = false;
             }
-        }
-
-        input.addEventListener('click', () => {
-            unlockAudio();
-            abrirTeclado();
-        });
-
-        input.addEventListener('touchstart', () => {
-            unlockAudio();
-            abrirTeclado();
-        }, { passive: true });
-
-        keyboardBackdrop.addEventListener('click', cerrarTeclado);
-        btnOcultarTeclado.addEventListener('click', cerrarTeclado);
-        btnCerrarTeclado.addEventListener('click', cerrarTeclado);
-
-        btnBorrar.addEventListener('click', () => {
-            unlockAudio();
-            borrarUltimoCaracter();
-        });
-
-        btnLimpiar.addEventListener('click', () => {
-            unlockAudio();
-            limpiarCampo();
-        });
-
-        btnConfirmarTeclado.addEventListener('click', async () => {
-            unlockAudio();
-            await procesarLlegada();
-        });
-
-        keyButtons.forEach(btnKey => {
-            btnKey.addEventListener('click', () => {
-                unlockAudio();
-                insertarCaracter(btnKey.dataset.key);
-            });
-        });
-
-        btn.addEventListener('click', async () => {
-            unlockAudio();
-            await procesarLlegada();
         });
 
         window.cerrarModal = () => {
+            cancelarAutoCierreModal();
             modal.style.display = 'none';
             resetearInputRUT();
         };
 
         window.addEventListener('load', () => {
-            unlockAudio();
-            actualizarHint();
-            setTimeout(() => {
-                abrirTeclado();
-            }, 250);
+            input.focus();
         });
-
-        window.addEventListener('pointerdown', unlockAudio, { once: true });
     </script>
 
     <script>
