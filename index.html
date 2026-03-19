@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tótem de Atención - Clínica</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="manifest" href="./manifest.webmanifest">
+    <meta name="theme-color" content="#1c1c1c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <style>
         :root {
             --bg-page: #4a4a4a;
@@ -461,6 +467,16 @@
         window.addEventListener('load', () => {
             input.focus();
         });
+    </script>
+
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("./sw.js").catch((error) => {
+                    console.error("Error registrando service worker:", error);
+                });
+            });
+        }
     </script>
 </body>
 </html>
