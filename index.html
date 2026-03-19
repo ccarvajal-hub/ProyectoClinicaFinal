@@ -53,7 +53,6 @@
         h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
         .instruction { color: var(--text-muted); margin-bottom: 30px; font-size: 1.1rem; }
 
-        /* Escáner */
         #reader { width: 100%; border-radius: 18px; overflow: hidden; display: none; margin-bottom: 20px; border: 2px solid var(--blue-accent); }
         .btn-scan { width: 100%; padding: 18px; background: var(--green-success); color: white; border: none; border-radius: 18px; font-weight: 800; cursor: pointer; margin-bottom: 20px; font-size: 1rem; }
 
@@ -69,10 +68,9 @@
             cursor: pointer; text-transform: uppercase; margin-top: 20px;
         }
 
-        /* Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: none; justify-content: center;
+            background: rgba(0,0,0,0.95); display: none; justify-content: center;
             align-items: center; z-index: 3000; padding: 20px;
         }
         .modal-content {
@@ -131,7 +129,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -150,8 +148,11 @@
         const modal = document.getElementById('modalConfirmacion');
         let html5QrScanner = null;
 
-        // --- FUNCIONES DE UTILIDAD ---
-        function limpiarRUT(rut) { return rut.replace(/[^0-9kK]/g, '').toUpperCase(); }
+        // Función Limpiar: Ahora asegura siempre MAYÚSCULA
+        function limpiarRUT(rut) { 
+            if (!rut) return "";
+            return rut.replace(/[^0-9kK]/g, '').toUpperCase(); 
+        }
 
         function formatearRUT(rut) {
             let limpio = limpiarRUT(rut).slice(0, 9);
@@ -180,7 +181,6 @@
             return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
         }
 
-        // --- ESCÁNER DE CÉDULA ---
         document.getElementById('btnScan').onclick = () => {
             const reader = document.getElementById('reader');
             reader.style.display = 'block';
@@ -192,11 +192,11 @@
                     input.value = formatearRUT(match[0]);
                     html5QrScanner.stop();
                     reader.style.display = 'none';
+                    btnConfirmar.click();
                 }
             }).catch(err => console.error(err));
         };
 
-        // --- LÓGICA PRINCIPAL ---
         btnConfirmar.onclick = async () => {
             const rutLimpio = limpiarRUT(input.value);
             if (!validarRUT(rutLimpio)) return alert("RUT Inválido");
@@ -206,47 +206,66 @@
 
             try {
                 const hoy = obtenerFechaHoyChile();
-                const q = query(collection(db, "agendados"), where("rut", "==", rutLimpio), where("fecha_turno", "==", hoy));
-                const snap = await getDocs(q);
+                
+                // Búsqueda dual: Limpio vs Formateado
+                let q = query(collection(db, "agendados"), where("rut", "==", rutLimpio), where("fecha_turno", "==", hoy));
+                let snap = await getDocs(q);
 
                 if (snap.empty) {
-                    alert("No tienes cita para hoy.");
+                    const rutFormateado = formatearRUT(rutLimpio);
+                    q = query(collection(db, "agendados"), where("rut", "==", rutFormateado), where("fecha_turno", "==", hoy));
+                    snap = await getDocs(q);
+                }
+
+                if (snap.empty) {
+                    alert("No se encontró una cita agendada para hoy con el RUT: " + formatearRUT(rutLimpio));
                 } else {
                     const docRef = snap.docs[0];
                     const data = docRef.data();
                     const estado = (data.estado || "").toLowerCase();
 
-                    // VALIDACIÓN DE RE-INGRESO (Tu requerimiento)
-                    if (['llegado', 'pagado', 'llamando', 'atendiendo', 'atendido'].includes(estado)) {
-                        abrirModal("YA REGISTRADO", "info", "Ya procesamos tu llegada. Por favor espera.", data, docRef.id);
+                    const yaMarcado = ['llegado', 'pagado', 'llamando', 'atendiendo', 'atendido'].includes(estado);
+
+                    if (yaMarcado) {
+                        abrirModal("YA REGISTRADO", "info", "Tu llegada ya fue procesada. Espera tu turno.", data, docRef.id);
                     } else {
-                        // REGISTRO PRIMERA VEZ
+                        const horaActual = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
                         await updateDoc(doc(db, "agendados", docRef.id), {
                             estado: "llegado",
-                            hora_llegada: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+                            hora_llegada: horaActual
                         });
                         abrirModal("LLEGADA CONFIRMADA", "success", "Dirígete a recepción para pagar.", data, docRef.id);
                     }
                 }
-            } catch (e) { console.error(e); alert("Error de conexión"); }
-            btnConfirmar.disabled = false;
-            btnConfirmar.innerText = "Confirmar Llegada";
+            } catch (e) {
+                console.error(e);
+                alert("Error al conectar con el servidor.");
+            } finally {
+                btnConfirmar.disabled = false;
+                btnConfirmar.innerText = "Confirmar Llegada";
+            }
         };
 
         async function abrirModal(titulo, tipo, msg, data, idDoc) {
             document.getElementById('modalTitulo').innerText = titulo;
             document.getElementById('modalTitulo').className = tipo;
             document.getElementById('modalMensaje').innerText = msg;
-            document.getElementById('resNombre').innerText = data.nombre;
+            document.getElementById('resNombre').innerText = data.nombre || '---';
             
-            // Buscar datos del doctor
-            const docDoc = await getDoc(doc(db, "doctores", data.doctor_id.toLowerCase()));
-            if(docDoc.exists()){
-                document.getElementById('resDoctor').innerText = docDoc.data().nombre;
-                document.getElementById('resUbicacion').innerText = `Piso ${docDoc.data().piso} - Box ${docDoc.data().consulta}`;
+            try {
+                const docDoc = await getDoc(doc(db, "doctores", data.doctor_id.trim().toLowerCase()));
+                if(docDoc.exists()){
+                    const d = docDoc.data();
+                    document.getElementById('resDoctor').innerText = d.nombre;
+                    document.getElementById('resUbicacion').innerText = `Piso ${d.piso} - Box ${d.consulta}`;
+                } else {
+                    document.getElementById('resDoctor').innerText = "Médico asignado";
+                    document.getElementById('resUbicacion').innerText = "Mesón Recepción";
+                }
+            } catch (e) {
+                document.getElementById('resDoctor').innerText = "Consulte en Recepción";
             }
 
-            // Generar QR para el paciente (Ticket Digital)
             document.getElementById('qrcode').innerHTML = "";
             new QRCode(document.getElementById("qrcode"), {
                 text: `https://tu-web.app/ticket.html?id=${idDoc}`,
@@ -257,7 +276,11 @@
             input.value = "";
         }
 
-        document.getElementById('btnCerrarModal').onclick = () => modal.style.display = 'none';
+        document.getElementById('btnCerrarModal').onclick = () => {
+            modal.style.display = 'none';
+            input.focus();
+        };
+
         input.oninput = () => input.value = formatearRUT(input.value);
     </script>
 </body>
