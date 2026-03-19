@@ -318,6 +318,12 @@
             }
         };
 
+        window.confirmarLlamado = async (id, nombre) => {
+            const ok = confirm(`¿Llamar ahora a ${nombre}?`);
+            if (!ok) return;
+            await window.cambiarEstado(id, 'llamando', nombre);
+        };
+
         window.eliminar = async (id, nombre) => {
             if (confirm(`¿Eliminar a ${nombre}?`)) {
                 await deleteDoc(doc(db, "agendados", id));
@@ -399,11 +405,12 @@
 
                     const estadoDb = estadoReal(p.estado);
                     const estadoVisual = estadoVisualDesdeReal(p.estado);
+                    const nombreSeguro = (p.nombre || '').replace(/'/g, "\\'");
 
                     let botones = "";
 
                     if (estadoDb === 'pagado') {
-                        botones = `<button class="btn-call" onclick="cambiarEstado('${p.id}','llamando','${(p.nombre || '').replace(/'/g, "\\'")}')">Llamar</button>`;
+                        botones = `<button class="btn-call" onclick="confirmarLlamado('${p.id}','${nombreSeguro}')">Llamar</button>`;
                     } else if (estadoDb === 'llamando' || estadoDb === 'llamado' || estadoDb === 'atendiendo') {
                         botones = `<button class="btn-fin" onclick="cambiarEstado('${p.id}','atendido')">Finalizar</button>`;
                     }
@@ -417,7 +424,7 @@
                         <div class="col-est st-txt st-${estadoVisual}">${textoEstadoDesdeReal(p.estado)}</div>
                         <div class="col-acts">
                             ${botones}
-                            <button class="btn-del" onclick="eliminar('${p.id}','${(p.nombre || '').replace(/'/g, "\\'")}')">✕</button>
+                            <button class="btn-del" onclick="eliminar('${p.id}','${nombreSeguro}')">✕</button>
                         </div>
                     `;
 
@@ -429,6 +436,7 @@
                     row.className = "row";
 
                     const estadoVisual = estadoVisualDesdeReal(p.estado);
+                    const nombreSeguro = (p.nombre || '').replace(/'/g, "\\'");
 
                     row.innerHTML = `
                         <div class="col-name name-txt">${p.nombre || ''}</div>
@@ -438,7 +446,7 @@
                         <div class="col-llegada llegada-txt">${p.hora_llegada || '--:--'}</div>
                         <div class="col-est st-txt st-${estadoVisual}">${textoEstadoDesdeReal(p.estado)}</div>
                         <div class="col-acts">
-                            <button class="btn-del" onclick="eliminar('${p.id}','${(p.nombre || '').replace(/'/g, "\\'")}')">✕</button>
+                            <button class="btn-del" onclick="eliminar('${p.id}','${nombreSeguro}')">✕</button>
                         </div>
                     `;
 
