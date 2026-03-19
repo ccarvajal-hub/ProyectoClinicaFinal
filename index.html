@@ -1,287 +1,164 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tótem de Atención - Clínica</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <link rel="manifest" href="./manifest.webmanifest">
-    <meta name="theme-color" content="#1c1c1c">
+    const firebaseConfig = {
+        apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
+        authDomain: "llamado-cliente.firebaseapp.com",
+        projectId: "llamado-cliente",
+        storageBucket: "llamado-cliente.appspot.com",
+        messagingSenderId: "444376711880",
+        appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
+    };
 
-    <style>
-        :root {
-            --bg-page: #4a4a4a;
-            --bg-card: #1c1c1c;
-            --text-main: #FFFFFF;
-            --text-muted: #A0A0A0;
-            --blue-accent: #4682B4;
-            --green-muted: #2D6A4F;
-            --green-success: #48BB78;
-            --yellow-accent: #FFB347;
-            --info-accent: #4299E1;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --radius: 24px;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const input = document.getElementById('rutInput');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    const modal = document.getElementById('modalConfirmacion');
+    let html5QrScanner = null;
+
+    // NORMALIZACIÓN ABSOLUTA
+    function limpiarRUT(rut) { 
+        if (!rut) return "";
+        return rut.replace(/[^0-9kK]/g, '').toUpperCase(); 
+    }
+
+    function formatearRUT(rut) {
+        let limpio = limpiarRUT(rut);
+        if (limpio.length <= 1) return limpio;
+        const cuerpo = limpio.slice(0, -1);
+        const dv = limpio.slice(-1);
+        return cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + dv;
+    }
+
+    function validarRUT(rut) {
+        rut = limpiarRUT(rut);
+        if (rut.length < 8) return false;
+        const cuerpo = rut.slice(0, -1);
+        const dv = rut.slice(-1);
+        let suma = 0, mult = 2;
+        for (let i = cuerpo.length - 1; i >= 0; i--) {
+            suma += cuerpo[i] * mult;
+            mult = mult < 7 ? mult + 1 : 2;
+        }
+        const dvEsperado = 11 - (suma % 11);
+        const dvFinal = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : String(dvEsperado);
+        return dv === dvFinal;
+    }
+
+    function obtenerFechaHoyChile() {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
+    }
+
+    // LÓGICA DE BÚSQUEDA CORREGIDA
+    btnConfirmar.onclick = async () => {
+        const rutLimpio = limpiarRUT(input.value);
+        if (!validarRUT(rutLimpio)) {
+            alert("RUT Inválido. Asegúrate de incluir el dígito verificador.");
+            return;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-page);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: var(--text-main);
-            overflow: hidden;
-        }
+        btnConfirmar.disabled = true;
+        btnConfirmar.innerText = "BUSCANDO...";
 
-        .totem-card {
-            background-color: var(--bg-card);
-            padding: 40px;
-            border-radius: var(--radius);
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            border: 1px solid var(--border-color);
-        }
+        try {
+            const hoy = obtenerFechaHoyChile();
+            const rutFormateado = formatearRUT(rutLimpio);
+            
+            // Buscamos de ambas formas simultáneamente
+            const q1 = query(collection(db, "agendados"), where("rut", "==", rutLimpio), where("fecha_turno", "==", hoy));
+            const q2 = query(collection(db, "agendados"), where("rut", "==", rutFormateado), where("fecha_turno", "==", hoy));
+            
+            const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+            
+            const docSnap = !snap1.empty ? snap1.docs[0] : (!snap2.empty ? snap2.docs[0] : null);
 
-        h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
-        .instruction { color: var(--text-muted); margin-bottom: 30px; font-size: 1.1rem; }
-
-        #reader { width: 100%; border-radius: 18px; overflow: hidden; display: none; margin-bottom: 20px; border: 2px solid var(--blue-accent); }
-        .btn-scan { width: 100%; padding: 18px; background: var(--green-success); color: white; border: none; border-radius: 18px; font-weight: 800; cursor: pointer; margin-bottom: 20px; font-size: 1rem; }
-
-        input {
-            width: 100%; padding: 20px; background: #2a2a2a; border: 2px solid var(--border-color);
-            border-radius: 18px; color: white; font-size: 1.8rem; text-align: center;
-            box-sizing: border-box; outline: none; font-weight: 700;
-        }
-
-        .btn-confirm {
-            width: 100%; padding: 22px; background-color: var(--blue-accent); color: white;
-            border: none; border-radius: 18px; font-size: 1.3rem; font-weight: 800;
-            cursor: pointer; text-transform: uppercase; margin-top: 20px;
-        }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); display: none; justify-content: center;
-            align-items: center; z-index: 3000; padding: 20px;
-        }
-        .modal-content {
-            background: var(--bg-card); padding: 30px; border-radius: var(--radius);
-            border: 1px solid #333; max-width: 450px; width: 100%; text-align: center;
-        }
-        #qrcode { display: flex; justify-content: center; margin: 20px 0; background: white; padding: 15px; border-radius: 15px; }
-        
-        .info-box { background: #252525; padding: 20px; border-radius: 20px; margin-bottom: 20px; text-align: left; }
-        .info-item { margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .info-label { color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; font-weight: 800; }
-        .info-value { font-weight: 700; color: white; font-size: 1.1rem; display: block; }
-
-        #modalTitulo.success { color: var(--green-success); }
-        #modalTitulo.info { color: var(--info-accent); }
-        #modalTitulo.warning { color: var(--yellow-accent); }
-
-        .btn-close { background: var(--green-muted); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: 800; width: 100%; cursor: pointer; }
-    </style>
-</head>
-<body>
-
-    <div class="totem-card">
-        <h1>Bienvenido</h1>
-        <p class="instruction">Escanea tu carnet o ingresa tu RUT.</p>
-        
-        <button class="btn-scan" id="btnScan">📷 ESCANEAR MI CÉDULA</button>
-        <div id="reader"></div>
-
-        <input type="text" id="rutInput" placeholder="12.345.678-K" autocomplete="off" maxlength="12">
-        <button class="btn-confirm" id="btnConfirmar">Confirmar Llegada</button>
-    </div>
-
-    <div class="modal-overlay" id="modalConfirmacion">
-        <div class="modal-content">
-            <h2 id="modalTitulo">TÍTULO</h2>
-            <div id="qrcode"></div>
-            <div class="info-box">
-                <div class="info-item">
-                    <span class="info-label">Paciente</span>
-                    <span class="info-value" id="resNombre">---</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Médico</span>
-                    <span class="info-value" id="resDoctor">---</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Ubicación</span>
-                    <span class="info-value" id="resUbicacion">---</span>
-                </div>
-            </div>
-            <p id="modalMensaje" style="color: var(--text-muted); margin-bottom: 20px;"></p>
-            <button class="btn-close" id="btnCerrarModal">ENTENDIDO</button>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
-            authDomain: "llamado-cliente.firebaseapp.com",
-            projectId: "llamado-cliente",
-            storageBucket: "llamado-cliente.appspot.com",
-            messagingSenderId: "444376711880",
-            appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        const input = document.getElementById('rutInput');
-        const btnConfirmar = document.getElementById('btnConfirmar');
-        const modal = document.getElementById('modalConfirmacion');
-        let html5QrScanner = null;
-
-        // Función Limpiar: Ahora asegura siempre MAYÚSCULA
-        function limpiarRUT(rut) { 
-            if (!rut) return "";
-            return rut.replace(/[^0-9kK]/g, '').toUpperCase(); 
-        }
-
-        function formatearRUT(rut) {
-            let limpio = limpiarRUT(rut).slice(0, 9);
-            if (limpio.length <= 1) return limpio;
-            const cuerpo = limpio.slice(0, -1);
-            const dv = limpio.slice(-1);
-            return cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + dv;
-        }
-
-        function validarRUT(rut) {
-            rut = limpiarRUT(rut);
-            if (!/^\d{7,8}[0-9K]$/.test(rut)) return false;
-            const cuerpo = rut.slice(0, -1);
-            const dv = rut.slice(-1);
-            let suma = 0, mult = 2;
-            for (let i = cuerpo.length - 1; i >= 0; i--) {
-                suma += cuerpo[i] * mult;
-                mult = mult < 7 ? mult + 1 : 2;
-            }
-            const dvEsperado = 11 - (suma % 11);
-            const dvFinal = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : String(dvEsperado);
-            return dv === dvFinal;
-        }
-
-        function obtenerFechaHoyChile() {
-            return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
-        }
-
-        document.getElementById('btnScan').onclick = () => {
-            const reader = document.getElementById('reader');
-            reader.style.display = 'block';
-            html5QrScanner = new Html5Qrcode("reader");
-            html5QrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
-            (text) => {
-                const match = text.match(/(\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK])/);
-                if (match) {
-                    input.value = formatearRUT(match[0]);
-                    html5QrScanner.stop();
-                    reader.style.display = 'none';
-                    btnConfirmar.click();
-                }
-            }).catch(err => console.error(err));
-        };
-
-        btnConfirmar.onclick = async () => {
-            const rutLimpio = limpiarRUT(input.value);
-            if (!validarRUT(rutLimpio)) return alert("RUT Inválido");
-
-            btnConfirmar.disabled = true;
-            btnConfirmar.innerText = "PROCESANDO...";
-
-            try {
-                const hoy = obtenerFechaHoyChile();
-                
-                // Búsqueda dual: Limpio vs Formateado
-                let q = query(collection(db, "agendados"), where("rut", "==", rutLimpio), where("fecha_turno", "==", hoy));
-                let snap = await getDocs(q);
-
-                if (snap.empty) {
-                    const rutFormateado = formatearRUT(rutLimpio);
-                    q = query(collection(db, "agendados"), where("rut", "==", rutFormateado), where("fecha_turno", "==", hoy));
-                    snap = await getDocs(q);
-                }
-
-                if (snap.empty) {
-                    alert("No se encontró una cita agendada para hoy con el RUT: " + formatearRUT(rutLimpio));
-                } else {
-                    const docRef = snap.docs[0];
-                    const data = docRef.data();
-                    const estado = (data.estado || "").toLowerCase();
-
-                    const yaMarcado = ['llegado', 'pagado', 'llamando', 'atendiendo', 'atendido'].includes(estado);
-
-                    if (yaMarcado) {
-                        abrirModal("YA REGISTRADO", "info", "Tu llegada ya fue procesada. Espera tu turno.", data, docRef.id);
-                    } else {
-                        const horaActual = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-                        await updateDoc(doc(db, "agendados", docRef.id), {
-                            estado: "llegado",
-                            hora_llegada: horaActual
-                        });
-                        abrirModal("LLEGADA CONFIRMADA", "success", "Dirígete a recepción para pagar.", data, docRef.id);
-                    }
-                }
-            } catch (e) {
-                console.error(e);
-                alert("Error al conectar con el servidor.");
-            } finally {
+            if (!docSnap) {
+                // AQUÍ ES DONDE FALLABA ANTES: Ahora lanzamos el error y LIMPIAMOS
+                alert("NO TIENES CONSULTA PROGRAMADA\nNo encontramos ninguna cita para hoy con el RUT " + rutFormateado);
+                input.value = "";
                 btnConfirmar.disabled = false;
                 btnConfirmar.innerText = "Confirmar Llegada";
-            }
-        };
-
-        async function abrirModal(titulo, tipo, msg, data, idDoc) {
-            document.getElementById('modalTitulo').innerText = titulo;
-            document.getElementById('modalTitulo').className = tipo;
-            document.getElementById('modalMensaje').innerText = msg;
-            document.getElementById('resNombre').innerText = data.nombre || '---';
-            
-            try {
-                const docDoc = await getDoc(doc(db, "doctores", data.doctor_id.trim().toLowerCase()));
-                if(docDoc.exists()){
-                    const d = docDoc.data();
-                    document.getElementById('resDoctor').innerText = d.nombre;
-                    document.getElementById('resUbicacion').innerText = `Piso ${d.piso} - Box ${d.consulta}`;
-                } else {
-                    document.getElementById('resDoctor').innerText = "Médico asignado";
-                    document.getElementById('resUbicacion').innerText = "Mesón Recepción";
-                }
-            } catch (e) {
-                document.getElementById('resDoctor').innerText = "Consulte en Recepción";
+                return; 
             }
 
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), {
-                text: `https://tu-web.app/ticket.html?id=${idDoc}`,
-                width: 150, height: 150
+            const data = docSnap.data();
+            const estado = (data.estado || "").toLowerCase();
+
+            // BLOQUEO DE DOBLE INGRESO
+            if (['llegado', 'pagado', 'llamando', 'atendiendo', 'atendido'].includes(estado)) {
+                abrirModal("YA REGISTRADO", "info", "Tu llegada ya fue procesada anteriormente. Por favor, espera en la sala.", data, docSnap.id);
+                return;
+            }
+
+            // SI TODO ESTÁ BIEN, REGISTRAMOS
+            const horaActual = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+            await updateDoc(doc(db, "agendados", docSnap.id), {
+                estado: "llegado",
+                hora_llegada: horaActual
             });
 
-            modal.style.display = 'flex';
-            input.value = "";
+            abrirModal("LLEGADA CONFIRMADA", "success", "Registro exitoso. Dirígete a recepción para el pago.", data, docSnap.id);
+
+        } catch (e) {
+            console.error("Error crítico:", e);
+            alert("Error de conexión. Intenta de nuevo.");
+        } finally {
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerText = "Confirmar Llegada";
+        }
+    };
+
+    // ESCÁNER
+    document.getElementById('btnScan').onclick = () => {
+        const reader = document.getElementById('reader');
+        reader.style.display = 'block';
+        html5QrScanner = new Html5Qrcode("reader");
+        html5QrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+        (text) => {
+            const match = text.match(/(\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK])/);
+            if (match) {
+                input.value = match[0];
+                html5QrScanner.stop();
+                reader.style.display = 'none';
+                btnConfirmar.click(); 
+            }
+        }).catch(err => console.error(err));
+    };
+
+    async function abrirModal(titulo, tipo, msg, data, idDoc) {
+        document.getElementById('modalTitulo').innerText = titulo;
+        document.getElementById('modalTitulo').className = titulo === "YA REGISTRADO" ? "info" : "success";
+        document.getElementById('modalMensaje').innerText = msg;
+        document.getElementById('resNombre').innerText = data.nombre || 'Paciente';
+        
+        // Carga de Doctor
+        try {
+            const docDoc = await getDoc(doc(db, "doctores", data.doctor_id.trim().toLowerCase()));
+            if(docDoc.exists()){
+                const d = docDoc.data();
+                document.getElementById('resDoctor').innerText = d.nombre;
+                document.getElementById('resUbicacion').innerText = `Piso ${d.piso} - Box ${d.consulta}`;
+            } else {
+                document.getElementById('resDoctor').innerText = "Personal de Turno";
+                document.getElementById('resUbicacion').innerText = "Mesón Recepción";
+            }
+        } catch (e) {
+            document.getElementById('resDoctor').innerText = "Consultar en Mesón";
         }
 
-        document.getElementById('btnCerrarModal').onclick = () => {
-            modal.style.display = 'none';
-            input.focus();
-        };
+        document.getElementById('qrcode').innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), {
+            text: `https://tu-web.app/ticket.html?id=${idDoc}`,
+            width: 150, height: 150
+        });
 
-        input.oninput = () => input.value = formatearRUT(input.value);
-    </script>
-</body>
-</html>
+        modal.style.display = 'flex';
+        input.value = "";
+    }
+
+    document.getElementById('btnCerrarModal').onclick = () => modal.style.display = 'none';
+    input.oninput = () => input.value = formatearRUT(input.value);
+</script>
