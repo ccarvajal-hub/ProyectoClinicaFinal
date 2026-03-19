@@ -249,10 +249,14 @@
             return `${year}-${month}-${day}`;
         }
 
-        function normalizarEstado(estado) {
-            const e = (estado || 'pendiente').toLowerCase().trim();
+        function estadoReal(estado) {
+            return (estado || 'pendiente').toLowerCase().trim();
+        }
 
-            if (e === 'llegado' || e === 'en_recepcion' || e === 'en recepción' || e === 'pagado') {
+        function estadoVisualDesdeReal(estado) {
+            const e = estadoReal(estado);
+
+            if (e === 'llegado' || e === 'pagado' || e === 'en_recepcion' || e === 'en recepción') {
                 return 'en_recepcion';
             }
 
@@ -267,10 +271,12 @@
             return 'pendiente';
         }
 
-        function textoEstado(estado) {
-            if (estado === 'en_recepcion') return 'En Recepción';
-            if (estado === 'llamado') return 'Llamado';
-            if (estado === 'atendido') return 'Atendido';
+        function textoEstadoDesdeReal(estado) {
+            const visual = estadoVisualDesdeReal(estado);
+
+            if (visual === 'en_recepcion') return 'En Recepción';
+            if (visual === 'llamado') return 'Llamado';
+            if (visual === 'atendido') return 'Atendido';
             return 'Pendiente';
         }
 
@@ -288,7 +294,7 @@
             try {
                 const updateData = { estado: nuevo };
 
-                if (nuevo === 'llamado') {
+                if (nuevo === 'llamando') {
                     const ahora = new Date().getTime();
                     updateData.ultimo_llamado = ahora;
 
@@ -356,26 +362,27 @@
 
                 const pacientes = snapshot.docs.map(docSnap => {
                     const p = docSnap.data();
-                    const estadoNormalizado = normalizarEstado(p.estado);
-
                     return {
                         id: docSnap.id,
-                        ...p,
-                        estadoNormalizado
+                        ...p
                     };
                 });
 
                 const espera = pacientes
-                    .filter(p => p.estadoNormalizado !== 'atendido')
+                    .filter(p => estadoReal(p.estado) !== 'atendido')
                     .sort((a, b) => {
                         const ordenEstados = {
-                            en_recepcion: 0,
+                            pagado: 0,
+                            llamando: 1,
                             llamado: 1,
-                            pendiente: 2
+                            atendiendo: 1,
+                            llegado: 2,
+                            en_recepcion: 2,
+                            pendiente: 3
                         };
 
-                        const ordenA = ordenEstados[a.estadoNormalizado] ?? 99;
-                        const ordenB = ordenEstados[b.estadoNormalizado] ?? 99;
+                        const ordenA = ordenEstados[estadoReal(a.estado)] ?? 99;
+                        const ordenB = ordenEstados[estadoReal(b.estado)] ?? 99;
 
                         if (ordenA !== ordenB) return ordenA - ordenB;
 
@@ -383,18 +390,21 @@
                     });
 
                 const historial = pacientes
-                    .filter(p => p.estadoNormalizado === 'atendido')
+                    .filter(p => estadoReal(p.estado) === 'atendido')
                     .sort((a, b) => horaATotalMinutos(a.hora_consulta) - horaATotalMinutos(b.hora_consulta));
 
                 espera.forEach(p => {
                     const row = document.createElement('div');
                     row.className = "row";
 
+                    const estadoDb = estadoReal(p.estado);
+                    const estadoVisual = estadoVisualDesdeReal(p.estado);
+
                     let botones = "";
 
-                    if (p.estadoNormalizado === 'en_recepcion') {
-                        botones = `<button class="btn-call" onclick="cambiarEstado('${p.id}','llamado','${p.nombre}')">Llamar</button>`;
-                    } else if (p.estadoNormalizado === 'llamado') {
+                    if (estadoDb === 'pagado') {
+                        botones = `<button class="btn-call" onclick="cambiarEstado('${p.id}','llamando','${(p.nombre || '').replace(/'/g, "\\'")}')">Llamar</button>`;
+                    } else if (estadoDb === 'llamando' || estadoDb === 'llamado' || estadoDb === 'atendiendo') {
                         botones = `<button class="btn-fin" onclick="cambiarEstado('${p.id}','atendido')">Finalizar</button>`;
                     }
 
@@ -404,10 +414,10 @@
                         <div class="col-info info-txt">${boxDoc}</div>
                         <div class="col-hora">${p.hora_consulta || '--:--'}</div>
                         <div class="col-llegada llegada-txt">${p.hora_llegada || '--:--'}</div>
-                        <div class="col-est st-txt st-${p.estadoNormalizado}">${textoEstado(p.estadoNormalizado)}</div>
+                        <div class="col-est st-txt st-${estadoVisual}">${textoEstadoDesdeReal(p.estado)}</div>
                         <div class="col-acts">
                             ${botones}
-                            <button class="btn-del" onclick="eliminar('${p.id}','${p.nombre || ''}')">✕</button>
+                            <button class="btn-del" onclick="eliminar('${p.id}','${(p.nombre || '').replace(/'/g, "\\'")}')">✕</button>
                         </div>
                     `;
 
@@ -418,15 +428,17 @@
                     const row = document.createElement('div');
                     row.className = "row";
 
+                    const estadoVisual = estadoVisualDesdeReal(p.estado);
+
                     row.innerHTML = `
                         <div class="col-name name-txt">${p.nombre || ''}</div>
                         <div class="col-rut rut-txt">${formatRut(p.rut)}</div>
                         <div class="col-info info-txt">${boxDoc}</div>
                         <div class="col-hora">${p.hora_consulta || '--:--'}</div>
                         <div class="col-llegada llegada-txt">${p.hora_llegada || '--:--'}</div>
-                        <div class="col-est st-txt st-${p.estadoNormalizado}">${textoEstado(p.estadoNormalizado)}</div>
+                        <div class="col-est st-txt st-${estadoVisual}">${textoEstadoDesdeReal(p.estado)}</div>
                         <div class="col-acts">
-                            <button class="btn-del" onclick="eliminar('${p.id}','${p.nombre || ''}')">✕</button>
+                            <button class="btn-del" onclick="eliminar('${p.id}','${(p.nombre || '').replace(/'/g, "\\'")}')">✕</button>
                         </div>
                     `;
 
