@@ -19,6 +19,7 @@
             --text-muted: #A0A0A0;
             --blue-accent: #4682B4;
             --green-muted: #2D6A4F;
+            --yellow-accent: #FFB347;
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
         }
@@ -103,6 +104,7 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            padding: 20px;
         }
 
         .modal-content {
@@ -111,15 +113,22 @@
             border-radius: var(--radius);
             border: 1px solid #333;
             max-width: 450px;
-            width: 90%;
+            width: 100%;
             text-align: center;
         }
 
-        .modal-content h2 {
-            color: #48BB78;
+        #modalTitulo {
             font-size: 1.8rem;
             margin: 0 0 25px 0;
             font-weight: 800;
+        }
+
+        #modalTitulo.success {
+            color: #48BB78;
+        }
+
+        #modalTitulo.warning {
+            color: var(--yellow-accent);
         }
 
         .info-box {
@@ -156,6 +165,12 @@
             font-size: 1.2rem;
         }
 
+        #modalMensaje {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+
         .btn-close {
             background: var(--green-muted);
             color: rgba(255, 255, 255, 0.9);
@@ -188,7 +203,7 @@
 
     <div class="modal-overlay" id="modalConfirmacion">
         <div class="modal-content">
-            <h2>LLEGADA CONFIRMADA</h2>
+            <h2 id="modalTitulo" class="success">LLEGADA CONFIRMADA</h2>
             <div class="info-box">
                 <div class="info-item">
                     <span class="info-label">Paciente</span>
@@ -203,9 +218,7 @@
                     <span class="info-value" id="resUbicacion">---</span>
                 </div>
             </div>
-            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">
-                Por favor, diríjase a Recepción para pagar su atención.
-            </p>
+            <p id="modalMensaje">Por favor, diríjase a Recepción para pagar su atención.</p>
             <button class="btn-close" onclick="cerrarModal()">ENTENDIDO</button>
         </div>
     </div>
@@ -229,12 +242,15 @@
         const input = document.getElementById('rutInput');
         const modal = document.getElementById('modalConfirmacion');
         const btn = document.getElementById('btnConfirmar');
+        const modalTitulo = document.getElementById('modalTitulo');
+        const modalMensaje = document.getElementById('modalMensaje');
 
         let resetTimer = null;
+        let modalTimer = null;
 
-        // FUNCIÓN MODIFICADA PARA SOPORTAR K/k
+        const MODAL_AUTO_CLOSE_MS = 8000;
+
         function limpiarRUT(rut) {
-            if (!rut) return '';
             return rut.replace(/[^0-9kK]/g, '').toUpperCase();
         }
 
@@ -314,29 +330,60 @@
             return (hh * 60) + mm;
         }
 
-        function seleccionarCitaCorrecta(docs) {
-            const estadosValidos = ['pendiente', 'agendado', 'confirmado', 'llegado'];
+        function normalizarEstado(estado) {
+            return (estado || 'pendiente').toLowerCase().trim();
+        }
 
-            const citasValidas = docs.filter(item => {
-                const estado = (item.data().estado || '').toLowerCase().trim();
-                return estadosValidos.includes(estado);
-            });
+        function seleccionarCitaCorrecta(docs) {
+            const prioridadEstado = {
+                pendiente: 0,
+                agendado: 0,
+                confirmado: 0,
+                llegado: 1,
+                en_recepcion: 1,
+                pagado: 1,
+                llamando: 1,
+                llamado: 1,
+                atendiendo: 1,
+                atendido: 2
+            };
+
+            const citasValidas = docs
+                .map(item => ({
+                    doc: item,
+                    data: item.data(),
+                    estado: normalizarEstado(item.data().estado)
+                }))
+                .filter(item => item.estado in prioridadEstado);
 
             if (citasValidas.length === 0) return null;
 
             citasValidas.sort((a, b) => {
-                const horaA = horaATotalMinutos(a.data().hora_consulta);
-                const horaB = horaATotalMinutos(b.data().hora_consulta);
+                const prioridadA = prioridadEstado[a.estado];
+                const prioridadB = prioridadEstado[b.estado];
+
+                if (prioridadA !== prioridadB) return prioridadA - prioridadB;
+
+                const horaA = horaATotalMinutos(a.data.hora_consulta);
+                const horaB = horaATotalMinutos(b.data.hora_consulta);
+
                 return horaA - horaB;
             });
 
-            return citasValidas[0];
+            return citasValidas[0].doc;
         }
 
         function cancelarResetInput() {
             if (resetTimer) {
                 clearTimeout(resetTimer);
                 resetTimer = null;
+            }
+        }
+
+        function cancelarAutoCierreModal() {
+            if (modalTimer) {
+                clearTimeout(modalTimer);
+                modalTimer = null;
             }
         }
 
@@ -359,6 +406,50 @@
                     input.focus();
                 }
             }, 10000);
+        }
+
+        async function obtenerDatosDoctor(doctorId) {
+            let nombreDoctorMostrar = "No asignado";
+            let ubicacionMostrar = "Por confirmar";
+
+            if (!doctorId) {
+                return { nombreDoctorMostrar, ubicacionMostrar };
+            }
+
+            const idBuscado = doctorId.trim().toLowerCase();
+            const docRefDoc = doc(db, "doctores", idBuscado);
+            const docSnapDoc = await getDoc(docRefDoc);
+
+            if (docSnapDoc.exists()) {
+                const dData = docSnapDoc.data();
+                nombreDoctorMostrar = dData.nombre || "No asignado";
+                ubicacionMostrar = `Piso ${dData.piso} - Consulta ${dData.consulta}`;
+            } else {
+                nombreDoctorMostrar = "Dr(a). " + idBuscado.split('@')[0].toUpperCase();
+            }
+
+            return { nombreDoctorMostrar, ubicacionMostrar };
+        }
+
+        function abrirModal({ titulo, tipo, mensaje, nombre, doctor, ubicacion, autoClose = true }) {
+            cancelarAutoCierreModal();
+
+            modalTitulo.textContent = titulo;
+            modalTitulo.className = tipo;
+
+            document.getElementById('resNombre').innerText = nombre || '---';
+            document.getElementById('resDoctor').innerText = doctor || '---';
+            document.getElementById('resUbicacion').innerText = ubicacion || '---';
+            modalMensaje.textContent = mensaje || '';
+
+            modal.style.display = 'flex';
+            input.value = '';
+
+            if (autoClose) {
+                modalTimer = setTimeout(() => {
+                    cerrarModal();
+                }, MODAL_AUTO_CLOSE_MS);
+            }
         }
 
         input.addEventListener('input', () => {
@@ -401,56 +492,79 @@
 
                 const querySnapshot = await getDocs(q);
 
-                if (!querySnapshot.empty) {
-                    const citaSeleccionada = seleccionarCitaCorrecta(querySnapshot.docs);
-
-                    if (!citaSeleccionada) {
-                        alert("No tiene una cita válida para hoy.");
-                        resetearInputRUT();
-                        return;
-                    }
-
-                    const docSnap = citaSeleccionada;
-                    const p = docSnap.data();
-
-                    const ahora24 = new Date().toLocaleTimeString('es-CL', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    });
-
-                    await updateDoc(doc(db, "agendados", docSnap.id), {
-                        estado: "llegado",
-                        hora_llegada: ahora24
-                    });
-
-                    let nombreDoctorMostrar = "No asignado";
-                    let ubicacionMostrar = "Por confirmar";
-
-                    if (p.doctor_id) {
-                        const idBuscado = p.doctor_id.trim().toLowerCase();
-                        const docRefDoc = doc(db, "doctores", idBuscado);
-                        const docSnapDoc = await getDoc(docRefDoc);
-
-                        if (docSnapDoc.exists()) {
-                            const dData = docSnapDoc.data();
-                            nombreDoctorMostrar = dData.nombre;
-                            ubicacionMostrar = `Piso ${dData.piso} - Consulta ${dData.consulta}`;
-                        } else {
-                            nombreDoctorMostrar = "Dr(a). " + idBuscado.split('@')[0].toUpperCase();
-                        }
-                    }
-
-                    document.getElementById('resNombre').innerText = p.nombre;
-                    document.getElementById('resDoctor').innerText = nombreDoctorMostrar;
-                    document.getElementById('resUbicacion').innerText = ubicacionMostrar;
-
-                    modal.style.display = 'flex';
-                    input.value = '';
-                } else {
+                if (querySnapshot.empty) {
                     alert("No se encontró una cita para hoy con ese RUT.");
                     resetearInputRUT();
+                    return;
                 }
+
+                const citaSeleccionada = seleccionarCitaCorrecta(querySnapshot.docs);
+
+                if (!citaSeleccionada) {
+                    alert("No se encontró una cita válida para hoy con ese RUT.");
+                    resetearInputRUT();
+                    return;
+                }
+
+                const docSnap = citaSeleccionada;
+                const p = docSnap.data();
+                const estadoActual = normalizarEstado(p.estado);
+                const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
+
+                if (estadoActual === 'llegado') {
+                    alert("Su llegada ya fue registrada.");
+                    resetearInputRUT();
+                    return;
+                }
+
+                if (estadoActual === 'atendido') {
+                    abrirModal({
+                        titulo: 'ATENCIÓN REALIZADA',
+                        tipo: 'warning',
+                        mensaje: 'Su atención de hoy ya fue realizada.',
+                        nombre: p.nombre,
+                        doctor: nombreDoctorMostrar,
+                        ubicacion: ubicacionMostrar
+                    });
+                    return;
+                }
+
+                const estadosYaRegistrados = ['en_recepcion', 'pagado', 'llamando', 'llamado', 'atendiendo'];
+
+                if (estadosYaRegistrados.includes(estadoActual)) {
+                    alert("Su llegada ya fue registrada.");
+                    resetearInputRUT();
+                    return;
+                }
+
+                const estadosInicialesValidos = ['pendiente', 'agendado', 'confirmado'];
+
+                if (!estadosInicialesValidos.includes(estadoActual)) {
+                    alert("No se encontró una cita válida para hoy con ese RUT.");
+                    resetearInputRUT();
+                    return;
+                }
+
+                const ahora24 = new Date().toLocaleTimeString('es-CL', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+
+                await updateDoc(doc(db, "agendados", docSnap.id), {
+                    estado: "llegado",
+                    hora_llegada: ahora24
+                });
+
+                abrirModal({
+                    titulo: 'LLEGADA CONFIRMADA',
+                    tipo: 'success',
+                    mensaje: 'Por favor, diríjase a Recepción para pagar su atención.',
+                    nombre: p.nombre,
+                    doctor: nombreDoctorMostrar,
+                    ubicacion: ubicacionMostrar
+                });
+
             } catch (error) {
                 console.error(error);
                 alert("Error al procesar.");
@@ -462,6 +576,7 @@
         });
 
         window.cerrarModal = () => {
+            cancelarAutoCierreModal();
             modal.style.display = 'none';
             resetearInputRUT();
         };
