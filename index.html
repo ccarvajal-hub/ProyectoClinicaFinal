@@ -1,164 +1,482 @@
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tótem de Atención - Clínica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
-        authDomain: "llamado-cliente.firebaseapp.com",
-        projectId: "llamado-cliente",
-        storageBucket: "llamado-cliente.appspot.com",
-        messagingSenderId: "444376711880",
-        appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
-    };
+    <link rel="manifest" href="./manifest.webmanifest">
+    <meta name="theme-color" content="#1c1c1c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const input = document.getElementById('rutInput');
-    const btnConfirmar = document.getElementById('btnConfirmar');
-    const modal = document.getElementById('modalConfirmacion');
-    let html5QrScanner = null;
-
-    // NORMALIZACIÓN ABSOLUTA
-    function limpiarRUT(rut) { 
-        if (!rut) return "";
-        return rut.replace(/[^0-9kK]/g, '').toUpperCase(); 
-    }
-
-    function formatearRUT(rut) {
-        let limpio = limpiarRUT(rut);
-        if (limpio.length <= 1) return limpio;
-        const cuerpo = limpio.slice(0, -1);
-        const dv = limpio.slice(-1);
-        return cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "-" + dv;
-    }
-
-    function validarRUT(rut) {
-        rut = limpiarRUT(rut);
-        if (rut.length < 8) return false;
-        const cuerpo = rut.slice(0, -1);
-        const dv = rut.slice(-1);
-        let suma = 0, mult = 2;
-        for (let i = cuerpo.length - 1; i >= 0; i--) {
-            suma += cuerpo[i] * mult;
-            mult = mult < 7 ? mult + 1 : 2;
-        }
-        const dvEsperado = 11 - (suma % 11);
-        const dvFinal = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'K' : String(dvEsperado);
-        return dv === dvFinal;
-    }
-
-    function obtenerFechaHoyChile() {
-        return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
-    }
-
-    // LÓGICA DE BÚSQUEDA CORREGIDA
-    btnConfirmar.onclick = async () => {
-        const rutLimpio = limpiarRUT(input.value);
-        if (!validarRUT(rutLimpio)) {
-            alert("RUT Inválido. Asegúrate de incluir el dígito verificador.");
-            return;
+    <style>
+        :root {
+            --bg-page: #4a4a4a;
+            --bg-card: #1c1c1c;
+            --text-main: #FFFFFF;
+            --text-muted: #A0A0A0;
+            --blue-accent: #4682B4;
+            --green-muted: #2D6A4F;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --radius: 24px;
         }
 
-        btnConfirmar.disabled = true;
-        btnConfirmar.innerText = "BUSCANDO...";
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-page);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: var(--text-main);
+            overflow: hidden;
+        }
 
-        try {
-            const hoy = obtenerFechaHoyChile();
-            const rutFormateado = formatearRUT(rutLimpio);
-            
-            // Buscamos de ambas formas simultáneamente
-            const q1 = query(collection(db, "agendados"), where("rut", "==", rutLimpio), where("fecha_turno", "==", hoy));
-            const q2 = query(collection(db, "agendados"), where("rut", "==", rutFormateado), where("fecha_turno", "==", hoy));
-            
-            const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-            
-            const docSnap = !snap1.empty ? snap1.docs[0] : (!snap2.empty ? snap2.docs[0] : null);
+        .totem-card {
+            background-color: var(--bg-card);
+            padding: 60px 40px;
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+        }
 
-            if (!docSnap) {
-                // AQUÍ ES DONDE FALLABA ANTES: Ahora lanzamos el error y LIMPIAMOS
-                alert("NO TIENES CONSULTA PROGRAMADA\nNo encontramos ninguna cita para hoy con el RUT " + rutFormateado);
-                input.value = "";
-                btnConfirmar.disabled = false;
-                btnConfirmar.innerText = "Confirmar Llegada";
-                return; 
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -2px;
+        }
+
+        .instruction {
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 24px;
+            background: #2a2a2a;
+            border: 2px solid var(--border-color);
+            border-radius: 18px;
+            color: white;
+            font-size: 1.8rem;
+            text-align: center;
+            box-sizing: border-box;
+            outline: none;
+            font-weight: 700;
+        }
+
+        .btn-confirm {
+            width: 100%;
+            padding: 22px;
+            background-color: var(--blue-accent);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 25px;
+        }
+
+        .btn-confirm:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 45px;
+            border-radius: var(--radius);
+            border: 1px solid #333;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            color: #48BB78;
+            font-size: 1.8rem;
+            margin: 0 0 25px 0;
+            font-weight: 800;
+        }
+
+        .info-box {
+            background: #252525;
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+            border: none;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-weight: 700;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .btn-close {
+            background: var(--green-muted);
+            color: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 18px 40px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="totem-card">
+        <h1>Bienvenido</h1>
+        <p class="instruction">Ingrese su RUT para confirmar su llegada.</p>
+        <input
+            type="text"
+            id="rutInput"
+            placeholder="12.345.678-K"
+            autocomplete="off"
+            autocapitalize="characters"
+            maxlength="12"
+        >
+        <button class="btn-confirm" id="btnConfirmar">Confirmar Llegada</button>
+    </div>
+
+    <div class="modal-overlay" id="modalConfirmacion">
+        <div class="modal-content">
+            <h2>LLEGADA CONFIRMADA</h2>
+            <div class="info-box">
+                <div class="info-item">
+                    <span class="info-label">Paciente</span>
+                    <span class="info-value" id="resNombre">---</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Médico</span>
+                    <span class="info-value" id="resDoctor">---</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Ubicación</span>
+                    <span class="info-value" id="resUbicacion">---</span>
+                </div>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">
+                Por favor, diríjase a Recepción para pagar su atención.
+            </p>
+            <button class="btn-close" onclick="cerrarModal()">ENTENDIDO</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
+            authDomain: "llamado-cliente.firebaseapp.com",
+            projectId: "llamado-cliente",
+            storageBucket: "llamado-cliente.appspot.com",
+            messagingSenderId: "444376711880",
+            appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const input = document.getElementById('rutInput');
+        const modal = document.getElementById('modalConfirmacion');
+        const btn = document.getElementById('btnConfirmar');
+
+        let resetTimer = null;
+
+        function limpiarRUT(rut) {
+            return rut.replace(/[^0-9kK]/g, '').toUpperCase();
+        }
+
+        function formatearRUT(rut) {
+            const limpio = limpiarRUT(rut).slice(0, 9);
+
+            if (limpio.length <= 1) return limpio;
+
+            const cuerpo = limpio.slice(0, -1);
+            const dv = limpio.slice(-1);
+
+            let cuerpoFormateado = '';
+            let contador = 0;
+
+            for (let i = cuerpo.length - 1; i >= 0; i--) {
+                cuerpoFormateado = cuerpo[i] + cuerpoFormateado;
+                contador++;
+
+                if (contador === 3 && i !== 0) {
+                    cuerpoFormateado = '.' + cuerpoFormateado;
+                    contador = 0;
+                }
             }
 
-            const data = docSnap.data();
-            const estado = (data.estado || "").toLowerCase();
+            return `${cuerpoFormateado}-${dv}`;
+        }
 
-            // BLOQUEO DE DOBLE INGRESO
-            if (['llegado', 'pagado', 'llamando', 'atendiendo', 'atendido'].includes(estado)) {
-                abrirModal("YA REGISTRADO", "info", "Tu llegada ya fue procesada anteriormente. Por favor, espera en la sala.", data, docSnap.id);
+        function validarRUT(rut) {
+            rut = limpiarRUT(rut);
+
+            if (!/^\d{7,8}[0-9K]$/.test(rut)) return false;
+
+            const cuerpo = rut.slice(0, -1);
+            const dvIngresado = rut.slice(-1);
+
+            let suma = 0;
+            let multiplo = 2;
+
+            for (let i = cuerpo.length - 1; i >= 0; i--) {
+                suma += parseInt(cuerpo[i], 10) * multiplo;
+                multiplo = multiplo < 7 ? multiplo + 1 : 2;
+            }
+
+            const resto = suma % 11;
+            const dvEsperadoNum = 11 - resto;
+
+            let dvEsperado = '';
+            if (dvEsperadoNum === 11) dvEsperado = '0';
+            else if (dvEsperadoNum === 10) dvEsperado = 'K';
+            else dvEsperado = String(dvEsperadoNum);
+
+            return dvIngresado === dvEsperado;
+        }
+
+        function obtenerFechaHoyChile() {
+            const partes = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/Santiago',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).formatToParts(new Date());
+
+            const year = partes.find(p => p.type === 'year').value;
+            const month = partes.find(p => p.type === 'month').value;
+            const day = partes.find(p => p.type === 'day').value;
+
+            return `${year}-${month}-${day}`;
+        }
+
+        function horaATotalMinutos(hora) {
+            if (!hora || typeof hora !== 'string') return 999999;
+
+            const [hh, mm] = hora.split(':').map(Number);
+
+            if (Number.isNaN(hh) || Number.isNaN(mm)) return 999999;
+
+            return (hh * 60) + mm;
+        }
+
+        function seleccionarCitaCorrecta(docs) {
+            const estadosValidos = ['pendiente', 'agendado', 'confirmado', 'llegado'];
+
+            const citasValidas = docs.filter(item => {
+                const estado = (item.data().estado || '').toLowerCase().trim();
+                return estadosValidos.includes(estado);
+            });
+
+            if (citasValidas.length === 0) return null;
+
+            citasValidas.sort((a, b) => {
+                const horaA = horaATotalMinutos(a.data().hora_consulta);
+                const horaB = horaATotalMinutos(b.data().hora_consulta);
+                return horaA - horaB;
+            });
+
+            return citasValidas[0];
+        }
+
+        function cancelarResetInput() {
+            if (resetTimer) {
+                clearTimeout(resetTimer);
+                resetTimer = null;
+            }
+        }
+
+        function resetearInputRUT() {
+            cancelarResetInput();
+            input.value = '';
+            input.focus();
+        }
+
+        function programarResetInput() {
+            cancelarResetInput();
+
+            if (!input.value.trim()) return;
+            if (btn.disabled) return;
+            if (modal.style.display === 'flex') return;
+
+            resetTimer = setTimeout(() => {
+                if (!btn.disabled && modal.style.display !== 'flex') {
+                    input.value = '';
+                    input.focus();
+                }
+            }, 10000);
+        }
+
+        input.addEventListener('input', () => {
+            input.value = formatearRUT(input.value);
+            programarResetInput();
+        });
+
+        input.addEventListener('focus', () => {
+            if (input.value.trim()) {
+                programarResetInput();
+            }
+        });
+
+        btn.addEventListener('click', async () => {
+            cancelarResetInput();
+
+            const rutLimpio = limpiarRUT(input.value);
+            if (!rutLimpio) {
+                resetearInputRUT();
                 return;
             }
 
-            // SI TODO ESTÁ BIEN, REGISTRAMOS
-            const horaActual = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-            await updateDoc(doc(db, "agendados", docSnap.id), {
-                estado: "llegado",
-                hora_llegada: horaActual
-            });
-
-            abrirModal("LLEGADA CONFIRMADA", "success", "Registro exitoso. Dirígete a recepción para el pago.", data, docSnap.id);
-
-        } catch (e) {
-            console.error("Error crítico:", e);
-            alert("Error de conexión. Intenta de nuevo.");
-        } finally {
-            btnConfirmar.disabled = false;
-            btnConfirmar.innerText = "Confirmar Llegada";
-        }
-    };
-
-    // ESCÁNER
-    document.getElementById('btnScan').onclick = () => {
-        const reader = document.getElementById('reader');
-        reader.style.display = 'block';
-        html5QrScanner = new Html5Qrcode("reader");
-        html5QrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
-        (text) => {
-            const match = text.match(/(\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK])/);
-            if (match) {
-                input.value = match[0];
-                html5QrScanner.stop();
-                reader.style.display = 'none';
-                btnConfirmar.click(); 
+            if (!validarRUT(rutLimpio)) {
+                alert("RUT inválido. Verifique e intente nuevamente.");
+                resetearInputRUT();
+                return;
             }
-        }).catch(err => console.error(err));
-    };
 
-    async function abrirModal(titulo, tipo, msg, data, idDoc) {
-        document.getElementById('modalTitulo').innerText = titulo;
-        document.getElementById('modalTitulo').className = titulo === "YA REGISTRADO" ? "info" : "success";
-        document.getElementById('modalMensaje').innerText = msg;
-        document.getElementById('resNombre').innerText = data.nombre || 'Paciente';
-        
-        // Carga de Doctor
-        try {
-            const docDoc = await getDoc(doc(db, "doctores", data.doctor_id.trim().toLowerCase()));
-            if(docDoc.exists()){
-                const d = docDoc.data();
-                document.getElementById('resDoctor').innerText = d.nombre;
-                document.getElementById('resUbicacion').innerText = `Piso ${d.piso} - Box ${d.consulta}`;
-            } else {
-                document.getElementById('resDoctor').innerText = "Personal de Turno";
-                document.getElementById('resUbicacion').innerText = "Mesón Recepción";
+            btn.disabled = true;
+            btn.innerText = "Procesando...";
+
+            try {
+                const fechaHoy = obtenerFechaHoyChile();
+
+                const q = query(
+                    collection(db, "agendados"),
+                    where("rut", "==", rutLimpio),
+                    where("fecha_turno", "==", fechaHoy)
+                );
+
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const citaSeleccionada = seleccionarCitaCorrecta(querySnapshot.docs);
+
+                    if (!citaSeleccionada) {
+                        alert("No tiene una cita válida para hoy.");
+                        resetearInputRUT();
+                        return;
+                    }
+
+                    const docSnap = citaSeleccionada;
+                    const p = docSnap.data();
+
+                    const ahora24 = new Date().toLocaleTimeString('es-CL', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    });
+
+                    await updateDoc(doc(db, "agendados", docSnap.id), {
+                        estado: "llegado",
+                        hora_llegada: ahora24
+                    });
+
+                    let nombreDoctorMostrar = "No asignado";
+                    let ubicacionMostrar = "Por confirmar";
+
+                    if (p.doctor_id) {
+                        const idBuscado = p.doctor_id.trim().toLowerCase();
+                        const docRefDoc = doc(db, "doctores", idBuscado);
+                        const docSnapDoc = await getDoc(docRefDoc);
+
+                        if (docSnapDoc.exists()) {
+                            const dData = docSnapDoc.data();
+                            nombreDoctorMostrar = dData.nombre;
+                            ubicacionMostrar = `Piso ${dData.piso} - Consulta ${dData.consulta}`;
+                        } else {
+                            nombreDoctorMostrar = "Dr(a). " + idBuscado.split('@')[0].toUpperCase();
+                        }
+                    }
+
+                    document.getElementById('resNombre').innerText = p.nombre;
+                    document.getElementById('resDoctor').innerText = nombreDoctorMostrar;
+                    document.getElementById('resUbicacion').innerText = ubicacionMostrar;
+
+                    modal.style.display = 'flex';
+                    input.value = '';
+                } else {
+                    alert("No se encontró una cita para hoy con ese RUT.");
+                    resetearInputRUT();
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error al procesar.");
+                resetearInputRUT();
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Confirmar Llegada";
             }
-        } catch (e) {
-            document.getElementById('resDoctor').innerText = "Consultar en Mesón";
-        }
-
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), {
-            text: `https://tu-web.app/ticket.html?id=${idDoc}`,
-            width: 150, height: 150
         });
 
-        modal.style.display = 'flex';
-        input.value = "";
-    }
+        window.cerrarModal = () => {
+            modal.style.display = 'none';
+            resetearInputRUT();
+        };
 
-    document.getElementById('btnCerrarModal').onclick = () => modal.style.display = 'none';
-    input.oninput = () => input.value = formatearRUT(input.value);
-</script>
+        window.addEventListener('load', () => {
+            input.focus();
+        });
+    </script>
+
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("./sw.js").catch((error) => {
+                    console.error("Error registrando service worker:", error);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
