@@ -15,7 +15,6 @@
         :root {
             --bg-page: #4a4a4a;
             --bg-card: #1c1c1c;
-            --bg-card-2: #252525;
             --bg-key: #2f2f2f;
             --bg-key-alt: #3a3a3a;
             --bg-key-action: #4682B4;
@@ -107,7 +106,6 @@
             color: white;
             font-size: 1.8rem;
             text-align: center;
-            box-sizing: border-box;
             outline: none;
             font-weight: 700;
             caret-color: transparent;
@@ -147,10 +145,7 @@
 
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             background: rgba(0,0,0,0.85);
             display: none;
             justify-content: center;
@@ -468,7 +463,7 @@
         let resetTimer = null;
         let audioContext = null;
 
-        function inicializarAudio() {
+        function unlockAudio() {
             try {
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
                 if (!AudioCtx) return;
@@ -487,7 +482,7 @@
 
         async function reproducirSonidoConfirmacion() {
             try {
-                inicializarAudio();
+                unlockAudio();
                 if (!audioContext) return;
 
                 if (audioContext.state === 'suspended') {
@@ -496,31 +491,32 @@
 
                 const now = audioContext.currentTime;
 
-                const gain = audioContext.createGain();
-                gain.connect(audioContext.destination);
-                gain.gain.setValueAtTime(0.0001, now);
+                const master = audioContext.createGain();
+                master.connect(audioContext.destination);
+                master.gain.setValueAtTime(0.0001, now);
 
                 const osc1 = audioContext.createOscillator();
-                osc1.type = 'sine';
-                osc1.frequency.setValueAtTime(880, now);
-
                 const osc2 = audioContext.createOscillator();
+
+                osc1.type = 'sine';
                 osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(1174.66, now + 0.12);
 
-                osc1.connect(gain);
-                osc2.connect(gain);
+                osc1.frequency.setValueAtTime(784, now);
+                osc2.frequency.setValueAtTime(1046.5, now + 0.12);
 
-                gain.gain.exponentialRampToValueAtTime(0.08, now + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.03, now + 0.10);
-                gain.gain.exponentialRampToValueAtTime(0.09, now + 0.15);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+                osc1.connect(master);
+                osc2.connect(master);
+
+                master.gain.exponentialRampToValueAtTime(0.08, now + 0.02);
+                master.gain.exponentialRampToValueAtTime(0.03, now + 0.10);
+                master.gain.exponentialRampToValueAtTime(0.09, now + 0.16);
+                master.gain.exponentialRampToValueAtTime(0.0001, now + 0.36);
 
                 osc1.start(now);
                 osc1.stop(now + 0.14);
 
                 osc2.start(now + 0.12);
-                osc2.stop(now + 0.35);
+                osc2.stop(now + 0.36);
             } catch (error) {
                 console.error('Error reproduciendo sonido:', error);
             }
@@ -632,6 +628,18 @@
             }
         }
 
+        function actualizarHint() {
+            if (keyboardPanel.classList.contains('open')) {
+                inputHint.textContent = input.value
+                    ? 'Use el teclado inferior para completar o corregir su RUT'
+                    : 'Ingrese su RUT con el teclado inferior';
+            } else {
+                inputHint.textContent = input.value
+                    ? 'Toque el campo para seguir editando su RUT'
+                    : 'Toque el campo para ingresar su RUT';
+            }
+        }
+
         function abrirTeclado() {
             if (btn.disabled) return;
             if (modal.style.display === 'flex') return;
@@ -650,14 +658,6 @@
             appShell.classList.remove('keyboard-open');
             input.classList.remove('active');
             actualizarHint();
-        }
-
-        function actualizarHint() {
-            if (keyboardPanel.classList.contains('open')) {
-                inputHint.textContent = input.value ? 'Use el teclado inferior para completar o corregir su RUT' : 'Ingrese su RUT con el teclado inferior';
-            } else {
-                inputHint.textContent = input.value ? 'Toque el campo para seguir editando su RUT' : 'Toque el campo para ingresar su RUT';
-            }
         }
 
         function resetearInputRUT() {
@@ -741,59 +741,60 @@
 
                 const querySnapshot = await getDocs(q);
 
-                if (!querySnapshot.empty) {
-                    const citaSeleccionada = seleccionarCitaCorrecta(querySnapshot.docs);
-
-                    if (!citaSeleccionada) {
-                        alert("No tiene una cita válida para hoy.");
-                        resetearInputRUT();
-                        return;
-                    }
-
-                    const docSnap = citaSeleccionada;
-                    const p = docSnap.data();
-
-                    const ahora24 = new Date().toLocaleTimeString('es-CL', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    });
-
-                    await updateDoc(doc(db, "agendados", docSnap.id), {
-                        estado: "llegado",
-                        hora_llegada: ahora24
-                    });
-
-                    let nombreDoctorMostrar = "No asignado";
-                    let ubicacionMostrar = "Por confirmar";
-
-                    if (p.doctor_id) {
-                        const idBuscado = p.doctor_id.trim().toLowerCase();
-                        const docRefDoc = doc(db, "doctores", idBuscado);
-                        const docSnapDoc = await getDoc(docRefDoc);
-
-                        if (docSnapDoc.exists()) {
-                            const dData = docSnapDoc.data();
-                            nombreDoctorMostrar = dData.nombre;
-                            ubicacionMostrar = `Piso ${dData.piso} - Consulta ${dData.consulta}`;
-                        } else {
-                            nombreDoctorMostrar = "Dr(a). " + idBuscado.split('@')[0].toUpperCase();
-                        }
-                    }
-
-                    document.getElementById('resNombre').innerText = p.nombre;
-                    document.getElementById('resDoctor').innerText = nombreDoctorMostrar;
-                    document.getElementById('resUbicacion').innerText = ubicacionMostrar;
-
-                    cerrarTeclado();
-                    await reproducirSonidoConfirmacion();
-                    modal.style.display = 'flex';
-                    input.value = '';
-                    actualizarHint();
-                } else {
+                if (querySnapshot.empty) {
                     alert("No se encontró una cita para hoy con ese RUT.");
                     resetearInputRUT();
+                    return;
                 }
+
+                const citaSeleccionada = seleccionarCitaCorrecta(querySnapshot.docs);
+
+                if (!citaSeleccionada) {
+                    alert("No tiene una cita válida para hoy.");
+                    resetearInputRUT();
+                    return;
+                }
+
+                const docSnap = citaSeleccionada;
+                const p = docSnap.data();
+
+                const ahora24 = new Date().toLocaleTimeString('es-CL', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+
+                await updateDoc(doc(db, "agendados", docSnap.id), {
+                    estado: "llegado",
+                    hora_llegada: ahora24
+                });
+
+                let nombreDoctorMostrar = "No asignado";
+                let ubicacionMostrar = "Por confirmar";
+
+                if (p.doctor_id) {
+                    const idBuscado = p.doctor_id.trim().toLowerCase();
+                    const docRefDoc = doc(db, "doctores", idBuscado);
+                    const docSnapDoc = await getDoc(docRefDoc);
+
+                    if (docSnapDoc.exists()) {
+                        const dData = docSnapDoc.data();
+                        nombreDoctorMostrar = dData.nombre;
+                        ubicacionMostrar = `Piso ${dData.piso} - Consulta ${dData.consulta}`;
+                    } else {
+                        nombreDoctorMostrar = "Dr(a). " + idBuscado.split('@')[0].toUpperCase();
+                    }
+                }
+
+                document.getElementById('resNombre').innerText = p.nombre || "---";
+                document.getElementById('resDoctor').innerText = nombreDoctorMostrar;
+                document.getElementById('resUbicacion').innerText = ubicacionMostrar;
+
+                cerrarTeclado();
+                await reproducirSonidoConfirmacion();
+                modal.style.display = 'flex';
+                input.value = '';
+                actualizarHint();
             } catch (error) {
                 console.error(error);
                 alert("Error al procesar.");
@@ -806,46 +807,43 @@
         }
 
         input.addEventListener('click', () => {
-            inicializarAudio();
+            unlockAudio();
             abrirTeclado();
         });
 
         input.addEventListener('touchstart', () => {
-            inicializarAudio();
+            unlockAudio();
             abrirTeclado();
         }, { passive: true });
 
-        keyboardBackdrop.addEventListener('click', () => {
-            cerrarTeclado();
-        });
-
+        keyboardBackdrop.addEventListener('click', cerrarTeclado);
         btnOcultarTeclado.addEventListener('click', cerrarTeclado);
         btnCerrarTeclado.addEventListener('click', cerrarTeclado);
 
         btnBorrar.addEventListener('click', () => {
-            inicializarAudio();
+            unlockAudio();
             borrarUltimoCaracter();
         });
 
         btnLimpiar.addEventListener('click', () => {
-            inicializarAudio();
+            unlockAudio();
             limpiarCampo();
         });
 
         btnConfirmarTeclado.addEventListener('click', async () => {
-            inicializarAudio();
+            unlockAudio();
             await procesarLlegada();
         });
 
         keyButtons.forEach(btnKey => {
             btnKey.addEventListener('click', () => {
-                inicializarAudio();
+                unlockAudio();
                 insertarCaracter(btnKey.dataset.key);
             });
         });
 
         btn.addEventListener('click', async () => {
-            inicializarAudio();
+            unlockAudio();
             await procesarLlegada();
         });
 
@@ -855,12 +853,14 @@
         };
 
         window.addEventListener('load', () => {
-            inicializarAudio();
+            unlockAudio();
             actualizarHint();
             setTimeout(() => {
                 abrirTeclado();
             }, 250);
         });
+
+        window.addEventListener('pointerdown', unlockAudio, { once: true });
     </script>
 
     <script>
