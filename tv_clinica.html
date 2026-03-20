@@ -2,8 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TV Llamado - Clínica</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --bg: #1a1a1a;
@@ -11,68 +13,258 @@
             --accent: #4299E1;
             --text: #ffffff;
             --muted: #a0aec0;
+            --warning: #FFB347;
+            --success: #48BB78;
+            --safe-x: 2vw;
+            --safe-y: 2vh;
+            --radius: 2.2vh;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; overflow: hidden; }
-        .layout { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 30px; height: 95vh; }
 
-        /* Botón de activación de sonido necesario para TVs */
-        #audio-unlock {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 9999; display: flex;
-            flex-direction: column; justify-content: center; align-items: center;
-            cursor: pointer;
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
         }
-        #audio-unlock h2 { color: var(--accent); font-size: 3rem; margin-bottom: 20px; }
-        #audio-unlock p { font-size: 1.5rem; }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        #app {
+            width: 100vw;
+            height: 100vh;
+            padding: var(--safe-y) var(--safe-x);
+            overflow: hidden;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 1.6vw;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
+
+        #audio-unlock {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            text-align: center;
+            padding: 4vh 4vw;
+        }
+
+        #audio-unlock h2 {
+            color: var(--accent);
+            font-size: clamp(2rem, 4vw, 4.5rem);
+            margin: 0 0 1rem 0;
+            text-transform: uppercase;
+        }
+
+        #audio-unlock p {
+            font-size: clamp(1rem, 2vw, 2rem);
+            margin: 0;
+            color: #fff;
+        }
 
         .main-call {
-            background: var(--card); border-radius: 30px; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center;
-            border: 4px solid var(--accent); box-shadow: 0 0 50px rgba(66, 153, 225, 0.2);
+            background: var(--card);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: 0.35vw solid var(--accent);
+            box-shadow: 0 0 3vw rgba(66, 153, 225, 0.18);
+            padding: 3vh 2vw;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
         }
-        .main-call h1 { font-size: 5rem; margin: 0; color: var(--accent); text-transform: uppercase; }
-        .main-call .paciente { font-size: 7.5rem; font-weight: 900; margin: 20px 0; line-height: 1; text-transform: uppercase; }
-        .main-call .doctor-info { font-size: 2.8rem; font-weight: 700; color: #FFB347; text-transform: uppercase; }
-        .main-call .box-info { font-size: 2.2rem; color: var(--muted); margin-top: 15px; text-transform: uppercase; font-weight: 800; }
 
-        .history { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 30px; display: flex; flex-direction: column; }
-        .history h2 { font-size: 2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
-        
+        .main-call h1 {
+            font-size: clamp(2rem, 4vw, 4.8rem);
+            margin: 0;
+            color: var(--accent);
+            text-transform: uppercase;
+            line-height: 1.05;
+        }
+
+        .main-call .paciente {
+            font-size: clamp(2.8rem, 7vw, 7rem);
+            font-weight: 900;
+            margin: 2.2vh 0 1.8vh 0;
+            line-height: 0.95;
+            text-transform: uppercase;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .main-call .doctor-info {
+            font-size: clamp(1.3rem, 2.4vw, 2.8rem);
+            font-weight: 700;
+            color: var(--warning);
+            text-transform: uppercase;
+            line-height: 1.1;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            text-align: center;
+        }
+
+        .main-call .box-info {
+            font-size: clamp(1.2rem, 2vw, 2.3rem);
+            color: var(--muted);
+            margin-top: 1.4vh;
+            text-transform: uppercase;
+            font-weight: 800;
+            line-height: 1.1;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            text-align: center;
+        }
+
+        .history {
+            background: rgba(255,255,255,0.05);
+            border-radius: var(--radius);
+            padding: 2.2vh 1.4vw;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .history h2 {
+            font-size: clamp(1.3rem, 2vw, 2.2rem);
+            border-bottom: 0.18vw solid var(--accent);
+            padding-bottom: 1vh;
+            margin: 0 0 1.6vh 0;
+            text-transform: uppercase;
+            flex: 0 0 auto;
+        }
+
+        #historial-lista {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 1vh;
+        }
+
         .hist-row {
-            display: grid; grid-template-columns: 1fr auto;
-            background: rgba(0,0,0,0.2); padding: 18px 25px;
-            border-radius: 15px; margin-bottom: 12px; border-left: 6px solid var(--accent);
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 1vw;
+            background: rgba(0,0,0,0.22);
+            padding: 1.3vh 1vw;
+            border-radius: 1.2vh;
+            border-left: 0.35vw solid var(--accent);
             animation: slideIn 0.5s ease-out;
+            min-width: 0;
         }
-        
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .hist-name { font-weight: 800; font-size: 1.5rem; text-transform: uppercase; }
-        .hist-doc { font-size: 0.85rem; color: #FFB347; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
-        .hist-meta { font-size: 1.3rem; color: #48BB78; font-weight: 900; text-align: right; align-self: center; text-transform: uppercase; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        .flash { animation: pulse 1.2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        .hist-name {
+            font-weight: 800;
+            font-size: clamp(1rem, 1.7vw, 1.8rem);
+            text-transform: uppercase;
+            line-height: 1.08;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .hist-doc {
+            font-size: clamp(0.75rem, 1vw, 1rem);
+            color: var(--warning);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 0.4vh;
+            line-height: 1.1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .hist-meta {
+            font-size: clamp(0.95rem, 1.3vw, 1.45rem);
+            color: var(--success);
+            font-weight: 900;
+            text-align: right;
+            align-self: center;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .flash {
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 1200px) {
+            .layout {
+                grid-template-columns: 1fr;
+                gap: 1.5vh;
+            }
+
+            .history {
+                padding: 1.8vh 1.8vw;
+            }
+
+            .main-call {
+                padding: 2.4vh 2.2vw;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div id="audio-unlock" onclick="unlockAudio()">
-        <h2>SISTEMA LISTO</h2>
-        <p>Haz clic en cualquier parte para activar el sonido y la pantalla</p>
+        <h2>Sistema listo</h2>
+        <p>Haz clic para activar sonido y pantalla</p>
     </div>
 
-    <div class="layout">
-        <div class="main-call" id="container-llamado">
-            <h1>Llamando a:</h1>
-            <div class="paciente" id="tv-paciente">---</div>
-            <div class="doctor-info" id="tv-doctor">ESPERANDO...</div>
-            <div class="box-info" id="tv-box">---</div>
-        </div>
+    <div id="app">
+        <div class="layout">
+            <div class="main-call" id="container-llamado">
+                <h1>Llamando a:</h1>
+                <div class="paciente" id="tv-paciente">---</div>
+                <div class="doctor-info" id="tv-doctor">ESPERANDO...</div>
+                <div class="box-info" id="tv-box">---</div>
+            </div>
 
-        <div class="history">
-            <h2>Últimos llamados</h2>
-            <div id="historial-lista"></div>
+            <div class="history">
+                <h2>Últimos llamados</h2>
+                <div id="historial-lista"></div>
+            </div>
         </div>
     </div>
 
@@ -95,84 +287,103 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
         const cacheDoctores = {};
         let ultimoPacienteLlamado = "";
 
-        // Función global para desbloquear audio
         window.unlockAudio = () => {
-            const audio = document.getElementById('snd');
+            const audio = document.getElementById("snd");
             audio.play().then(() => {
                 audio.pause();
-                document.getElementById('audio-unlock').style.display = 'none';
+                audio.currentTime = 0;
+                document.getElementById("audio-unlock").style.display = "none";
+            }).catch(() => {
+                console.warn("No se pudo desbloquear el audio.");
             });
         };
 
         async function infoDoc(email) {
             if (!email) return { nombre: "DOCTOR", consulta: "---" };
+
             const cleanEmail = email.toLowerCase().trim();
+
             if (cacheDoctores[cleanEmail]) return cacheDoctores[cleanEmail];
+
             try {
                 const d = await getDoc(doc(db, "doctores", cleanEmail));
                 if (d.exists()) {
-                    cacheDoctores[cleanEmail] = { nombre: d.data().nombre, consulta: d.data().consulta };
+                    cacheDoctores[cleanEmail] = {
+                        nombre: d.data().nombre || cleanEmail.split("@")[0],
+                        consulta: d.data().consulta || "---"
+                    };
                     return cacheDoctores[cleanEmail];
                 }
-            } catch (e) {}
-            return { nombre: cleanEmail.split('@')[0], consulta: "---" };
+            } catch (e) {
+                console.warn("No se pudo obtener doctor:", e);
+            }
+
+            return {
+                nombre: cleanEmail.split("@")[0],
+                consulta: "---"
+            };
         }
 
-        // 1. LLAMADO ACTUAL Y SONIDO
         onSnapshot(doc(db, "turnos", "actual"), (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.paciente && data.paciente !== ultimoPacienteLlamado) {
-                    const audio = document.getElementById('snd');
-                    audio.currentTime = 0;
-                    audio.volume = 1.0; // Volumen al máximo
-                    audio.play().catch(e => console.warn("Audio bloqueado. Haz clic en la pantalla."));
-                    
-                    document.getElementById('container-llamado').classList.add('flash');
-                    setTimeout(() => document.getElementById('container-llamado').classList.remove('flash'), 5000);
-                    ultimoPacienteLlamado = data.paciente;
-                }
-                document.getElementById('tv-paciente').innerText = data.paciente || "---";
-                document.getElementById('tv-doctor').innerText = data.doctor ? "DR. " + data.doctor : "---";
-                document.getElementById('tv-box').innerText = data.box || "---";
+            if (!docSnap.exists()) return;
+
+            const data = docSnap.data();
+            const paciente = data.paciente || "---";
+            const doctor = data.doctor ? "DR. " + data.doctor : "---";
+            const box = data.box || "---";
+
+            if (data.paciente && data.paciente !== ultimoPacienteLlamado) {
+                const audio = document.getElementById("snd");
+                audio.currentTime = 0;
+                audio.volume = 1.0;
+                audio.play().catch(() => {
+                    console.warn("Audio bloqueado. Haz clic en la pantalla.");
+                });
+
+                const container = document.getElementById("container-llamado");
+                container.classList.add("flash");
+                setTimeout(() => container.classList.remove("flash"), 5000);
+
+                ultimoPacienteLlamado = data.paciente;
             }
+
+            document.getElementById("tv-paciente").innerText = paciente;
+            document.getElementById("tv-doctor").innerText = doctor;
+            document.getElementById("tv-box").innerText = box;
         });
 
-        // 2. HISTORIAL (Simplificado para evitar errores de índice)
-        // Solo filtramos por el campo que ordena
         const qHist = query(
-            collection(db, "agendados"), 
-            where("ultimo_llamado", ">", 0), // Solo pacientes que han sido pulsados en "Llamar"
+            collection(db, "agendados"),
+            where("ultimo_llamado", ">", 0),
             orderBy("ultimo_llamado", "desc"),
             limit(6)
         );
 
         onSnapshot(qHist, async (snapshot) => {
-            const lista = document.getElementById('historial-lista');
+            const lista = document.getElementById("historial-lista");
             lista.innerHTML = "";
-            
+
             for (const docSnap of snapshot.docs) {
                 const p = docSnap.data();
                 const d = await infoDoc(p.doctor_id);
-                
-                const row = document.createElement('div');
+
+                const row = document.createElement("div");
                 row.className = "hist-row";
                 row.innerHTML = `
-                    <div>
-                        <div class="hist-name">${p.nombre}</div>
-                        <div class="hist-doc">DR. ${d.nombre}</div>
+                    <div style="min-width:0;">
+                        <div class="hist-name">${p.nombre || "---"}</div>
+                        <div class="hist-doc">DR. ${d.nombre || "---"}</div>
                     </div>
-                    <div class="hist-meta">CONSULTA ${d.consulta}</div>
+                    <div class="hist-meta">CONSULTA ${d.consulta || "---"}</div>
                 `;
                 lista.appendChild(row);
             }
         }, (error) => {
             console.error("Error en Historial:", error);
-            // Si el historial sigue vacío, abre la consola del navegador (F12). 
-            // Firebase suele poner un link ahí para crear el índice necesario.
         });
     </script>
 </body>
