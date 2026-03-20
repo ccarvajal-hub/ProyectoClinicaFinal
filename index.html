@@ -166,9 +166,16 @@
         }
 
         #modalMensaje {
-            color: var(--text-muted);
+            color: var(--text-main);
             margin-bottom: 25px;
-            font-size: 0.95rem;
+            font-size: 1.15rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            line-height: 1.35;
+        }
+
+        #resUbicacion {
+            text-transform: uppercase;
         }
 
         .btn-close {
@@ -182,6 +189,37 @@
             cursor: pointer;
             width: 100%;
             margin-top: 10px;
+        }
+
+        .alert-overlay {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(28, 28, 28, 0.98);
+            color: white;
+            padding: 14px 22px;
+            border-radius: 18px;
+            border: 2px solid rgba(70, 130, 180, 0.55);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.35);
+            z-index: 2000;
+            min-width: 320px;
+            max-width: 90vw;
+            text-align: center;
+            display: none;
+        }
+
+        .alert-overlay.show {
+            display: block;
+        }
+
+        .alert-text {
+            font-size: 0.92rem;
+            font-weight: 800;
+            line-height: 1.2;
+            text-transform: uppercase;
+            white-space: nowrap;
+            letter-spacing: 0.2px;
         }
     </style>
 </head>
@@ -218,10 +256,18 @@
                     <span class="info-value" id="resUbicacion">---</span>
                 </div>
             </div>
-            <p id="modalMensaje">Por favor, diríjase a Recepción para pagar su atención.</p>
+            <p id="modalMensaje">POR FAVOR, DIRÍJASE A RECEPCIÓN.</p>
             <button class="btn-close" onclick="cerrarModal()">ENTENDIDO</button>
         </div>
     </div>
+
+    <div class="alert-overlay" id="customAlert">
+        <div class="alert-text" id="customAlertText"></div>
+    </div>
+
+    <audio id="modalSound" preload="auto">
+        <source src="./modal.mp3" type="audio/mpeg">
+    </audio>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -244,11 +290,16 @@
         const btn = document.getElementById('btnConfirmar');
         const modalTitulo = document.getElementById('modalTitulo');
         const modalMensaje = document.getElementById('modalMensaje');
+        const customAlert = document.getElementById('customAlert');
+        const customAlertText = document.getElementById('customAlertText');
+        const modalSound = document.getElementById('modalSound');
 
         let resetTimer = null;
         let modalTimer = null;
+        let alertTimer = null;
 
-        const MODAL_AUTO_CLOSE_MS = 8000;
+        const MODAL_AUTO_CLOSE_MS = 12000;
+        const ALERT_AUTO_CLOSE_MS = 8000;
 
         function limpiarRUT(rut) {
             return rut.replace(/[^0-9kK]/g, '').toUpperCase();
@@ -387,6 +438,13 @@
             }
         }
 
+        function cancelarAutoCierreAlert() {
+            if (alertTimer) {
+                clearTimeout(alertTimer);
+                alertTimer = null;
+            }
+        }
+
         function resetearInputRUT() {
             cancelarResetInput();
             input.value = '';
@@ -406,6 +464,30 @@
                     input.focus();
                 }
             }, 10000);
+        }
+
+        function mostrarAlerta(mensaje) {
+            cancelarAutoCierreAlert();
+            customAlertText.textContent = mensaje;
+            customAlert.classList.add('show');
+
+            alertTimer = setTimeout(() => {
+                ocultarAlerta();
+            }, ALERT_AUTO_CLOSE_MS);
+        }
+
+        function ocultarAlerta() {
+            cancelarAutoCierreAlert();
+            customAlert.classList.remove('show');
+        }
+
+        function reproducirSonidoModal() {
+            if (!modalSound) return;
+
+            modalSound.currentTime = 0;
+            modalSound.play().catch(() => {
+                console.warn('No se pudo reproducir el sonido del modal.');
+            });
         }
 
         async function obtenerDatosDoctor(doctorId) {
@@ -433,17 +515,20 @@
 
         function abrirModal({ titulo, tipo, mensaje, nombre, doctor, ubicacion, autoClose = true }) {
             cancelarAutoCierreModal();
+            ocultarAlerta();
 
             modalTitulo.textContent = titulo;
             modalTitulo.className = tipo;
 
             document.getElementById('resNombre').innerText = nombre || '---';
             document.getElementById('resDoctor').innerText = doctor || '---';
-            document.getElementById('resUbicacion').innerText = ubicacion || '---';
-            modalMensaje.textContent = mensaje || '';
+            document.getElementById('resUbicacion').innerText = (ubicacion || '---').toUpperCase();
+            modalMensaje.textContent = (mensaje || '').toUpperCase();
 
             modal.style.display = 'flex';
             input.value = '';
+
+            reproducirSonidoModal();
 
             if (autoClose) {
                 modalTimer = setTimeout(() => {
@@ -495,6 +580,7 @@
 
         btn.addEventListener('click', async () => {
             cancelarResetInput();
+            ocultarAlerta();
 
             const rutLimpio = limpiarRUT(input.value);
             if (!rutLimpio) {
@@ -503,7 +589,7 @@
             }
 
             if (!validarRUT(rutLimpio)) {
-                alert("RUT inválido. Verifique e intente nuevamente.");
+                mostrarAlerta("RUT INVÁLIDO. VERIFIQUE E INTENTE NUEVAMENTE.");
                 resetearInputRUT();
                 return;
             }
@@ -516,7 +602,7 @@
                 const citasHoy = await buscarCitasHoyPorRut(rutLimpio, fechaHoy);
 
                 if (citasHoy.length === 0) {
-                    alert("No se encontró una cita para hoy con ese RUT.");
+                    mostrarAlerta("NO SE ENCONTRÓ UNA CITA PARA HOY CON ESE RUT.");
                     resetearInputRUT();
                     return;
                 }
@@ -524,7 +610,7 @@
                 const citaSeleccionada = seleccionarCitaCorrecta(citasHoy);
 
                 if (!citaSeleccionada) {
-                    alert("No se encontró una cita válida para hoy con ese RUT.");
+                    mostrarAlerta("NO SE ENCONTRÓ UNA CITA VÁLIDA PARA HOY CON ESE RUT.");
                     resetearInputRUT();
                     return;
                 }
@@ -535,7 +621,7 @@
                 const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
 
                 if (estadoActual === 'llegado') {
-                    alert("Su llegada ya fue registrada.");
+                    mostrarAlerta("SU LLEGADA YA FUE REGISTRADA.");
                     resetearInputRUT();
                     return;
                 }
@@ -544,7 +630,7 @@
                     abrirModal({
                         titulo: 'ATENCIÓN REALIZADA',
                         tipo: 'warning',
-                        mensaje: 'Su atención de hoy ya fue realizada.',
+                        mensaje: 'SU ATENCIÓN DE HOY YA FUE REALIZADA.',
                         nombre: p.nombre,
                         doctor: nombreDoctorMostrar,
                         ubicacion: ubicacionMostrar
@@ -555,7 +641,7 @@
                 const estadosYaRegistrados = ['en_recepcion', 'pagado', 'llamando', 'llamado', 'atendiendo'];
 
                 if (estadosYaRegistrados.includes(estadoActual)) {
-                    alert("Su llegada ya fue registrada.");
+                    mostrarAlerta("SU LLEGADA YA FUE REGISTRADA.");
                     resetearInputRUT();
                     return;
                 }
@@ -563,7 +649,7 @@
                 const estadosInicialesValidos = ['pendiente', 'agendado', 'confirmado'];
 
                 if (!estadosInicialesValidos.includes(estadoActual)) {
-                    alert("No se encontró una cita válida para hoy con ese RUT.");
+                    mostrarAlerta("NO SE ENCONTRÓ UNA CITA VÁLIDA PARA HOY CON ESE RUT.");
                     resetearInputRUT();
                     return;
                 }
@@ -582,7 +668,7 @@
                 abrirModal({
                     titulo: 'LLEGADA CONFIRMADA',
                     tipo: 'success',
-                    mensaje: 'Por favor, diríjase a Recepción para pagar su atención.',
+                    mensaje: 'POR FAVOR, DIRÍJASE A RECEPCIÓN.',
                     nombre: p.nombre,
                     doctor: nombreDoctorMostrar,
                     ubicacion: ubicacionMostrar
@@ -590,7 +676,7 @@
 
             } catch (error) {
                 console.error(error);
-                alert("Error al procesar.");
+                mostrarAlerta("ERROR AL PROCESAR.");
                 resetearInputRUT();
             } finally {
                 btn.disabled = false;
