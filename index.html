@@ -269,6 +269,10 @@
         <source src="./modal.mp3" type="audio/mpeg">
     </audio>
 
+    <audio id="alertSound" preload="auto">
+        <source src="./alert.mp3" type="audio/mpeg">
+    </audio>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -293,6 +297,7 @@
         const customAlert = document.getElementById('customAlert');
         const customAlertText = document.getElementById('customAlertText');
         const modalSound = document.getElementById('modalSound');
+        const alertSound = document.getElementById('alertSound');
 
         let resetTimer = null;
         let modalTimer = null;
@@ -470,8 +475,9 @@
             cancelarAutoCierreAlert();
             customAlertText.textContent = mensaje;
             customAlert.classList.add('show');
+            reproducirSonidoAlerta();
 
-            alertTimer = setTimeout(() => {
+             alertTimer = setTimeout(() => {
                 ocultarAlerta();
             }, ALERT_AUTO_CLOSE_MS);
         }
@@ -490,6 +496,14 @@
             });
         }
 
+        function reproducirSonidoAlerta() {
+            if (!alertSound) return;
+
+            alertSound.currentTime = 0;
+            alertSound.play().catch(() => {
+                console.warn('No se pudo reproducir el sonido de la alerta.');
+            });
+        }
         async function obtenerDatosDoctor(doctorId) {
             let nombreDoctorMostrar = "No asignado";
             let ubicacionMostrar = "Por confirmar";
@@ -628,15 +642,9 @@
                 }
 
                 if (estadoActual === 'atendido') {
-                    abrirModal({
-                        titulo: 'ATENCIÓN REALIZADA',
-                        tipo: 'warning',
-                        mensaje: 'SU ATENCIÓN DE HOY YA FUE REALIZADA.',
-                        nombre: p.nombre,
-                        doctor: nombreDoctorMostrar,
-                        ubicacion: ubicacionMostrar
-                    });
-                    return;
+                    mostrarAlerta("SU ATENCIÓN DE HOY YA FUE REALIZADA.");
+                    resetearInputRUT();
+                     return;
                 }
 
                 const estadosYaRegistrados = ['en_recepcion', 'pagado', 'llamando', 'llamado', 'atendiendo'];
