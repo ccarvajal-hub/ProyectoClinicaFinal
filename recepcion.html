@@ -1,24 +1,39 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Recepción - Control de Flujo</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
     <style>
         :root {
-            --bg-page: #4a4a4a;      
-            --bg-card: #1c1c1c;      
-            --text-main: #FFFFFF;
-            --text-muted: #A0A0A0;
-            --color-recepcion: #FFB347; 
-            --color-pagado: #48BB78;    
+            --bg-page: #4a4a4a;
+            --bg-card: #1c1c1c;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --color-recepcion: #ffb347;
+            --color-pagado: #48bb78;
+            --color-llamado: #4299e1;
+            --color-atendido: #38a169;
+            --color-manual: #d69e2e;
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
+
+            --badge-pendiente: #718096;
+            --badge-en-recepcion: #ffb347;
+            --badge-llamado-recepcion: #4299e1;
+            --badge-pago-manual: #d69e2e;
+            --badge-pagado: #48bb78;
+            --badge-atendido: #38a169;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: "Inter", sans-serif;
             background-color: var(--bg-page);
             color: var(--text-main);
             margin: 0;
@@ -33,43 +48,178 @@
             padding: 40px;
             border-radius: var(--radius);
             width: 100%;
-            max-width: 900px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            max-width: 1220px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border-color);
             margin-bottom: 30px;
         }
 
-        h2 { 
-            font-size: 1.4rem; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
+        h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             margin-bottom: 25px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .title-espera { color: var(--color-recepcion); }
-        .title-atendidos { color: var(--color-pagado); }
+        .title-espera {
+            color: var(--color-recepcion);
+        }
 
-        .row {
+        .title-atendidos {
+            color: var(--color-pagado);
+        }
+
+        .subinfo {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+
+        .topbar {
             display: flex;
+            justify-content: space-between;
             align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .recepcion-actual {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .row-espera {
+            display: grid;
+            grid-template-columns: 1.9fr 2.3fr 0.9fr 1.2fr 1.2fr 1fr 0.8fr;
+            align-items: center;
+            gap: 12px;
             padding: 15px 20px;
-            background: rgba(255,255,255,0.02);
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border-color);
             border-radius: 15px;
             margin-bottom: 10px;
         }
 
-        .name { flex: 2; font-weight: 700; }
-        .doc { flex: 1.5; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
-        .hora { flex: 0.8; font-weight: 600; text-align: center; }
-        .actions { flex: 1; text-align: right; }
+        .row-historial {
+            display: grid;
+            grid-template-columns: 1.9fr 2.3fr 0.9fr 1.2fr 1.2fr 1fr;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
 
-        .btn-pay {
-            background-color: var(--color-pagado);
+        .row-espera.header,
+        .row-historial.header {
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .name {
+            font-weight: 700;
+        }
+
+        .doc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .hora {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .recepcion-col {
+            text-align: center;
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 0.88rem;
+        }
+
+        .recepcion-col.muted {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .estado-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #fff;
+            text-align: center;
+        }
+
+        .badge-pendiente {
+            background: var(--badge-pendiente);
+        }
+
+        .badge-en_recepcion {
+            background: var(--badge-en-recepcion);
+            color: #1a202c;
+        }
+
+        .badge-llamado_recepcion {
+            background: var(--badge-llamado-recepcion);
+        }
+
+        .badge-pago_manual {
+            background: var(--badge-pago-manual);
+            color: #1a202c;
+        }
+
+        .badge-pagado {
+            background: var(--badge-pagado);
+        }
+
+        .badge-atendido {
+            background: var(--badge-atendido);
+        }
+
+        .actions,
+        .direct-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-action {
             color: white;
             border: none;
             padding: 10px 18px;
@@ -78,33 +228,148 @@
             font-size: 0.75rem;
             cursor: pointer;
             text-transform: uppercase;
-            transition: 0.2s;
+            transition: 0.2s ease;
+            min-width: 110px;
         }
 
-        .btn-disabled {
+        .btn-call {
+            background-color: var(--color-llamado);
+        }
+
+        .btn-pay {
+            background-color: var(--color-pagado);
+        }
+
+        .btn-action:hover:not(:disabled) {
+            filter: brightness(1.08);
+            transform: scale(1.04);
+        }
+
+        .btn-action:disabled {
             background-color: #333;
             color: #666;
             cursor: not-allowed;
-            opacity: 0.5;
+            opacity: 0.6;
         }
 
-        .btn-pay:not(.btn-disabled):hover { filter: brightness(1.1); transform: scale(1.05); }
-        .check { color: var(--color-pagado); font-weight: 800; font-size: 1.2rem; }
+        .btn-direct {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: 1.5px solid rgba(255, 255, 255, 0.45);
+            border-radius: 6px;
+            background: transparent;
+            color: transparent;
+            cursor: pointer;
+            transition: 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            line-height: 1;
+            font-weight: 800;
+        }
 
-        .empty-msg { color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 20px; }
+        .btn-direct:hover:not(:disabled) {
+            border-color: #ffffff;
+            transform: scale(1.06);
+        }
+
+        .btn-direct:disabled {
+            cursor: not-allowed;
+            opacity: 0.45;
+        }
+
+        .btn-direct.direct-activo {
+            color: #48bb78;
+            border-color: rgba(255, 255, 255, 0.45);
+        }
+
+        .check {
+            color: var(--color-pagado);
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+
+        .empty-msg {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            text-align: center;
+            padding: 24px;
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+        }
+
+        .header-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        @media (max-width: 1100px) {
+            .row-espera,
+            .row-espera.header,
+            .row-historial,
+            .row-historial.header {
+                grid-template-columns: 1fr;
+                text-align: left;
+            }
+
+            .hora,
+            .estado-wrap,
+            .actions,
+            .direct-wrap,
+            .recepcion-col,
+            .header-center {
+                justify-content: flex-start;
+                text-align: left;
+            }
+
+            .actions,
+            .direct-wrap {
+                margin-top: 6px;
+            }
+        }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <h2 class="title-espera">● PACIENTES EN ESPERA (REGISTRO TÓTEM)</h2>
+        <div class="topbar">
+            <div>
+                <h2 class="title-espera">● PACIENTES EN RECEPCIÓN</h2>
+                <div class="subinfo" id="fecha-hoy">Cargando fecha...</div>
+            </div>
+            <div class="recepcion-actual" id="recepcion-actual-label">Módulo actual: Recepción 1</div>
+        </div>
+
+        <div class="row-espera header">
+            <div>Paciente</div>
+            <div>Doctor</div>
+            <div class="header-center">Hora</div>
+            <div class="header-center">Recepción</div>
+            <div class="header-center">Estado</div>
+            <div class="header-center">Acción</div>
+            <div class="header-center">Pago directo</div>
+        </div>
+
         <div id="lista-espera">
             <div class="empty-msg">Cargando agenda...</div>
         </div>
     </div>
 
-    <div class="container" style="opacity: 0.9;">
-        <h2 class="title-atendidos">✔ HISTORIAL DE PAGOS Y ATENCIÓN</h2>
+    <div class="container" style="opacity: 0.96;">
+        <h2 class="title-atendidos">✔ HISTORIAL</h2>
+
+        <div class="row-historial header">
+            <div>Paciente</div>
+            <div>Doctor</div>
+            <div class="header-center">Hora</div>
+            <div class="header-center">Recepción</div>
+            <div class="header-center">Estado</div>
+            <div class="header-center">Resultado</div>
+        </div>
+
         <div id="lista-atendidos">
             <div class="empty-msg">No hay movimientos registrados.</div>
         </div>
@@ -112,7 +377,17 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import {
+            getFirestore,
+            collection,
+            onSnapshot,
+            doc,
+            updateDoc,
+            query,
+            orderBy,
+            getDoc,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -126,92 +401,463 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Cache para nombres de doctores
+        // TEMPORAL - luego saldrá del login real
+        const RECEPCION_ACTUAL = {
+            numero: 1,
+            nombre: "Recepción 1",
+            id: "recepcion_1"
+        };
+
         const cacheDoctores = {};
+
+        const ESTADOS_ESPERA = ["pendiente", "en_recepcion", "llamado_recepcion", "pago_manual"];
+        const ESTADOS_HISTORIAL = ["pagado", "atendido"];
+
+        function getFechaChileYMD() {
+            const partes = new Intl.DateTimeFormat("en-CA", {
+                timeZone: "America/Santiago",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit"
+            }).formatToParts(new Date());
+
+            const y = partes.find(p => p.type === "year")?.value;
+            const m = partes.find(p => p.type === "month")?.value;
+            const d = partes.find(p => p.type === "day")?.value;
+
+            return `${y}-${m}-${d}`;
+        }
+
+        function mostrarFechaCabecera() {
+            const el = document.getElementById("fecha-hoy");
+
+            const texto = new Intl.DateTimeFormat("es-CL", {
+                timeZone: "America/Santiago",
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric"
+            }).format(new Date());
+
+            el.textContent = `Agenda del día: ${texto.charAt(0).toUpperCase() + texto.slice(1)}`;
+        }
+
+        function mostrarRecepcionActual() {
+            const el = document.getElementById("recepcion-actual-label");
+            el.textContent = `Módulo actual: ${RECEPCION_ACTUAL.nombre}`;
+        }
+
+        function normalizarEstado(estado) {
+            return String(estado || "pendiente").trim().toLowerCase().replace(/\s+/g, "_");
+        }
+
+        function esPagoManualVisual(paciente) {
+            const estado = normalizarEstado(paciente.estado);
+            return estado === "pago_manual" || paciente.tipo_pago === "manual" || paciente.registro_manual_recepcion === true;
+        }
+
+        function formatearEstadoDesdePaciente(paciente) {
+            const estado = normalizarEstado(paciente.estado);
+
+            if (estado === "pagado" && esPagoManualVisual(paciente)) {
+                return "Pago manual";
+            }
+
+            const mapa = {
+                pendiente: "Pendiente",
+                en_recepcion: "En recepción",
+                llamado_recepcion: "Llamado a recepción",
+                pago_manual: "Pago manual",
+                pagado: "Pagado",
+                atendido: "Atendido"
+            };
+
+            return mapa[estado] || estado;
+        }
+
+        function getClaseBadgeDesdePaciente(paciente) {
+            const estado = normalizarEstado(paciente.estado);
+
+            if (estado === "pagado" && esPagoManualVisual(paciente)) {
+                return "badge-pago_manual";
+            }
+
+            return `badge-${estado}`;
+        }
+
+        function crearBadgeEstadoDesdePaciente(paciente) {
+            const span = document.createElement("span");
+            span.className = `badge ${getClaseBadgeDesdePaciente(paciente)}`;
+            span.textContent = formatearEstadoDesdePaciente(paciente);
+            return span;
+        }
+
+        function obtenerTextoRecepcion(paciente) {
+            if (paciente.recepcion_nombre) {
+                return paciente.recepcion_nombre;
+            }
+            return "Sin llamar";
+        }
 
         async function obtenerNombreDoctor(email) {
             if (!email) return "DOCTOR";
-            const cleanEmail = email.toLowerCase().trim();
-            if (cacheDoctores[cleanEmail]) return cacheDoctores[cleanEmail];
+
+            const cleanEmail = String(email).toLowerCase().trim();
+
+            if (cacheDoctores[cleanEmail]) {
+                return cacheDoctores[cleanEmail];
+            }
 
             try {
                 const docRef = doc(db, "doctores", cleanEmail);
                 const docSnap = await getDoc(docRef);
+
                 if (docSnap.exists()) {
-                    const nombre = docSnap.data().nombre;
+                    const nombre = docSnap.data().nombre || cleanEmail.split("@")[0];
                     cacheDoctores[cleanEmail] = nombre;
                     return nombre;
                 }
-            } catch (e) { console.error("Error doctor:", e); }
-            
-            return cleanEmail.split('@')[0].toUpperCase();
+            } catch (e) {
+                console.error("Error obteniendo doctor:", e);
+            }
+
+            const fallback = cleanEmail.split("@")[0].toUpperCase();
+            cacheDoctores[cleanEmail] = fallback;
+            return fallback;
         }
+
+        async function confirmarLlamadoRecepcion(id, paciente) {
+            const nombrePaciente = paciente.nombre || "SIN NOMBRE";
+            const mensaje = `¿Confirmar llamado de ${nombrePaciente} a ${RECEPCION_ACTUAL.nombre}?`;
+
+            const ok = confirm(mensaje);
+            if (!ok) return false;
+
+            try {
+                await updateDoc(doc(db, "agendados", id), {
+                    estado: "llamado_recepcion",
+                    recepcion_id: RECEPCION_ACTUAL.id,
+                    recepcion_numero: RECEPCION_ACTUAL.numero,
+                    recepcion_nombre: RECEPCION_ACTUAL.nombre,
+                    hora_llamado_recepcion: serverTimestamp(),
+                    registro_manual_recepcion: false,
+                    tipo_pago: null
+                });
+                return true;
+            } catch (e) {
+                console.error("Error al llamar en recepción:", e);
+                alert("Error al confirmar llamado: " + e.message);
+                return false;
+            }
+        }
+
+        async function activarPagoDirecto(id, paciente) {
+            const nombrePaciente = paciente.nombre || "SIN NOMBRE";
+            const mensaje =
+                `¿Activar pago directo para ${nombrePaciente}?\n\n` +
+                `Esto habilitará el pago manual sin pasar por el llamado de recepción.`;
+
+            const ok = confirm(mensaje);
+            if (!ok) return false;
+
+            try {
+                await updateDoc(doc(db, "agendados", id), {
+                    estado: "pago_manual",
+                    recepcion_id: RECEPCION_ACTUAL.id,
+                    recepcion_numero: RECEPCION_ACTUAL.numero,
+                    recepcion_nombre: RECEPCION_ACTUAL.nombre,
+                    registro_manual_recepcion: true,
+                    tipo_pago: "manual",
+                    hora_pago_manual_activado: serverTimestamp()
+                });
+
+                return true;
+            } catch (e) {
+                console.error("Error al activar pago directo:", e);
+                alert("Error al activar pago directo: " + e.message);
+                return false;
+            }
+        }
+
+        async function confirmarPago(id, paciente) {
+            const nombrePaciente = paciente.nombre || "SIN NOMBRE";
+            const esManual = normalizarEstado(paciente.estado) === "pago_manual" || paciente.registro_manual_recepcion === true;
+            const mensaje = esManual
+                ? `¿Confirmar pago manual de ${nombrePaciente}?`
+                : `¿Confirmar que el paciente ${nombrePaciente} realizó el pago?`;
+
+            const ok = confirm(mensaje);
+            if (!ok) return false;
+
+            try {
+                const payload = {
+                    estado: "pagado",
+                    hora_pago: serverTimestamp(),
+                    recepcion_id: paciente.recepcion_id || RECEPCION_ACTUAL.id,
+                    recepcion_numero: paciente.recepcion_numero || RECEPCION_ACTUAL.numero,
+                    recepcion_nombre: paciente.recepcion_nombre || RECEPCION_ACTUAL.nombre
+                };
+
+                if (esManual) {
+                    payload.registro_manual_recepcion = true;
+                    payload.tipo_pago = "manual";
+                } else {
+                    payload.registro_manual_recepcion = false;
+                    payload.tipo_pago = null;
+                }
+
+                await updateDoc(doc(db, "agendados", id), payload);
+                return true;
+            } catch (e) {
+                console.error("Error al confirmar pago:", e);
+                alert("Error al procesar el pago: " + e.message);
+                return false;
+            }
+        }
+
+        function crearBotonAccion(id, paciente) {
+            const estado = normalizarEstado(paciente.estado);
+            const actions = document.createElement("div");
+            actions.className = "actions";
+
+            const btn = document.createElement("button");
+            btn.className = "btn-action";
+
+            if (estado === "pendiente") {
+                btn.classList.add("btn-call");
+                btn.textContent = "LLAMAR";
+                btn.disabled = true;
+                btn.title = "Esperando registro del paciente en el tótem o activación de pago directo";
+                actions.appendChild(btn);
+                return actions;
+            }
+
+            if (estado === "en_recepcion") {
+                btn.classList.add("btn-call");
+                btn.textContent = "LLAMAR";
+                btn.disabled = false;
+                btn.title = `Llamar paciente a ${RECEPCION_ACTUAL.nombre}`;
+                btn.addEventListener("click", async () => {
+                    btn.disabled = true;
+                    const ok = await confirmarLlamadoRecepcion(id, paciente);
+                    if (!ok) {
+                        btn.disabled = false;
+                    }
+                });
+                actions.appendChild(btn);
+                return actions;
+            }
+
+            if (estado === "llamado_recepcion" || estado === "pago_manual") {
+                btn.classList.add("btn-pay");
+                btn.textContent = "PAGAR";
+                btn.disabled = false;
+                btn.title = "Confirmar pago del paciente";
+                btn.addEventListener("click", async () => {
+                    btn.disabled = true;
+                    const ok = await confirmarPago(id, paciente);
+                    if (!ok) {
+                        btn.disabled = false;
+                    }
+                });
+                actions.appendChild(btn);
+                return actions;
+            }
+
+            const ok = document.createElement("span");
+            ok.className = "check";
+            ok.textContent = "✔";
+            actions.appendChild(ok);
+            return actions;
+        }
+
+        function crearPagoDirectoControl(id, paciente) {
+            const directWrap = document.createElement("div");
+            directWrap.className = "direct-wrap";
+
+            const estado = normalizarEstado(paciente.estado);
+            const esManual = esPagoManualVisual(paciente);
+
+            const btn = document.createElement("button");
+            btn.className = "btn-direct";
+            btn.title = "Activar pago directo";
+            btn.textContent = "";
+
+            if (esManual || estado === "pago_manual") {
+                btn.classList.add("direct-activo");
+                btn.textContent = "✔";
+                btn.disabled = true;
+                btn.title = "Pago directo activado";
+                directWrap.appendChild(btn);
+                return directWrap;
+            }
+
+            if (estado === "pendiente") {
+                btn.disabled = false;
+                btn.addEventListener("click", async () => {
+                    btn.disabled = true;
+                    const activado = await activarPagoDirecto(id, paciente);
+                    if (activado) {
+                        btn.classList.add("direct-activo");
+                        btn.textContent = "✔";
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = "";
+                    }
+                });
+            } else {
+                btn.disabled = true;
+                btn.title = "Pago directo disponible solo si el paciente no ha pasado por el tótem";
+            }
+
+            directWrap.appendChild(btn);
+            return directWrap;
+        }
+
+        function crearFilaEspera(id, paciente, nombreDoctor) {
+            const row = document.createElement("div");
+            row.className = "row-espera";
+
+            const name = document.createElement("div");
+            name.className = "name";
+            name.textContent = paciente.nombre || "SIN NOMBRE";
+
+            const docDiv = document.createElement("div");
+            docDiv.className = "doc";
+            docDiv.textContent = `Dr. ${nombreDoctor}`;
+
+            const hora = document.createElement("div");
+            hora.className = "hora";
+            hora.textContent = paciente.hora_consulta || "--:--";
+
+            const recepcion = document.createElement("div");
+            recepcion.className = "recepcion-col";
+            recepcion.textContent = obtenerTextoRecepcion(paciente);
+            if (!paciente.recepcion_nombre) {
+                recepcion.classList.add("muted");
+            }
+
+            const estadoWrap = document.createElement("div");
+            estadoWrap.className = "estado-wrap";
+            estadoWrap.appendChild(crearBadgeEstadoDesdePaciente(paciente));
+
+            row.appendChild(name);
+            row.appendChild(docDiv);
+            row.appendChild(hora);
+            row.appendChild(recepcion);
+            row.appendChild(estadoWrap);
+            row.appendChild(crearBotonAccion(id, paciente));
+            row.appendChild(crearPagoDirectoControl(id, paciente));
+
+            return row;
+        }
+
+        function crearFilaHistorial(paciente, nombreDoctor) {
+            const row = document.createElement("div");
+            row.className = "row-historial";
+
+            const name = document.createElement("div");
+            name.className = "name";
+            name.textContent = paciente.nombre || "SIN NOMBRE";
+
+            const docDiv = document.createElement("div");
+            docDiv.className = "doc";
+            docDiv.textContent = `Dr. ${nombreDoctor}`;
+
+            const hora = document.createElement("div");
+            hora.className = "hora";
+            hora.textContent = paciente.hora_consulta || "--:--";
+
+            const recepcion = document.createElement("div");
+            recepcion.className = "recepcion-col";
+            recepcion.textContent = obtenerTextoRecepcion(paciente);
+            if (!paciente.recepcion_nombre) {
+                recepcion.classList.add("muted");
+            }
+
+            const estadoWrap = document.createElement("div");
+            estadoWrap.className = "estado-wrap";
+            estadoWrap.appendChild(crearBadgeEstadoDesdePaciente(paciente));
+
+            const result = document.createElement("div");
+            result.className = "actions";
+
+            const ok = document.createElement("span");
+            ok.className = "check";
+            ok.textContent = "✔";
+            result.appendChild(ok);
+
+            row.appendChild(name);
+            row.appendChild(docDiv);
+            row.appendChild(hora);
+            row.appendChild(recepcion);
+            row.appendChild(estadoWrap);
+            row.appendChild(result);
+
+            return row;
+        }
+
+        mostrarFechaCabecera();
+        mostrarRecepcionActual();
 
         const q = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
 
-        onSnapshot(q, async (snapshot) => {
-            const esperaDiv = document.getElementById('lista-espera');
-            const atendidosDiv = document.getElementById('lista-atendidos');
-            
-            esperaDiv.innerHTML = "";
-            atendidosDiv.innerHTML = "";
+        onSnapshot(
+            q,
+            async (snapshot) => {
+                const esperaDiv = document.getElementById("lista-espera");
+                const atendidosDiv = document.getElementById("lista-atendidos");
 
-            let contEspera = 0;
-            let contAtendidos = 0;
+                esperaDiv.innerHTML = "";
+                atendidosDiv.innerHTML = "";
 
-            // Usamos for...of para poder usar await dentro
-            for (const docSnap of snapshot.docs) {
-                const p = docSnap.data();
-                const id = docSnap.id;
-                const estado = p.estado || 'pendiente';
+                let contEspera = 0;
+                let contAtendidos = 0;
 
-                const esHistorial = (estado === 'pagado' || estado === 'llamando' || estado === 'atendiendo' || estado === 'atendido');
-                const nombreRealDoctor = await obtenerNombreDoctor(p.doctor_id);
+                const fechaHoy = getFechaChileYMD();
 
-                const row = document.createElement('div');
-                row.className = "row";
-                
-                let accionContenido = '';
-                if (!esHistorial) {
-                    if (estado === 'llegado') {
-                        accionContenido = `<button class="btn-pay" onclick="confirmarPago('${id}', '${p.nombre}')">PAGAR</button>`;
-                    } else {
-                        accionContenido = `<button class="btn-pay btn-disabled" title="Esperando registro en Tótem">PAGAR</button>`;
+                for (const docSnap of snapshot.docs) {
+                    const paciente = docSnap.data();
+                    const id = docSnap.id;
+                    const estado = normalizarEstado(paciente.estado);
+                    const fechaTurno = String(paciente.fecha_turno || "").trim().replace(/\s+/g, "");
+
+                    if (fechaTurno !== fechaHoy) {
+                        continue;
                     }
-                } else {
-                    accionContenido = `<span class="check">✔</span>`;
+
+                    if (!ESTADOS_ESPERA.includes(estado) && !ESTADOS_HISTORIAL.includes(estado)) {
+                        continue;
+                    }
+
+                    const nombreDoctor = await obtenerNombreDoctor(paciente.doctor_id);
+                    const esHistorial = ESTADOS_HISTORIAL.includes(estado);
+
+                    if (esHistorial) {
+                        atendidosDiv.appendChild(crearFilaHistorial(paciente, nombreDoctor));
+                        contAtendidos++;
+                    } else {
+                        esperaDiv.appendChild(crearFilaEspera(id, paciente, nombreDoctor));
+                        contEspera++;
+                    }
                 }
 
-                row.innerHTML = `
-                    <div class="name">${p.nombre}</div>
-                    <div class="doc">Dr. ${nombreRealDoctor}</div>
-                    <div class="hora">${p.hora_consulta}</div>
-                    <div class="actions">${accionContenido}</div>
-                `;
-
-                if (esHistorial) {
-                    atendidosDiv.appendChild(row);
-                    contAtendidos++;
-                } else {
-                    esperaDiv.appendChild(row);
-                    contEspera++;
+                if (contEspera === 0) {
+                    esperaDiv.innerHTML = '<div class="empty-msg">No hay pacientes pendientes hoy.</div>';
                 }
+
+                if (contAtendidos === 0) {
+                    atendidosDiv.innerHTML = '<div class="empty-msg">No hay pagos o atenciones registradas hoy.</div>';
+                }
+            },
+            (error) => {
+                console.error("Error en onSnapshot:", error);
+                document.getElementById("lista-espera").innerHTML =
+                    `<div class="empty-msg">Error cargando agenda: ${error.message}</div>`;
+                document.getElementById("lista-atendidos").innerHTML =
+                    `<div class="empty-msg">Error cargando historial: ${error.message}</div>`;
             }
-
-            if(contEspera === 0) esperaDiv.innerHTML = '<div class="empty-msg">No hay pacientes pendientes.</div>';
-            if(contAtendidos === 0) atendidosDiv.innerHTML = '<div class="empty-msg">No hay pagos registrados hoy.</div>';
-        });
-
-        window.confirmarPago = async (id, nombre) => {
-            const respuesta = confirm(`¿Confirmar que el paciente ${nombre} ha realizado el pago?`);
-            if (respuesta) {
-                try {
-                    await updateDoc(doc(db, "agendados", id), { estado: "pagado" });
-                } catch (e) {
-                    alert("Error al procesar: " + e.message);
-                }
-            }
-        };
+        );
     </script>
 </body>
 </html>
