@@ -23,7 +23,7 @@ import {
    true  = muestra botones de prueba
    false = oculta botones de prueba
 ========================================================= */
-const MODO_DEV = true;
+const MODO_DEV = false;
 
 const firebaseConfig = {
     apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
