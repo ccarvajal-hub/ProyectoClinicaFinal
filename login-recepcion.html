@@ -13,9 +13,12 @@
 </head>
 <body>
 
-    <div class="login-container">
-        <h1>Bienvenida</h1>
-        <p>Acceso al Panel de Recepción</p>
+    <div class="login-card">
+        <div class="login-header">
+            <div class="module-pill">MÓDULO RECEPCIÓN</div>
+            <h1>Bienvenida</h1>
+            <p class="instruction">Inicie sesión para acceder al panel de recepción.</p>
+        </div>
 
         <div class="input-group">
             <label for="email">Correo Electrónico</label>
@@ -48,13 +51,12 @@
         <div id="ok-text" class="ok-msg"></div>
 
         <div class="small-note">
-            El usuario debe existir en Firebase Authentication y también en la colección <b>recepcionistas</b>.
+            Para iniciar sesión, tu usuario debe estar registrado en <b>Firebase Authentication</b>.
         </div>
     </div>
 
-    <!-- SOLO DESARROLLO -->
     <div class="dev-tools" id="devTools">
-        <button class="btn-dev btn-seed" id="btnCrearDemo">Crear documento demo</button>
+        <button class="btn-dev btn-seed" id="btnCrearDemo">Crear recepcionista</button>
         <button class="btn-dev btn-check" id="btnProbarColeccion">Probar colección</button>
     </div>
 

@@ -18,6 +18,13 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+/* =========================================================
+   MODO DESARROLLO
+   true  = muestra botones de prueba
+   false = oculta botones de prueba
+========================================================= */
+const MODO_DEV = true;
+
 const firebaseConfig = {
     apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
     authDomain: "llamado-cliente.firebaseapp.com",
@@ -41,20 +48,10 @@ const btnProbarColeccion = document.getElementById("btnProbarColeccion");
 const devTools = document.getElementById("devTools");
 const togglePassword = document.getElementById("togglePassword");
 
-function esEntornoDesarrollo() {
-    const host = window.location.hostname;
-    const protocol = window.location.protocol;
+function configurarVistaSegunModo() {
+    if (!devTools) return;
 
-    return (
-        host === "localhost" ||
-        host === "127.0.0.1" ||
-        host === "" ||
-        protocol === "file:"
-    );
-}
-
-function configurarVistaSegunEntorno() {
-    if (esEntornoDesarrollo()) {
+    if (MODO_DEV) {
         devTools.classList.add("visible");
     } else {
         devTools.classList.remove("visible");
@@ -212,30 +209,70 @@ async function loginRecepcion() {
 }
 
 async function crearRecepcionistaDemo() {
-    try {
-        const demoUid = "UID_DEMO_RECEPCION";
+    if (!MODO_DEV) return;
 
-        await setDoc(doc(db, "recepcionistas", demoUid), {
-            uid: demoUid,
-            nombre: "Recepcionista Demo",
-            email: "recepcion@clinica.cl",
-            email_normalizado: "recepcion@clinica.cl",
+    try {
+        const uidReal = prompt("Pega aquí el UID real del usuario creado en Firebase Authentication:");
+        if (!uidReal) {
+            alert("Operación cancelada. Debes ingresar un UID.");
+            return;
+        }
+
+        const uid = uidReal.trim();
+        if (!uid) {
+            alert("El UID no puede estar vacío.");
+            return;
+        }
+
+        const emailIngresado = prompt("Ingresa el correo del recepcionista:");
+        if (!emailIngresado) {
+            alert("Operación cancelada. Debes ingresar un correo.");
+            return;
+        }
+
+        const email = emailIngresado.trim().toLowerCase();
+        if (!email) {
+            alert("El correo no puede estar vacío.");
+            return;
+        }
+
+        const nombreIngresado = prompt("Ingresa el nombre visible del recepcionista:", "Recepción 1");
+        const nombre = (nombreIngresado || "Recepción 1").trim();
+
+        const sedeIngresada = prompt("Ingresa la sede:", "Principal");
+        const sede = (sedeIngresada || "Principal").trim();
+
+        const boxIngresado = prompt("Ingresa el módulo o caja:", "Recepción 1");
+        const box = (boxIngresado || "Recepción 1").trim();
+
+        await setDoc(doc(db, "recepcionistas", uid), {
+            uid: uid,
+            nombre: nombre,
+            email: email,
+            email_normalizado: email,
             rol: "recepcion",
             activo: true,
-            sede: "Principal",
-            box: "Caja 1",
+            sede: sede,
+            box: box,
             creado_en: serverTimestamp(),
             ultimo_login: null
         }, { merge: true });
 
-        alert("Documento demo creado en colección recepcionistas.\n\nOJO: esto NO crea el usuario en Authentication.");
+        alert(
+            "Documento de recepcionista creado correctamente.\n\n" +
+            "ID del documento: " + uid + "\n" +
+            "Email: " + email + "\n\n" +
+            "Ahora ese usuario ya puede intentar iniciar sesión."
+        );
     } catch (error) {
         console.error(error);
-        alert("No se pudo crear el documento demo.");
+        alert("No se pudo crear el documento del recepcionista.");
     }
 }
 
 async function probarColeccion() {
+    if (!MODO_DEV) return;
+
     try {
         const snap = await getDocs(collection(db, "recepcionistas"));
         alert(`Recepcionistas encontrados: ${snap.size}`);
@@ -246,6 +283,8 @@ async function probarColeccion() {
 }
 
 function configurarMostrarOcultarPassword() {
+    if (!togglePassword) return;
+
     togglePassword.addEventListener("click", () => {
         const esPassword = passwordInput.type === "password";
         passwordInput.type = esPassword ? "text" : "password";
@@ -287,6 +326,6 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-configurarVistaSegunEntorno();
+configurarVistaSegunModo();
 configurarMostrarOcultarPassword();
 emailInput.focus();
