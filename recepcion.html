@@ -17,6 +17,7 @@
             --color-llamado: #4299e1;
             --color-atendido: #38a169;
             --color-manual: #d69e2e;
+            --color-danger: #e53e3e;
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
 
@@ -83,10 +84,18 @@
         .topbar {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             gap: 16px;
             margin-bottom: 18px;
             flex-wrap: wrap;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .recepcion-actual {
@@ -97,6 +106,24 @@
             font-size: 0.9rem;
             color: var(--text-main);
             font-weight: 700;
+        }
+
+        .btn-logout {
+            border: none;
+            background: var(--color-danger);
+            color: white;
+            border-radius: 12px;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-logout:hover {
+            filter: brightness(1.08);
+            transform: scale(1.03);
         }
 
         .row-espera {
@@ -154,11 +181,11 @@
         }
 
         .recepcion-col {
-            text-align: center;
-            font-weight: 700;
-            color: var(--text-main);
-            font-size: 0.88rem;
-        }
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 0.74rem;
+}
 
         .recepcion-col.muted {
             color: var(--text-muted);
@@ -166,50 +193,76 @@
         }
 
         .estado-wrap {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(1px);
+}
 
         .badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 100px;
-            padding: 5px 10px;
-            border-radius: 999px;
-            font-size: 0.68rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: #fff;
-            text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #fff;
+    text-align: center;
+    line-height: 1;
+}
+
+.badge-pendiente {
+    color: #f28b82;
+}
+
+.badge-llegado,
+.badge-en_recepcion {
+    color: var(--color-recepcion);
+}
+
+.badge-llamado_recepcion {
+    color: var(--color-llamado);
+}
+
+.badge-pago_manual {
+    color: var(--color-manual);
+}
+
+.badge-pagado {
+    color: var(--color-pagado);
+}
+
+.badge-atendido {
+    color: var(--color-atendido);
+}
+
+.       badge-pendiente {
+            color: #a0aec0;
         }
 
-        .badge-pendiente {
-            background: var(--badge-pendiente);
-        }
-
+        .badge-llegado,
         .badge-en_recepcion {
-            background: var(--badge-en-recepcion);
-            color: #1a202c;
+            color: var(--color-recepcion);
         }
 
         .badge-llamado_recepcion {
-            background: var(--badge-llamado-recepcion);
+            color: var(--color-llamado);
         }
 
         .badge-pago_manual {
-            background: var(--badge-pago-manual);
-            color: #1a202c;
+            color: var(--color-manual);
         }
 
         .badge-pagado {
-            background: var(--badge-pagado);
+            color: var(--color-pagado);
         }
 
         .badge-atendido {
-            background: var(--badge-atendido);
+            color: var(--color-atendido);
         }
 
         .actions,
@@ -330,6 +383,11 @@
             .direct-wrap {
                 margin-top: 6px;
             }
+
+            .topbar-right {
+                width: 100%;
+                justify-content: flex-start;
+            }
         }
     </style>
 </head>
@@ -340,7 +398,11 @@
                 <h2 class="title-espera">● PACIENTES EN RECEPCIÓN</h2>
                 <div class="subinfo" id="fecha-hoy">Cargando fecha...</div>
             </div>
-            <div class="recepcion-actual" id="recepcion-actual-label">Módulo actual: Recepción 1</div>
+
+            <div class="topbar-right">
+                <div class="recepcion-actual" id="recepcion-actual-label">Módulo: Recepción 1</div>
+                <button class="btn-logout" id="btn-cerrar-sesion">Cerrar sesión</button>
+            </div>
         </div>
 
         <div class="row-espera header">
@@ -389,6 +451,11 @@
             serverTimestamp
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+       import {
+    getAuth,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
             authDomain: "llamado-cliente.firebaseapp.com",
@@ -401,16 +468,18 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        const auth = getAuth(app);
+
         // TEMPORAL - luego saldrá del login real
         const RECEPCION_ACTUAL = {
             numero: 1,
             nombre: "Recepción 1",
-            id: "recepcion_1"
+            id: "recepcion_1",
         };
 
         const cacheDoctores = {};
 
-        const ESTADOS_ESPERA = ["pendiente", "en_recepcion", "llamado_recepcion", "pago_manual"];
+        const ESTADOS_ESPERA = ["pendiente", "llegado", "en_recepcion", "llamado_recepcion", "pago_manual"];
         const ESTADOS_HISTORIAL = ["pagado", "atendido"];
 
         function getFechaChileYMD() {
@@ -439,14 +508,26 @@
                 day: "numeric"
             }).format(new Date());
 
-            el.textContent = `Agenda del día: ${texto.charAt(0).toUpperCase() + texto.slice(1)}`;
+            el.innerHTML = `<strong>Agenda del día:</strong> ${texto.charAt(0).toUpperCase() + texto.slice(1)}`;
         }
 
         function mostrarRecepcionActual() {
             const el = document.getElementById("recepcion-actual-label");
-            el.textContent = `Módulo actual: ${RECEPCION_ACTUAL.nombre}`;
+            el.textContent = `Módulo: ${RECEPCION_ACTUAL.nombre}`;
         }
 
+        async function cerrarSesion() {
+    const ok = confirm("¿Cerrar sesión de recepción?");
+    if (!ok) return;
+
+    try {
+        await signOut(auth);
+        window.location.href = "login-recepcion.html";
+    } catch (error) {
+        console.error("Error al cerrar sesión:", error);
+        alert("No se pudo cerrar la sesión: " + error.message);
+    }
+}
         function normalizarEstado(estado) {
             return String(estado || "pendiente").trim().toLowerCase().replace(/\s+/g, "_");
         }
@@ -457,23 +538,24 @@
         }
 
         function formatearEstadoDesdePaciente(paciente) {
-            const estado = normalizarEstado(paciente.estado);
+    const estado = normalizarEstado(paciente.estado);
 
-            if (estado === "pagado" && esPagoManualVisual(paciente)) {
-                return "Pago manual";
-            }
+    if (estado === "pagado" && esPagoManualVisual(paciente)) {
+        return "Pago manual";
+    }
 
-            const mapa = {
-                pendiente: "Pendiente",
-                en_recepcion: "En recepción",
-                llamado_recepcion: "Llamado a recepción",
-                pago_manual: "Pago manual",
-                pagado: "Pagado",
-                atendido: "Atendido"
-            };
+    const mapa = {
+        pendiente: "Pendiente",
+        llegado: "En recepción",
+        en_recepcion: "En recepción",
+        llamado_recepcion: "Llamado a recepción",
+        pago_manual: "Pago manual",
+        pagado: "Pagado",
+        atendido: "Atendido"
+    };
 
-            return mapa[estado] || estado;
-        }
+    return mapa[estado] || estado;
+}
 
         function getClaseBadgeDesdePaciente(paciente) {
             const estado = normalizarEstado(paciente.estado);
@@ -485,7 +567,7 @@
             return `badge-${estado}`;
         }
 
-        function crearBadgeEstadoDesdePaciente(paciente) {
+       function crearBadgeEstadoDesdePaciente(paciente) {
             const span = document.createElement("span");
             span.className = `badge ${getClaseBadgeDesdePaciente(paciente)}`;
             span.textContent = formatearEstadoDesdePaciente(paciente);
@@ -493,11 +575,11 @@
         }
 
         function obtenerTextoRecepcion(paciente) {
-            if (paciente.recepcion_nombre) {
-                return paciente.recepcion_nombre;
-            }
-            return "Sin llamar";
-        }
+    if (paciente.recepcion_nombre) {
+        return String(paciente.recepcion_nombre).toUpperCase();
+    }
+    return "SIN LLAMAR";
+}
 
         async function obtenerNombreDoctor(email) {
             if (!email) return "DOCTOR";
@@ -799,6 +881,8 @@
 
         mostrarFechaCabecera();
         mostrarRecepcionActual();
+       
+        document.getElementById("btn-cerrar-sesion").addEventListener("click", cerrarSesion);
 
         const q = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
 
