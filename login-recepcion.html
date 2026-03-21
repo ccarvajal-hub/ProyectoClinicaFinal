@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acceso Recepción - Clínica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-page: #4a4a4a;
+            --bg-card: #1c1c1c;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --blue-accent: #4682b4;
+            --orange-accent: #f59e0b;
+            --red-accent: #ef4444;
+            --green-accent: #22c55e;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --radius: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-page);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-main);
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .login-container {
+            background-color: var(--bg-card);
+            padding: 50px 40px;
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            margin-left: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--blue-accent);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--blue-accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            filter: brightness(1.08);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .error-msg {
+            color: var(--red-accent);
+            font-size: 0.9rem;
+            margin-top: 15px;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .ok-msg {
+            color: var(--green-accent);
+            font-size: 0.9rem;
+            margin-top: 15px;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .dev-tools {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-dev {
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            background: transparent;
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .btn-seed {
+            border-color: var(--blue-accent);
+            color: var(--blue-accent);
+        }
+
+        .btn-seed:hover {
+            background: var(--blue-accent);
+            color: white;
+        }
+
+        .btn-check {
+            border-color: var(--orange-accent);
+            color: var(--orange-accent);
+        }
+
+        .btn-check:hover {
+            background: var(--orange-accent);
+            color: white;
+        }
+
+        .small-note {
+            margin-top: 18px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 34px 22px;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .dev-tools {
+                gap: 10px;
+            }
+
+            .btn-dev {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>Bienvenida</h1>
+        <p>Acceso al Panel de Recepción</p>
+
+        <div class="input-group">
+            <label for="email">Correo Electrónico</label>
+            <input type="email" id="email" placeholder="recepcion@clinica.cl" autocomplete="username" />
+        </div>
+
+        <div class="input-group">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+
+        <button class="btn-login" id="loginBtn">Iniciar Sesión</button>
+
+        <div id="error-text" class="error-msg"></div>
+        <div id="ok-text" class="ok-msg"></div>
+
+        <div class="small-note">
+            El usuario debe existir en Firebase Authentication y también en la colección <b>recepcionistas</b>.
+        </div>
+    </div>
+
+    <div class="dev-tools">
+        <button class="btn-dev btn-seed" onclick="crearRecepcionistaDemo()">Crear documento demo</button>
+        <button class="btn-dev btn-check" onclick="probarColeccion()">Probar colección</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import {
+            getAuth,
+            signInWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc,
+            collection,
+            getDocs,
+            query,
+            where,
+            limit,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
+            authDomain: "llamado-cliente.firebaseapp.com",
+            projectId: "llamado-cliente",
+            storageBucket: "llamado-cliente.appspot.com",
+            messagingSenderId: "444376711880",
+            appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const loginBtn = document.getElementById("loginBtn");
+        const errorText = document.getElementById("error-text");
+        const okText = document.getElementById("ok-text");
+
+        function mostrarError(mensaje) {
+            okText.style.display = "none";
+            okText.textContent = "";
+            errorText.textContent = mensaje;
+            errorText.style.display = "block";
+        }
+
+        function mostrarOk(mensaje) {
+            errorText.style.display = "none";
+            errorText.textContent = "";
+            okText.textContent = mensaje;
+            okText.style.display = "block";
+        }
+
+        function limpiarMensajes() {
+            errorText.style.display = "none";
+            errorText.textContent = "";
+            okText.style.display = "none";
+            okText.textContent = "";
+        }
+
+        function setLoading(loading) {
+            loginBtn.disabled = loading;
+            loginBtn.textContent = loading ? "Ingresando..." : "Iniciar Sesión";
+        }
+
+        function guardarSesionRecepcion(data) {
+            localStorage.setItem("recepcionistaSesion", JSON.stringify({
+                uid: data.uid || "",
+                nombre: data.nombre || "",
+                email: data.email || "",
+                rol: data.rol || "recepcion",
+                sede: data.sede || "",
+                box: data.box || "",
+                activo: data.activo === true
+            }));
+        }
+
+        async function obtenerRecepcionistaPorUID(uid) {
+            const ref = doc(db, "recepcionistas", uid);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return null;
+            return { id: snap.id, ...snap.data() };
+        }
+
+        async function obtenerRecepcionistaPorEmail(emailNormalizado) {
+            const q = query(
+                collection(db, "recepcionistas"),
+                where("email_normalizado", "==", emailNormalizado),
+                limit(1)
+            );
+
+            const snap = await getDocs(q);
+            if (snap.empty) return null;
+
+            const d = snap.docs[0];
+            return { id: d.id, ...d.data() };
+        }
+
+        async function loginRecepcion() {
+            limpiarMensajes();
+
+            const email = emailInput.value.trim().toLowerCase();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                mostrarError("Debes ingresar correo y contraseña.");
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const cred = await signInWithEmailAndPassword(auth, email, password);
+                const user = cred.user;
+
+                let recepcionista = await obtenerRecepcionistaPorUID(user.uid);
+
+                if (!recepcionista) {
+                    recepcionista = await obtenerRecepcionistaPorEmail(email);
+                }
+
+                if (!recepcionista) {
+                    await signOut(auth);
+                    mostrarError("Tu usuario existe en Auth, pero no está creado en la colección recepcionistas.");
+                    return;
+                }
+
+                if (recepcionista.activo !== true) {
+                    await signOut(auth);
+                    mostrarError("Tu usuario de recepción está inactivo.");
+                    return;
+                }
+
+                if (recepcionista.rol && recepcionista.rol !== "recepcion") {
+                    await signOut(auth);
+                    mostrarError("Este usuario no pertenece al módulo de recepción.");
+                    return;
+                }
+
+                await setDoc(doc(db, "recepcionistas", user.uid), {
+                    ...recepcionista,
+                    uid: user.uid,
+                    email: user.email || email,
+                    email_normalizado: email,
+                    ultimo_login: serverTimestamp()
+                }, { merge: true });
+
+                guardarSesionRecepcion({
+                    ...recepcionista,
+                    uid: user.uid,
+                    email: user.email || email
+                });
+
+                mostrarOk("Acceso correcto. Redirigiendo...");
+                setTimeout(() => {
+                    window.location.href = "recepcion.html";
+                }, 500);
+
+            } catch (error) {
+                console.error("Error login recepción:", error);
+
+                switch (error.code) {
+                    case "auth/invalid-email":
+                        mostrarError("El correo no tiene un formato válido.");
+                        break;
+                    case "auth/user-disabled":
+                        mostrarError("Este usuario fue deshabilitado.");
+                        break;
+                    case "auth/user-not-found":
+                    case "auth/wrong-password":
+                    case "auth/invalid-credential":
+                        mostrarError("Credenciales incorrectas.");
+                        break;
+                    case "auth/too-many-requests":
+                        mostrarError("Demasiados intentos. Espera un momento y vuelve a probar.");
+                        break;
+                    default:
+                        mostrarError("No fue posible iniciar sesión.");
+                        break;
+                }
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loginBtn.addEventListener("click", loginRecepcion);
+
+        [emailInput, passwordInput].forEach(input => {
+            input.addEventListener("input", limpiarMensajes);
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    loginRecepcion();
+                }
+            });
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) return;
+
+            try {
+                const recepcionista = await obtenerRecepcionistaPorUID(user.uid);
+                if (recepcionista && recepcionista.activo === true) {
+                    guardarSesionRecepcion({
+                        ...recepcionista,
+                        uid: user.uid,
+                        email: user.email || recepcionista.email || ""
+                    });
+                    window.location.href = "recepcion.html";
+                }
+            } catch (e) {
+                console.error("Error verificando sesión activa:", e);
+            }
+        });
+
+        window.crearRecepcionistaDemo = async () => {
+            try {
+                const demoUid = "UID_DEMO_RECEPCION";
+                await setDoc(doc(db, "recepcionistas", demoUid), {
+                    uid: demoUid,
+                    nombre: "Recepcionista Demo",
+                    email: "recepcion@clinica.cl",
+                    email_normalizado: "recepcion@clinica.cl",
+                    rol: "recepcion",
+                    activo: true,
+                    sede: "Principal",
+                    box: "Caja 1",
+                    creado_en: serverTimestamp(),
+                    ultimo_login: null
+                }, { merge: true });
+
+                alert("Documento demo creado en colección recepcionistas.\n\nOJO: esto NO crea el usuario en Authentication.");
+            } catch (error) {
+                console.error(error);
+                alert("No se pudo crear el documento demo.");
+            }
+        };
+
+        window.probarColeccion = async () => {
+            try {
+                const snap = await getDocs(collection(db, "recepcionistas"));
+                alert(`Recepcionistas encontrados: ${snap.size}`);
+            } catch (error) {
+                console.error(error);
+                alert("No se pudo leer la colección recepcionistas.");
+            }
+        };
+    </script>
+</body>
+</html>
