@@ -8,7 +8,12 @@
     <link rel="stylesheet" href="recepcion.css" />
 </head>
 <body>
-    <div class="container">
+    <div class="page-header">
+        <h1 id="recepcion-page-title">AGENDA RECEPCIONISTA</h1>
+        <div class="page-subtitle" id="recepcion-page-subtitle">MÓDULO: RECEPCIÓN 1</div>
+    </div>
+
+    <div class="container container-pacientes">
         <div class="topbar">
             <div>
                 <h2 class="title-espera">● PACIENTES EN RECEPCIÓN</h2>
@@ -16,7 +21,6 @@
             </div>
 
             <div class="topbar-right">
-                <div class="recepcion-actual" id="recepcion-actual-label">Módulo: Recepción 1</div>
                 <button class="btn-logout" id="btn-cerrar-sesion">Cerrar sesión</button>
             </div>
         </div>
@@ -36,7 +40,7 @@
         </div>
     </div>
 
-    <div class="container" style="opacity: 0.96;">
+    <div class="container container-historial">
         <h2 class="title-atendidos">✔ HISTORIAL</h2>
 
         <div class="row-historial header">
