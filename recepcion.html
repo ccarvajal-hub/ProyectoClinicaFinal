@@ -181,11 +181,11 @@
         }
 
         .recepcion-col {
-    text-align: center;
-    font-weight: 700;
-    color: var(--text-main);
-    font-size: 0.74rem;
-}
+            text-align: center;
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 0.74rem;
+        }
 
         .recepcion-col.muted {
             color: var(--text-muted);
@@ -193,52 +193,27 @@
         }
 
         .estado-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transform: translateY(1px);
-}
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(1px);
+        }
 
         .badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 100px;
-    padding: 5px 10px;
-    border-radius: 999px;
-    font-size: 0.74rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #fff;
-    text-align: center;
-    line-height: 1;
-}
-
-.badge-pendiente {
-    color: #f28b82;
-}
-
-.badge-llegado,
-.badge-en_recepcion {
-    color: var(--color-recepcion);
-}
-
-.badge-llamado_recepcion {
-    color: var(--color-llamado);
-}
-
-.badge-pago_manual {
-    color: var(--color-manual);
-}
-
-.badge-pagado {
-    color: var(--color-pagado);
-}
-
-.badge-atendido {
-    color: var(--color-atendido);
-}
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #fff;
+            text-align: center;
+            line-height: 1;
+        }
 
         .badge-pendiente {
             color: #a0aec0;
@@ -451,10 +426,10 @@
             serverTimestamp
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-       import {
-    getAuth,
-    signOut
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import {
+            getAuth,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -467,10 +442,8 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
         const auth = getAuth(app);
 
-        // TEMPORAL - luego saldrá del login real
         const RECEPCION_ACTUAL = {
             numero: 1,
             nombre: "Recepción 1",
@@ -517,17 +490,18 @@
         }
 
         async function cerrarSesion() {
-    const ok = confirm("¿Cerrar sesión de recepción?");
-    if (!ok) return;
+            const ok = confirm("¿Cerrar sesión de recepción?");
+            if (!ok) return;
 
-    try {
-        await signOut(auth);
-        window.location.href = "login-recepcion.html";
-    } catch (error) {
-        console.error("Error al cerrar sesión:", error);
-        alert("No se pudo cerrar la sesión: " + error.message);
-    }
-}
+            try {
+                await signOut(auth);
+                window.location.href = "login-recepcion.html";
+            } catch (error) {
+                console.error("Error al cerrar sesión:", error);
+                alert("No se pudo cerrar la sesión: " + error.message);
+            }
+        }
+
         function normalizarEstado(estado) {
             return String(estado || "pendiente").trim().toLowerCase().replace(/\s+/g, "_");
         }
@@ -538,24 +512,24 @@
         }
 
         function formatearEstadoDesdePaciente(paciente) {
-    const estado = normalizarEstado(paciente.estado);
+            const estado = normalizarEstado(paciente.estado);
 
-    if (estado === "pagado" && esPagoManualVisual(paciente)) {
-        return "Pago manual";
-    }
+            if (estado === "pagado" && esPagoManualVisual(paciente)) {
+                return "Pago manual";
+            }
 
-    const mapa = {
-        pendiente: "Pendiente",
-        llegado: "En recepción",
-        en_recepcion: "En recepción",
-        llamado_recepcion: "Llamado a recepción",
-        pago_manual: "Pago manual",
-        pagado: "Pagado",
-        atendido: "Atendido"
-    };
+            const mapa = {
+                pendiente: "Pendiente",
+                llegado: "En recepción",
+                en_recepcion: "En recepción",
+                llamado_recepcion: "Llamado a recepción",
+                pago_manual: "Pago manual",
+                pagado: "Pagado",
+                atendido: "Atendido"
+            };
 
-    return mapa[estado] || estado;
-}
+            return mapa[estado] || estado;
+        }
 
         function getClaseBadgeDesdePaciente(paciente) {
             const estado = normalizarEstado(paciente.estado);
@@ -567,7 +541,7 @@
             return `badge-${estado}`;
         }
 
-       function crearBadgeEstadoDesdePaciente(paciente) {
+        function crearBadgeEstadoDesdePaciente(paciente) {
             const span = document.createElement("span");
             span.className = `badge ${getClaseBadgeDesdePaciente(paciente)}`;
             span.textContent = formatearEstadoDesdePaciente(paciente);
@@ -575,11 +549,11 @@
         }
 
         function obtenerTextoRecepcion(paciente) {
-    if (paciente.recepcion_nombre) {
-        return String(paciente.recepcion_nombre).toUpperCase();
-    }
-    return "SIN LLAMAR";
-}
+            if (paciente.recepcion_nombre) {
+                return String(paciente.recepcion_nombre).toUpperCase();
+            }
+            return "SIN LLAMAR";
+        }
 
         async function obtenerNombreDoctor(email) {
             if (!email) return "DOCTOR";
@@ -714,7 +688,7 @@
                 return actions;
             }
 
-            if (estado === "en_recepcion") {
+            if (estado === "llegado") {
                 btn.classList.add("btn-call");
                 btn.textContent = "LLAMAR";
                 btn.disabled = false;
@@ -789,7 +763,7 @@
                 });
             } else {
                 btn.disabled = true;
-                btn.title = "Pago directo disponible solo si el paciente no ha pasado por el tótem";
+                btn.title = "Pago directo desactivado cuando el paciente ya llegó por tótem";
             }
 
             directWrap.appendChild(btn);
@@ -881,7 +855,7 @@
 
         mostrarFechaCabecera();
         mostrarRecepcionActual();
-       
+
         document.getElementById("btn-cerrar-sesion").addEventListener("click", cerrarSesion);
 
         const q = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));

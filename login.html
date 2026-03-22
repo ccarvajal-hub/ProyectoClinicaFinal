@@ -8,14 +8,18 @@
     
     <style>
         :root {
-            --bg-page: #4a4a4a;      
-            --bg-card: #1c1c1c;      
+            --bg-page: #4a4a4a;
+            --bg-card: #1c1c1c;
             --text-main: #FFFFFF;
             --text-muted: #A0A0A0;
-            --blue-accent: #4682B4; 
+            --blue-accent: #4682B4;
             --orange-accent: #f59e0b;
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -28,6 +32,7 @@
             min-height: 100vh;
             color: var(--text-main);
             flex-direction: column;
+            padding: 24px;
         }
 
         .login-container {
@@ -41,11 +46,33 @@
             text-align: center;
         }
 
-        h1 { font-size: 2rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
-        p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 30px; }
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
 
-        .input-group { margin-bottom: 20px; text-align: left; }
-        label { display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; color: var(--text-muted); margin-left: 5px; }
+        p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            margin-left: 5px;
+        }
 
         input {
             width: 100%;
@@ -55,12 +82,14 @@
             border-radius: 12px;
             color: white;
             font-size: 1rem;
-            box-sizing: border-box;
             outline: none;
             transition: 0.2s;
         }
 
-        input:focus { border-color: var(--blue-accent); background: rgba(255, 255, 255, 0.08); }
+        input:focus {
+            border-color: var(--blue-accent);
+            background: rgba(255, 255, 255, 0.08);
+        }
 
         .btn-login {
             width: 100%;
@@ -77,11 +106,17 @@
             margin-top: 10px;
         }
 
-        /* --- BOTONES DE DESARROLLO (ABAJO) --- */
+        .btn-login:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+
         .dev-tools {
             margin-top: 30px;
             display: flex;
             gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .btn-dev {
@@ -95,13 +130,48 @@
             transition: 0.2s;
         }
 
-        .btn-seed { border: 1px solid var(--blue-accent); color: var(--blue-accent); }
-        .btn-seed:hover { background: var(--blue-accent); color: white; }
+        .btn-seed {
+            border: 1px solid var(--blue-accent);
+            color: var(--blue-accent);
+        }
 
-        .btn-reset { border: 1px solid var(--orange-accent); color: var(--orange-accent); }
-        .btn-reset:hover { background: var(--orange-accent); color: white; }
+        .btn-seed:hover {
+            background: var(--blue-accent);
+            color: white;
+        }
 
-        .error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 15px; display: none; }
+        .btn-reset {
+            border: 1px solid var(--orange-accent);
+            color: var(--orange-accent);
+        }
+
+        .btn-reset:hover {
+            background: var(--orange-accent);
+            color: white;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            display: none;
+        }
+
+        @media (max-width: 520px) {
+            .login-container {
+                padding: 36px 24px;
+            }
+
+            .dev-tools {
+                flex-direction: column;
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .btn-dev {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -147,40 +217,104 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // LOGIN
-        document.getElementById('loginBtn').addEventListener('click', async () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        document.getElementById("loginBtn").addEventListener("click", async () => {
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const errorText = document.getElementById("error-text");
+
+            errorText.style.display = "none";
+
             try {
                 await signInWithEmailAndPassword(auth, email, password);
                 window.location.href = "doctor.html";
-            } catch (e) { document.getElementById('error-text').style.display = "block"; }
+            } catch (e) {
+                console.error("Error de login:", e);
+                errorText.style.display = "block";
+            }
         });
 
-        // NUEVO: CREAR PACIENTES DE PRUEBA
+        document.getElementById("password").addEventListener("keydown", async (e) => {
+            if (e.key === "Enter") {
+                document.getElementById("loginBtn").click();
+            }
+        });
+
+        document.getElementById("email").addEventListener("keydown", async (e) => {
+            if (e.key === "Enter") {
+                document.getElementById("loginBtn").click();
+            }
+        });
+
         window.crearPacientesPrueba = async () => {
             const pacientes = [
-                { nombre: "JUAN PEREZ", rut: "12345678K", hora_consulta: "09:00", estado: "pendiente", doctor_id: "doctor@clinica.cl", consulta: "101", piso: "Piso 1" },
-                { nombre: "MARIA GONZALEZ", rut: "112223334", hora_consulta: "09:30", estado: "pendiente", doctor_id: "doctor@clinica.cl", consulta: "101", piso: "Piso 1" },
-                { nombre: "RICARDO SOTO", rut: "156667778", hora_consulta: "10:00", estado: "pendiente", doctor_id: "doctor@clinica.cl", consulta: "101", piso: "Piso 1" }
+                {
+                    nombre: "JUAN PEREZ",
+                    rut: "12345678K",
+                    hora_consulta: "09:00",
+                    estado: "pendiente",
+                    doctor_id: "doctor@clinica.cl",
+                    consulta: "101",
+                    piso: "Piso 1"
+                },
+                {
+                    nombre: "MARIA GONZALEZ",
+                    rut: "112223334",
+                    hora_consulta: "09:30",
+                    estado: "pendiente",
+                    doctor_id: "doctor@clinica.cl",
+                    consulta: "101",
+                    piso: "Piso 1"
+                },
+                {
+                    nombre: "RICARDO SOTO",
+                    rut: "156667778",
+                    hora_consulta: "10:00",
+                    estado: "pendiente",
+                    doctor_id: "doctor@clinica.cl",
+                    consulta: "101",
+                    piso: "Piso 1"
+                }
             ];
 
             try {
-                for (let p of pacientes) {
+                for (const p of pacientes) {
                     await addDoc(collection(db, "agendados"), p);
                 }
+
                 alert("Se han creado 3 pacientes de prueba para doctor@clinica.cl");
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error("Error al crear pacientes de prueba:", e);
+                alert("Error al crear pacientes de prueba.");
+            }
         };
 
-        // REINICIAR ESTADOS
         window.resetearEstados = async () => {
-            if(!confirm("¿Reiniciar todos a 'Pendiente'?")) return;
-            const snap = await getDocs(collection(db, "agendados"));
-            snap.forEach(async (d) => {
-                await updateDoc(doc(db, "agendados", d.id), { estado: "pendiente", hora_llegada: "" });
-            });
-            alert("Jornada reiniciada.");
+            const confirmado = confirm("¿Reiniciar todos los pacientes a 'Pendiente' y limpiar datos de recepción/pago?");
+            if (!confirmado) return;
+
+            try {
+                const snap = await getDocs(collection(db, "agendados"));
+
+                for (const d of snap.docs) {
+                    await updateDoc(doc(db, "agendados", d.id), {
+                        estado: "pendiente",
+                        hora_llegada: "",
+                        hora_pago: "",
+                        hora_llamado_recepcion: "",
+                        hora_pago_manual_activado: "",
+                        registro_manual_recepcion: false,
+                        tipo_pago: null,
+                        recepcion_id: null,
+                        recepcion_numero: null,
+                        recepcion_nombre: null
+                    });
+                }
+
+                alert("Jornada reiniciada correctamente.");
+            } catch (error) {
+                console.error("Error al reiniciar jornada:", error);
+                alert("Error al reiniciar jornada.");
+            }
         };
     </script>
 </body>
