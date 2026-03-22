@@ -1,0 +1,290 @@
+:root {
+    --bg: #1a1a1a;
+    --card: #2d2d2d;
+    --accent: #4299E1;
+    --text: #ffffff;
+    --muted: #a0aec0;
+    --warning: #FFB347;
+    --success: #48BB78;
+    --danger: #e53e3e;
+    --danger-hover: #c53030;
+    --safe-x: 1.4vw;
+    --safe-y: 1.6vh;
+    --radius: 1.6vh;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+}
+
+#app {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    padding: var(--safe-y) var(--safe-x);
+    overflow: hidden;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 1.72fr 0.78fr;
+    gap: 1.2vw;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    align-items: stretch;
+}
+
+#audio-unlock {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    text-align: center;
+    padding: 4vh 4vw;
+}
+
+#audio-unlock h2 {
+    color: var(--accent);
+    font-size: clamp(2rem, 4vw, 4.5rem);
+    margin: 0 0 1rem 0;
+    text-transform: uppercase;
+}
+
+#audio-unlock p {
+    font-size: clamp(1rem, 2vw, 2rem);
+    margin: 0;
+    color: #fff;
+}
+
+.reset-tv-btn {
+    position: absolute;
+    right: 1.4vw;
+    bottom: 1.6vh;
+    z-index: 20;
+    border: none;
+    border-radius: 999px;
+    background: var(--danger);
+    color: #fff;
+    font-family: inherit;
+    font-size: clamp(0.9rem, 1vw, 1.1rem);
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 0.8rem 1.15rem;
+    cursor: pointer;
+    box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.reset-tv-btn:hover {
+    background: var(--danger-hover);
+    transform: scale(1.03);
+}
+
+.reset-tv-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.main-call {
+    background: var(--card);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border: 0.2vw solid var(--accent);
+    box-shadow: 0 0 2vw rgba(66, 153, 225, 0.14);
+    padding: 2.2vh 1.8vw;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.main-call h1 {
+    font-size: clamp(1.8rem, 3.4vw, 4.2rem);
+    margin: 0;
+    color: var(--accent);
+    text-transform: uppercase;
+    line-height: 1.05;
+}
+
+.main-call .paciente {
+    font-size: clamp(3.2rem, 6vw, 6.6rem);
+    font-weight: 900;
+    margin: 1.6vh 0 1.2vh 0;
+    line-height: 0.95;
+    text-transform: uppercase;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.main-call .doctor-info {
+    font-size: clamp(2rem, 3.6vw, 4rem);
+    font-weight: 900;
+    color: var(--warning);
+    text-transform: uppercase;
+    line-height: 1.05;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    text-align: center;
+    margin-top: 0.4vh;
+}
+
+.main-call .box-info {
+    font-size: clamp(1.1rem, 1.7vw, 2rem);
+    color: var(--muted);
+    margin-top: 1vh;
+    text-transform: uppercase;
+    font-weight: 800;
+    line-height: 1.1;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    text-align: center;
+}
+
+.history {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius);
+    padding: 1.6vh 1vw;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.history h2 {
+    font-size: clamp(1.1rem, 1.7vw, 2rem);
+    border-bottom: 0.14vw solid var(--accent);
+    padding-bottom: 0.8vh;
+    margin: 0 0 1.2vh 0;
+    text-transform: uppercase;
+    flex: 0 0 auto;
+}
+
+#historial-lista {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8vh;
+}
+
+.hist-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.8vw;
+    background: rgba(0, 0, 0, 0.22);
+    padding: 1vh 0.8vw;
+    border-radius: 1vh;
+    border-left: 0.25vw solid var(--accent);
+    animation: slideIn 0.5s ease-out;
+    min-width: 0;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hist-name {
+    font-weight: 800;
+    font-size: clamp(0.95rem, 1.4vw, 1.5rem);
+    text-transform: uppercase;
+    line-height: 1.08;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hist-doc {
+    font-size: clamp(0.7rem, 0.9vw, 0.95rem);
+    color: var(--warning);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 0.35vh;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hist-meta {
+    font-size: clamp(0.9rem, 1.15vw, 1.2rem);
+    color: var(--success);
+    font-weight: 900;
+    text-align: right;
+    align-self: center;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.flash {
+    animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.015);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 900px), (orientation: portrait) {
+    .layout {
+        grid-template-columns: 1fr;
+        gap: 1.2vh;
+    }
+
+    .history {
+        padding: 1.6vh 1.8vw;
+    }
+
+    .main-call {
+        padding: 2vh 2vw;
+    }
+
+    .reset-tv-btn {
+    right: 2vw;
+    bottom: 1.2vh;
+    padding: 0.7rem 1rem;
+    }
+}

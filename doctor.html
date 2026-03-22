@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Panel Doctor - Agenda Médica</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
     <style>
         :root {
             --bg-page: #4a4a4a;
@@ -290,26 +291,37 @@
             return (hh * 60) + mm;
         }
 
+        function obtenerHoraChile24() {
+            return new Intl.DateTimeFormat('es-CL', {
+                timeZone: 'America/Santiago',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).format(new Date());
+        }
+
         window.cambiarEstado = async (id, nuevo, nombre = "") => {
             try {
-                const updateData = { estado: nuevo };
+                const updateData = {
+                    estado: nuevo
+                };
 
                 if (nuevo === 'llamando') {
-                    const ahora = new Date().getTime();
+                    const ahora = Date.now();
+                    const horaActual = obtenerHoraChile24();
+
                     updateData.ultimo_llamado = ahora;
+                    updateData.tv_origen = "DOCTOR";
+                    updateData.tv_destino = boxDoc || "";
+                    updateData.tv_hora_llamado = horaActual;
+                    updateData.tv_doctor = nombreDoc ? `DR. ${nombreDoc}` : "";
+                    updateData.tv_paciente = nombre || "";
+                }
 
-                    const horaActual = new Date().toLocaleTimeString('es-CL', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    });
-
-                    await updateDoc(doc(db, "turnos", "actual"), {
-                        paciente: nombre,
-                        box: boxDoc,
-                        doctor: nombreDoc,
-                        hora_llamado: horaActual
-                    });
+                if (nuevo === 'atendido') {
+                    updateData.tv_origen = "";
+                    updateData.tv_destino = "";
+                    updateData.tv_hora_llamado = "";
                 }
 
                 await updateDoc(doc(db, "agendados", id), updateData);
@@ -330,8 +342,9 @@
             }
         };
 
-        document.getElementById('btnLogout').onclick = () => {
-            signOut(auth).then(() => location.href = "login.html");
+        document.getElementById('btnLogout').onclick = async () => {
+            await signOut(auth);
+            location.href = "login.html";
         };
 
         onAuthStateChanged(auth, async (user) => {
@@ -340,131 +353,143 @@
                 return;
             }
 
-            const emailNormalizado = user.email.toLowerCase().trim();
+            const uid = user.uid;
             const fechaHoy = obtenerFechaHoyChile();
 
-            const dSnap = await getDoc(doc(db, "doctores", emailNormalizado));
-            if (dSnap.exists()) {
+            try {
+                const dSnap = await getDoc(doc(db, "doctores", uid));
+
+                if (!dSnap.exists()) {
+                    alert("Este usuario no pertenece al módulo doctor.");
+                    await signOut(auth);
+                    location.href = "login.html";
+                    return;
+                }
+
                 const data = dSnap.data();
                 nombreDoc = data.nombre || "";
                 boxDoc = `PISO ${data.piso} - CONSULTA ${data.consulta}`;
                 document.getElementById('display-name').innerText = `DR. ${nombreDoc}`;
-            } else {
-                document.getElementById('display-name').innerText = emailNormalizado;
-            }
 
-            const q = query(
-                collection(db, "agendados"),
-                where("doctor_id", "==", emailNormalizado),
-                where("fecha_turno", "==", fechaHoy)
-            );
+                const q = query(
+                    collection(db, "agendados"),
+                    where("doctor_id", "==", uid),
+                    where("fecha_turno", "==", fechaHoy)
+                );
 
-            onSnapshot(q, (snapshot) => {
-                const esperaDiv = document.getElementById('lista-espera');
-                const historialDiv = document.getElementById('lista-historial');
+                onSnapshot(q, (snapshot) => {
+                    const esperaDiv = document.getElementById('lista-espera');
+                    const historialDiv = document.getElementById('lista-historial');
 
-                esperaDiv.innerHTML = "";
-                historialDiv.innerHTML = "";
+                    esperaDiv.innerHTML = "";
+                    historialDiv.innerHTML = "";
 
-                const pacientes = snapshot.docs.map(docSnap => {
-                    const p = docSnap.data();
-                    return {
-                        id: docSnap.id,
-                        ...p
-                    };
-                });
-
-                const espera = pacientes
-                    .filter(p => estadoReal(p.estado) !== 'atendido')
-                    .sort((a, b) => {
-                        const ordenEstados = {
-                            pagado: 0,
-                            llamando: 1,
-                            llamado: 1,
-                            atendiendo: 1,
-                            llegado: 2,
-                            en_recepcion: 2,
-                            pendiente: 3
+                    const pacientes = snapshot.docs.map(docSnap => {
+                        const p = docSnap.data();
+                        return {
+                            id: docSnap.id,
+                            ...p
                         };
-
-                        const ordenA = ordenEstados[estadoReal(a.estado)] ?? 99;
-                        const ordenB = ordenEstados[estadoReal(b.estado)] ?? 99;
-
-                        if (ordenA !== ordenB) return ordenA - ordenB;
-
-                        return horaATotalMinutos(a.hora_consulta) - horaATotalMinutos(b.hora_consulta);
                     });
 
-                const historial = pacientes
-                    .filter(p => estadoReal(p.estado) === 'atendido')
-                    .sort((a, b) => horaATotalMinutos(a.hora_consulta) - horaATotalMinutos(b.hora_consulta));
+                    const espera = pacientes
+                        .filter(p => estadoReal(p.estado) !== 'atendido')
+                        .sort((a, b) => {
+                            const ordenEstados = {
+                                pagado: 0,
+                                llamando: 1,
+                                llamado: 1,
+                                atendiendo: 1,
+                                llegado: 2,
+                                en_recepcion: 2,
+                                pendiente: 3
+                            };
 
-                espera.forEach(p => {
-                    const row = document.createElement('div');
-                    row.className = "row";
+                            const ordenA = ordenEstados[estadoReal(a.estado)] ?? 99;
+                            const ordenB = ordenEstados[estadoReal(b.estado)] ?? 99;
 
-                    const estadoDb = estadoReal(p.estado);
-                    const estadoVisual = estadoVisualDesdeReal(p.estado);
-                    const nombreSeguro = (p.nombre || '').replace(/'/g, "\\'");
+                            if (ordenA !== ordenB) return ordenA - ordenB;
 
-                    let botones = "";
+                            return horaATotalMinutos(a.hora_consulta) - horaATotalMinutos(b.hora_consulta);
+                        });
 
-                    if (estadoDb === 'pagado') {
-                        botones = `<button class="btn-call" onclick="confirmarLlamado('${p.id}','${nombreSeguro}')">Llamar</button>`;
-                    } else if (estadoDb === 'llamando' || estadoDb === 'llamado' || estadoDb === 'atendiendo') {
-                        botones = `<button class="btn-fin" onclick="cambiarEstado('${p.id}','atendido')">Finalizar</button>`;
+                    const historial = pacientes
+                        .filter(p => estadoReal(p.estado) === 'atendido')
+                        .sort((a, b) => horaATotalMinutos(a.hora_consulta) - horaATotalMinutos(b.hora_consulta));
+
+                    espera.forEach(p => {
+                        const row = document.createElement('div');
+                        row.className = "row";
+
+                        const estadoDb = estadoReal(p.estado);
+                        const estadoVisual = estadoVisualDesdeReal(p.estado);
+                        const nombreSeguro = (p.nombre || '').replace(/'/g, "\\'");
+
+                        let botones = "";
+
+                        if (estadoDb === 'pagado') {
+                            botones = `<button class="btn-call" onclick="confirmarLlamado('${p.id}','${nombreSeguro}')">Llamar</button>`;
+                        } else if (estadoDb === 'llamando' || estadoDb === 'llamado' || estadoDb === 'atendiendo') {
+                            botones = `<button class="btn-fin" onclick="cambiarEstado('${p.id}','atendido')">Finalizar</button>`;
+                        }
+
+                        row.innerHTML = `
+                            <div class="col-name name-txt">${p.nombre || ''}</div>
+                            <div class="col-rut rut-txt">${formatRut(p.rut)}</div>
+                            <div class="col-info info-txt">${boxDoc}</div>
+                            <div class="col-hora">${p.hora_consulta || '--:--'}</div>
+                            <div class="col-llegada llegada-txt">${p.hora_llegada || '--:--'}</div>
+                            <div class="col-est st-txt st-${estadoVisual}">${textoEstadoDesdeReal(p.estado)}</div>
+                            <div class="col-acts">
+                                ${botones}
+                                <button class="btn-del" onclick="eliminar('${p.id}','${nombreSeguro}')">✕</button>
+                            </div>
+                        `;
+
+                        esperaDiv.appendChild(row);
+                    });
+
+                    historial.forEach(p => {
+                        const row = document.createElement('div');
+                        row.className = "row";
+
+                        const estadoVisual = estadoVisualDesdeReal(p.estado);
+                        const nombreSeguro = (p.nombre || '').replace(/'/g, "\\'");
+
+                        row.innerHTML = `
+                            <div class="col-name name-txt">${p.nombre || ''}</div>
+                            <div class="col-rut rut-txt">${formatRut(p.rut)}</div>
+                            <div class="col-info info-txt">${boxDoc}</div>
+                            <div class="col-hora">${p.hora_consulta || '--:--'}</div>
+                            <div class="col-llegada llegada-txt">${p.hora_llegada || '--:--'}</div>
+                            <div class="col-est st-txt st-${estadoVisual}">${textoEstadoDesdeReal(p.estado)}</div>
+                            <div class="col-acts">
+                                <button class="btn-del" onclick="eliminar('${p.id}','${nombreSeguro}')">✕</button>
+                            </div>
+                        `;
+
+                        historialDiv.appendChild(row);
+                    });
+
+                    if (espera.length === 0) {
+                        esperaDiv.innerHTML = '<div class="empty">No hay pacientes en espera hoy.</div>';
                     }
 
-                    row.innerHTML = `
-                        <div class="col-name name-txt">${p.nombre || ''}</div>
-                        <div class="col-rut rut-txt">${formatRut(p.rut)}</div>
-                        <div class="col-info info-txt">${boxDoc}</div>
-                        <div class="col-hora">${p.hora_consulta || '--:--'}</div>
-                        <div class="col-llegada llegada-txt">${p.hora_llegada || '--:--'}</div>
-                        <div class="col-est st-txt st-${estadoVisual}">${textoEstadoDesdeReal(p.estado)}</div>
-                        <div class="col-acts">
-                            ${botones}
-                            <button class="btn-del" onclick="eliminar('${p.id}','${nombreSeguro}')">✕</button>
-                        </div>
-                    `;
-
-                    esperaDiv.appendChild(row);
+                    if (historial.length === 0) {
+                        historialDiv.innerHTML = '<div class="empty">No hay historial hoy.</div>';
+                    }
+                }, (error) => {
+                    console.error("Error al escuchar agenda del doctor:", error);
+                    document.getElementById('lista-espera').innerHTML = '<div class="empty">Error al cargar la agenda.</div>';
+                    document.getElementById('lista-historial').innerHTML = '<div class="empty">No se pudo cargar el historial.</div>';
                 });
 
-                historial.forEach(p => {
-                    const row = document.createElement('div');
-                    row.className = "row";
-
-                    const estadoVisual = estadoVisualDesdeReal(p.estado);
-                    const nombreSeguro = (p.nombre || '').replace(/'/g, "\\'");
-
-                    row.innerHTML = `
-                        <div class="col-name name-txt">${p.nombre || ''}</div>
-                        <div class="col-rut rut-txt">${formatRut(p.rut)}</div>
-                        <div class="col-info info-txt">${boxDoc}</div>
-                        <div class="col-hora">${p.hora_consulta || '--:--'}</div>
-                        <div class="col-llegada llegada-txt">${p.hora_llegada || '--:--'}</div>
-                        <div class="col-est st-txt st-${estadoVisual}">${textoEstadoDesdeReal(p.estado)}</div>
-                        <div class="col-acts">
-                            <button class="btn-del" onclick="eliminar('${p.id}','${nombreSeguro}')">✕</button>
-                        </div>
-                    `;
-
-                    historialDiv.appendChild(row);
-                });
-
-                if (espera.length === 0) {
-                    esperaDiv.innerHTML = '<div class="empty">No hay pacientes en espera hoy.</div>';
-                }
-
-                if (historial.length === 0) {
-                    historialDiv.innerHTML = '<div class="empty">No hay historial hoy.</div>';
-                }
-            }, (error) => {
-                console.error("Error al escuchar agenda del doctor:", error);
-                document.getElementById('lista-espera').innerHTML = '<div class="empty">Error al cargar la agenda.</div>';
-                document.getElementById('lista-historial').innerHTML = '<div class="empty">No se pudo cargar el historial.</div>';
-            });
+            } catch (error) {
+                console.error("Error al validar doctor:", error);
+                alert("No se pudo validar el acceso del doctor.");
+                await signOut(auth);
+                location.href = "login.html";
+            }
         });
     </script>
 </body>
