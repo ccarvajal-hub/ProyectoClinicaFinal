@@ -3,25 +3,37 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Panel Doctor - Agenda Médica</title>
+    <title>Agenda Médica</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
 
     <style>
         :root {
             --bg-page: #4a4a4a;
             --bg-card: #1c1c1c;
-            --text-main: #FFFFFF;
-            --text-muted: #A0A0A0;
-            --color-recepcion: #FFB347;
-            --color-llamado: #4299E1;
-            --color-atendido: #48BB78;
-            --color-pendiente: #CFCFCF;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --color-recepcion: #ffb347;
+            --color-pagado: #48bb78;
+            --color-llamado: #4299e1;
+            --color-atendido: #38a169;
+            --color-manual: #d69e2e;
+            --color-danger: #e53e3e;
             --border-color: rgba(255, 255, 255, 0.1);
             --radius: 24px;
+
+            --badge-pendiente: #718096;
+            --badge-en-recepcion: #ffb347;
+            --badge-llamado-recepcion: #4299e1;
+            --badge-pagado: #48bb78;
+            --badge-atendido: #38a169;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: "Inter", sans-serif;
             background-color: var(--bg-page);
             color: var(--text-main);
             margin: 0;
@@ -31,184 +43,359 @@
             align-items: center;
         }
 
+        .page-header {
+            width: 100%;
+            max-width: 1220px;
+            text-align: center;
+            margin-bottom: 26px;
+        }
+
+        .page-header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+        }
+
+        .page-subtitle {
+            margin-top: 6px;
+            font-size: 1rem;
+            font-weight: 800;
+            color: #ffffff;
+            text-transform: uppercase;
+            opacity: 0.95;
+        }
+
         .container {
             background-color: var(--bg-card);
-            padding: 30px;
+            padding: 40px;
             border-radius: var(--radius);
             width: 100%;
-            max-width: 1200px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            max-width: 1220px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border-color);
+        }
+
+        .container-pacientes {
+            margin-bottom: 42px;
+        }
+
+        .container-historial {
+            opacity: 0.96;
             margin-bottom: 30px;
         }
 
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 800;
-            margin-bottom: 5px;
-            text-align: center;
-        }
-
-        .user-name {
-            color: #FFFFFF;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 25px;
-            text-align: center;
-            display: block;
-            opacity: 0.9;
-        }
-
         h2 {
-            font-size: 1.1rem;
+            font-size: 1.4rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .title-espera { color: var(--color-llamado); }
-        .title-historial { color: var(--color-atendido); }
+        .title-espera {
+            color: var(--color-recepcion);
+        }
 
-        .header, .row {
+        .title-atendidos {
+            color: var(--color-pagado);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .topbar-right {
             display: flex;
             align-items: center;
-            padding: 12px 20px;
-        }
-
-        .header {
-            font-size: 0.7rem;
-            font-weight: 800;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 10px;
-        }
-
-        .col-name { flex: 2; }
-        .col-rut { flex: 1.2; text-align: center; }
-        .col-info { flex: 1.2; text-align: center; }
-        .col-hora { flex: 0.8; text-align: center; }
-        .col-llegada { flex: 0.8; text-align: center; }
-        .col-est { flex: 1; text-align: center; }
-        .col-acts { flex: 1.5; text-align: right; }
-
-        .row {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            margin-bottom: 8px;
-            font-size: 0.85rem;
-        }
-
-        .name-txt {
-            font-weight: 700;
-            font-size: 0.95rem;
-        }
-
-        .rut-txt {
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .info-txt {
-            color: #fdfd96;
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        .llegada-txt {
-            color: var(--color-recepcion);
-            font-weight: 700;
-        }
-
-        .st-txt {
-            font-size: 0.7rem;
-            font-weight: 900;
-            text-transform: uppercase;
-        }
-
-        .st-pendiente { color: var(--color-pendiente); }
-        .st-en_recepcion { color: var(--color-recepcion); }
-        .st-llamado { color: var(--color-llamado); }
-        .st-atendido { color: var(--color-atendido); }
-
-        button {
-            cursor: pointer;
-            border: none;
-            font-family: 'Inter', sans-serif;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-weight: 800;
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            color: white;
-            transition: 0.2s;
-        }
-
-        .btn-call { background: var(--color-llamado); }
-        .btn-fin { background: var(--color-atendido); }
-        .btn-del {
-            background: transparent;
-            color: #FC8181;
-            font-size: 1.1rem;
-            margin-left: 10px;
-            font-weight: 400;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .btn-logout {
-            background: #d4d4a1;
-            margin-top: 10px;
-            padding: 10px 20px;
-            font-size: 0.75rem;
-            color: #333;
+            border: none;
+            background: var(--color-danger);
+            color: white;
+            border-radius: 12px;
+            padding: 10px 16px;
+            font-size: 0.85rem;
             font-weight: 800;
-            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s ease;
+            text-transform: uppercase;
         }
 
-        .empty {
-            color: var(--text-muted);
+        .btn-logout:hover {
+            filter: brightness(1.08);
+            transform: scale(1.03);
+        }
+
+        .row-espera {
+            display: grid;
+            grid-template-columns: 1.9fr 1.3fr 0.9fr 1.1fr 1.2fr 1fr;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+
+        .row-historial {
+            display: grid;
+            grid-template-columns: 1.9fr 1.3fr 0.9fr 1.1fr 1.2fr 0.9fr;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            margin-bottom: 10px;
+        }
+
+        .row-espera.header,
+        .row-historial.header {
+            background: rgba(255, 255, 255, 0.05);
             font-size: 0.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .name {
+            font-weight: 700;
+        }
+
+        .rut-col {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .hora {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .llegada-col {
             text-align: center;
-            padding: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        .llegada-col.muted {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .estado-wrap,
+        .resultado-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(1px);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #fff;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .badge-pendiente {
+            color: #a0aec0;
+        }
+
+        .badge-llegado {
+            color: var(--color-recepcion);
+        }
+
+        .badge-llamado_recepcion,
+        .badge-llamando {
+            color: var(--color-llamado);
+        }
+
+        .badge-pagado {
+            color: var(--color-pagado);
+        }
+
+        .badge-atendido {
+            color: var(--color-atendido);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-action {
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s ease;
+            min-width: 110px;
+        }
+
+        .btn-call {
+            background-color: var(--color-llamado);
+        }
+
+        .btn-finish {
+            background-color: var(--color-atendido);
+        }
+
+        .btn-action:hover:not(:disabled) {
+            filter: brightness(1.08);
+            transform: scale(1.04);
+        }
+
+        .btn-action:disabled {
+            background-color: #333;
+            color: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .check {
+            color: var(--color-pagado);
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+
+        .empty-msg {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            text-align: center;
+            padding: 24px;
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+        }
+
+        .header-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        @media (max-width: 1100px) {
+            .row-espera,
+            .row-espera.header,
+            .row-historial,
+            .row-historial.header {
+                grid-template-columns: 1fr;
+                text-align: left;
+            }
+
+            .hora,
+            .estado-wrap,
+            .resultado-wrap,
+            .actions,
+            .llegada-col,
+            .header-center {
+                justify-content: flex-start;
+                text-align: left;
+            }
+
+            .actions,
+            .resultado-wrap {
+                margin-top: 6px;
+            }
+
+            .topbar-right {
+                width: 100%;
+                justify-content: flex-start;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="page-header">
+        <h1>AGENDA MÉDICA</h1>
+        <div class="page-subtitle" id="display-name">CARGANDO...</div>
+    </div>
 
-    <h1>AGENDA MÉDICA</h1>
-    <div class="user-name" id="display-name">Cargando...</div>
-
-    <div class="container">
-        <h2 class="title-espera">● PACIENTES POR ATENDER</h2>
-        <div class="header">
-            <div class="col-name">Paciente</div>
-            <div class="col-rut">RUT</div>
-            <div class="col-info">Ubicación</div>
-            <div class="col-hora">Cita</div>
-            <div class="col-llegada">Llegada</div>
-            <div class="col-est">Estado</div>
-            <div class="col-acts">Acción</div>
+    <div class="container container-pacientes">
+        <div class="topbar">
+            <h2 class="title-espera">● PACIENTES POR ATENDER</h2>
+            <div class="topbar-right">
+                <button class="btn-logout" id="btnLogout">Cerrar sesión</button>
+            </div>
         </div>
+
+        <div class="row-espera header">
+            <div>Paciente</div>
+            <div>RUT</div>
+            <div class="header-center">Hora</div>
+            <div class="header-center">Llegada</div>
+            <div class="header-center">Estado</div>
+            <div class="header-center">Acción</div>
+        </div>
+
         <div id="lista-espera"></div>
     </div>
 
-    <div class="container" style="opacity: 0.85;">
-        <h2 class="title-historial">✔ HISTORIAL DE HOY</h2>
+    <div class="container container-historial">
+        <h2 class="title-atendidos">✔ HISTORIAL</h2>
+
+        <div class="row-historial header">
+            <div>Paciente</div>
+            <div>RUT</div>
+            <div class="header-center">Hora</div>
+            <div class="header-center">Llegada</div>
+            <div class="header-center">Estado</div>
+            <div class="header-center">Resultado</div>
+        </div>
+
         <div id="lista-historial"></div>
     </div>
-
-    <button class="btn-logout" id="btnLogout">Cerrar Sesión</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, where, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import {
+            getFirestore,
+            collection,
+            onSnapshot,
+            doc,
+            updateDoc,
+            query,
+            where,
+            getDoc
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -223,12 +410,22 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        const ESTADOS = {
+            PENDIENTE: "pendiente",
+            LLEGADO: "llegado",
+            LLAMADO_RECEPCION: "llamado_recepcion",
+            PAGADO: "pagado",
+            LLAMANDO: "llamando",
+            ATENDIDO: "atendido"
+        };
+
         let nombreDoc = "";
         let boxDoc = "";
+        let uidDoc = "";
 
         function formatRut(rut) {
             if (!rut) return "---";
-            const value = rut.toString().replace(/\./g, '').replace('-', '');
+            const value = rut.toString().replace(/\./g, "").replace("-", "");
             if (value.length < 2) return value;
             const cuerpo = value.slice(0, -1);
             const dv = value.slice(-1).toUpperCase();
@@ -236,77 +433,86 @@
         }
 
         function obtenerFechaHoyChile() {
-            const partes = new Intl.DateTimeFormat('en-CA', {
-                timeZone: 'America/Santiago',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
+            const partes = new Intl.DateTimeFormat("en-CA", {
+                timeZone: "America/Santiago",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit"
             }).formatToParts(new Date());
 
-            const year = partes.find(p => p.type === 'year').value;
-            const month = partes.find(p => p.type === 'month').value;
-            const day = partes.find(p => p.type === 'day').value;
+            const year = partes.find(p => p.type === "year").value;
+            const month = partes.find(p => p.type === "month").value;
+            const day = partes.find(p => p.type === "day").value;
 
             return `${year}-${month}-${day}`;
         }
 
-        function estadoReal(estado) {
-            return (estado || 'pendiente').toLowerCase().trim();
-        }
-
-        function estadoVisualDesdeReal(estado) {
-            const e = estadoReal(estado);
-
-            if (e === 'llegado' || e === 'pagado' || e === 'en_recepcion' || e === 'en recepción') {
-                return 'en_recepcion';
-            }
-
-            if (e === 'llamando' || e === 'llamado' || e === 'atendiendo') {
-                return 'llamado';
-            }
-
-            if (e === 'atendido') {
-                return 'atendido';
-            }
-
-            return 'pendiente';
-        }
-
-        function textoEstadoDesdeReal(estado) {
-            const visual = estadoVisualDesdeReal(estado);
-
-            if (visual === 'en_recepcion') return 'En Recepción';
-            if (visual === 'llamado') return 'Llamado';
-            if (visual === 'atendido') return 'Atendido';
-            return 'Pendiente';
-        }
-
-        function horaATotalMinutos(hora) {
-            if (!hora || typeof hora !== 'string') return 999999;
-
-            const [hh, mm] = hora.split(':').map(Number);
-
-            if (Number.isNaN(hh) || Number.isNaN(mm)) return 999999;
-
-            return (hh * 60) + mm;
-        }
-
         function obtenerHoraChile24() {
-            return new Intl.DateTimeFormat('es-CL', {
-                timeZone: 'America/Santiago',
-                hour: '2-digit',
-                minute: '2-digit',
+            return new Intl.DateTimeFormat("es-CL", {
+                timeZone: "America/Santiago",
+                hour: "2-digit",
+                minute: "2-digit",
                 hour12: false
             }).format(new Date());
         }
 
+        function horaATotalMinutos(hora) {
+            if (!hora || typeof hora !== "string") return 999999;
+            const [hh, mm] = hora.split(":").map(Number);
+            if (Number.isNaN(hh) || Number.isNaN(mm)) return 999999;
+            return (hh * 60) + mm;
+        }
+
+        function normalizarEstado(estado) {
+            return (estado || ESTADOS.PENDIENTE).toString().trim().toLowerCase();
+        }
+
+        function textoEstado(estado) {
+            const e = normalizarEstado(estado);
+
+            if (e === ESTADOS.PENDIENTE) return "PENDIENTE";
+            if (e === ESTADOS.LLEGADO) return "EN RECEPCIÓN";
+            if (e === ESTADOS.LLAMADO_RECEPCION) return "LLAMADO A RECEPCIÓN";
+            if (e === ESTADOS.PAGADO) return "PAGADO";
+            if (e === ESTADOS.LLAMANDO) return "LLAMADO A DOCTOR";
+            if (e === ESTADOS.ATENDIDO) return "ATENDIDO";
+
+            return "PENDIENTE";
+        }
+
+        function claseBadge(estado) {
+            const e = normalizarEstado(estado);
+
+            if (e === ESTADOS.PENDIENTE) return "badge-pendiente";
+            if (e === ESTADOS.LLEGADO) return "badge-llegado";
+            if (e === ESTADOS.LLAMADO_RECEPCION) return "badge-llamado_recepcion";
+            if (e === ESTADOS.PAGADO) return "badge-pagado";
+            if (e === ESTADOS.LLAMANDO) return "badge-llamando";
+            if (e === ESTADOS.ATENDIDO) return "badge-atendido";
+
+            return "badge-pendiente";
+        }
+
+        function construirBotonAccion(p) {
+            const estado = normalizarEstado(p.estado);
+            const nombreSeguro = (p.nombre || "").replace(/'/g, "\\'");
+
+            if (estado === ESTADOS.PAGADO) {
+                return `<button class="btn-action btn-call" onclick="confirmarLlamado('${p.id}','${nombreSeguro}')">Llamar</button>`;
+            }
+
+            if (estado === ESTADOS.LLAMANDO) {
+                return `<button class="btn-action btn-finish" onclick="cambiarEstado('${p.id}','${ESTADOS.ATENDIDO}')">Finalizar</button>`;
+            }
+
+            return `<button class="btn-action" disabled>Llamar</button>`;
+        }
+
         window.cambiarEstado = async (id, nuevo, nombre = "") => {
             try {
-                const updateData = {
-                    estado: nuevo
-                };
+                const updateData = { estado: nuevo };
 
-                if (nuevo === 'llamando') {
+                if (nuevo === ESTADOS.LLAMANDO) {
                     const ahora = Date.now();
                     const horaActual = obtenerHoraChile24();
 
@@ -318,7 +524,7 @@
                     updateData.tv_paciente = nombre || "";
                 }
 
-                if (nuevo === 'atendido') {
+                if (nuevo === ESTADOS.ATENDIDO) {
                     updateData.tv_origen = "";
                     updateData.tv_destino = "";
                     updateData.tv_hora_llamado = "";
@@ -333,16 +539,10 @@
         window.confirmarLlamado = async (id, nombre) => {
             const ok = confirm(`¿Llamar ahora a ${nombre}?`);
             if (!ok) return;
-            await window.cambiarEstado(id, 'llamando', nombre);
+            await window.cambiarEstado(id, ESTADOS.LLAMANDO, nombre);
         };
 
-        window.eliminar = async (id, nombre) => {
-            if (confirm(`¿Eliminar a ${nombre}?`)) {
-                await deleteDoc(doc(db, "agendados", id));
-            }
-        };
-
-        document.getElementById('btnLogout').onclick = async () => {
+        document.getElementById("btnLogout").onclick = async () => {
             await signOut(auth);
             location.href = "login.html";
         };
@@ -353,11 +553,12 @@
                 return;
             }
 
-            const uid = user.uid;
             const fechaHoy = obtenerFechaHoyChile();
 
             try {
-                const dSnap = await getDoc(doc(db, "doctores", uid));
+                uidDoc = user.uid;
+
+                const dSnap = await getDoc(doc(db, "doctores", uidDoc));
 
                 if (!dSnap.exists()) {
                     alert("Este usuario no pertenece al módulo doctor.");
@@ -369,80 +570,62 @@
                 const data = dSnap.data();
                 nombreDoc = data.nombre || "";
                 boxDoc = `PISO ${data.piso} - CONSULTA ${data.consulta}`;
-                document.getElementById('display-name').innerText = `DR. ${nombreDoc}`;
+                document.getElementById("display-name").innerText = `DR. ${nombreDoc}`;
 
                 const q = query(
                     collection(db, "agendados"),
-                    where("doctor_id", "==", uid),
+                    where("doctor_id", "==", uidDoc),
                     where("fecha_turno", "==", fechaHoy)
                 );
 
                 onSnapshot(q, (snapshot) => {
-                    const esperaDiv = document.getElementById('lista-espera');
-                    const historialDiv = document.getElementById('lista-historial');
+                    const esperaDiv = document.getElementById("lista-espera");
+                    const historialDiv = document.getElementById("lista-historial");
 
                     esperaDiv.innerHTML = "";
                     historialDiv.innerHTML = "";
 
-                    const pacientes = snapshot.docs.map(docSnap => {
-                        const p = docSnap.data();
-                        return {
-                            id: docSnap.id,
-                            ...p
-                        };
-                    });
+                    const pacientes = snapshot.docs.map(docSnap => ({
+                        id: docSnap.id,
+                        ...docSnap.data()
+                    }));
 
                     const espera = pacientes
-                        .filter(p => estadoReal(p.estado) !== 'atendido')
+                        .filter(p => normalizarEstado(p.estado) !== ESTADOS.ATENDIDO)
                         .sort((a, b) => {
                             const ordenEstados = {
-                                pagado: 0,
-                                llamando: 1,
-                                llamado: 1,
-                                atendiendo: 1,
-                                llegado: 2,
-                                en_recepcion: 2,
-                                pendiente: 3
+                                [ESTADOS.PENDIENTE]: 0,
+                                [ESTADOS.LLEGADO]: 1,
+                                [ESTADOS.LLAMADO_RECEPCION]: 2,
+                                [ESTADOS.PAGADO]: 3,
+                                [ESTADOS.LLAMANDO]: 4
                             };
 
-                            const ordenA = ordenEstados[estadoReal(a.estado)] ?? 99;
-                            const ordenB = ordenEstados[estadoReal(b.estado)] ?? 99;
+                            const ordenA = ordenEstados[normalizarEstado(a.estado)] ?? 99;
+                            const ordenB = ordenEstados[normalizarEstado(b.estado)] ?? 99;
 
                             if (ordenA !== ordenB) return ordenA - ordenB;
-
                             return horaATotalMinutos(a.hora_consulta) - horaATotalMinutos(b.hora_consulta);
                         });
 
                     const historial = pacientes
-                        .filter(p => estadoReal(p.estado) === 'atendido')
+                        .filter(p => normalizarEstado(p.estado) === ESTADOS.ATENDIDO)
                         .sort((a, b) => horaATotalMinutos(a.hora_consulta) - horaATotalMinutos(b.hora_consulta));
 
                     espera.forEach(p => {
-                        const row = document.createElement('div');
-                        row.className = "row";
-
-                        const estadoDb = estadoReal(p.estado);
-                        const estadoVisual = estadoVisualDesdeReal(p.estado);
-                        const nombreSeguro = (p.nombre || '').replace(/'/g, "\\'");
-
-                        let botones = "";
-
-                        if (estadoDb === 'pagado') {
-                            botones = `<button class="btn-call" onclick="confirmarLlamado('${p.id}','${nombreSeguro}')">Llamar</button>`;
-                        } else if (estadoDb === 'llamando' || estadoDb === 'llamado' || estadoDb === 'atendiendo') {
-                            botones = `<button class="btn-fin" onclick="cambiarEstado('${p.id}','atendido')">Finalizar</button>`;
-                        }
+                        const row = document.createElement("div");
+                        row.className = "row-espera";
 
                         row.innerHTML = `
-                            <div class="col-name name-txt">${p.nombre || ''}</div>
-                            <div class="col-rut rut-txt">${formatRut(p.rut)}</div>
-                            <div class="col-info info-txt">${boxDoc}</div>
-                            <div class="col-hora">${p.hora_consulta || '--:--'}</div>
-                            <div class="col-llegada llegada-txt">${p.hora_llegada || '--:--'}</div>
-                            <div class="col-est st-txt st-${estadoVisual}">${textoEstadoDesdeReal(p.estado)}</div>
-                            <div class="col-acts">
-                                ${botones}
-                                <button class="btn-del" onclick="eliminar('${p.id}','${nombreSeguro}')">✕</button>
+                            <div class="name">${p.nombre || ""}</div>
+                            <div class="rut-col">${formatRut(p.rut)}</div>
+                            <div class="hora">${p.hora_consulta || "--:--"}</div>
+                            <div class="llegada-col ${p.hora_llegada ? "" : "muted"}">${p.hora_llegada || "--:--"}</div>
+                            <div class="estado-wrap">
+                                <span class="badge ${claseBadge(p.estado)}">${textoEstado(p.estado)}</span>
+                            </div>
+                            <div class="actions">
+                                ${construirBotonAccion(p)}
                             </div>
                         `;
 
@@ -450,21 +633,19 @@
                     });
 
                     historial.forEach(p => {
-                        const row = document.createElement('div');
-                        row.className = "row";
-
-                        const estadoVisual = estadoVisualDesdeReal(p.estado);
-                        const nombreSeguro = (p.nombre || '').replace(/'/g, "\\'");
+                        const row = document.createElement("div");
+                        row.className = "row-historial";
 
                         row.innerHTML = `
-                            <div class="col-name name-txt">${p.nombre || ''}</div>
-                            <div class="col-rut rut-txt">${formatRut(p.rut)}</div>
-                            <div class="col-info info-txt">${boxDoc}</div>
-                            <div class="col-hora">${p.hora_consulta || '--:--'}</div>
-                            <div class="col-llegada llegada-txt">${p.hora_llegada || '--:--'}</div>
-                            <div class="col-est st-txt st-${estadoVisual}">${textoEstadoDesdeReal(p.estado)}</div>
-                            <div class="col-acts">
-                                <button class="btn-del" onclick="eliminar('${p.id}','${nombreSeguro}')">✕</button>
+                            <div class="name">${p.nombre || ""}</div>
+                            <div class="rut-col">${formatRut(p.rut)}</div>
+                            <div class="hora">${p.hora_consulta || "--:--"}</div>
+                            <div class="llegada-col ${p.hora_llegada ? "" : "muted"}">${p.hora_llegada || "--:--"}</div>
+                            <div class="estado-wrap">
+                                <span class="badge ${claseBadge(p.estado)}">${textoEstado(p.estado)}</span>
+                            </div>
+                            <div class="resultado-wrap">
+                                <span class="check">✓</span>
                             </div>
                         `;
 
@@ -472,16 +653,16 @@
                     });
 
                     if (espera.length === 0) {
-                        esperaDiv.innerHTML = '<div class="empty">No hay pacientes en espera hoy.</div>';
+                        esperaDiv.innerHTML = `<div class="empty-msg">No hay pacientes por atender hoy.</div>`;
                     }
 
                     if (historial.length === 0) {
-                        historialDiv.innerHTML = '<div class="empty">No hay historial hoy.</div>';
+                        historialDiv.innerHTML = `<div class="empty-msg">No hay historial hoy.</div>`;
                     }
                 }, (error) => {
                     console.error("Error al escuchar agenda del doctor:", error);
-                    document.getElementById('lista-espera').innerHTML = '<div class="empty">Error al cargar la agenda.</div>';
-                    document.getElementById('lista-historial').innerHTML = '<div class="empty">No se pudo cargar el historial.</div>';
+                    document.getElementById("lista-espera").innerHTML = `<div class="empty-msg">Error al cargar la agenda.</div>`;
+                    document.getElementById("lista-historial").innerHTML = `<div class="empty-msg">No se pudo cargar el historial.</div>`;
                 });
 
             } catch (error) {
