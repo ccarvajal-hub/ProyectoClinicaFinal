@@ -17,6 +17,8 @@
     --badge-llamado-recepcion: #4299e1;
     --badge-pagado: #48bb78;
     --badge-atendido: #38a169;
+    --badge-llamado-doctor: #4299e1;
+    --badge-pago-manual: #d69e2e;
 }
 
 * {
@@ -210,13 +212,14 @@ h2 {
 .llegada-col {
     text-align: center;
     font-weight: 700;
-    color: var(--text-main);
+    color: #e8a8b8;
     font-size: 0.9rem;
 }
 
 .llegada-col.muted {
-    color: var(--text-muted);
+    color: #e8a8b8;
     font-weight: 600;
+    opacity: 0.75;
 }
 
 .estado-wrap,
@@ -245,20 +248,28 @@ h2 {
 }
 
 .badge-pendiente {
-    color: #a0aec0;
+    color: var(--badge-pendiente);
 }
 
 .badge-llegado {
     color: var(--color-recepcion);
 }
 
-.badge-llamado_recepcion,
-.badge-llamando {
+.badge-llamado_recepcion {
     color: var(--color-llamado);
+}
+
+.badge-pago_manual {
+    color: var(--badge-pago-manual);
 }
 
 .badge-pagado {
     color: var(--color-pagado);
+}
+
+.badge-llamando,
+.badge-llamado_doctor {
+    color: var(--badge-llamado-doctor);
 }
 
 .badge-atendido {

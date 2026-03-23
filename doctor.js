@@ -28,8 +28,9 @@ const ESTADOS = {
     PENDIENTE: "pendiente",
     LLEGADO: "llegado",
     LLAMADO_RECEPCION: "llamado_recepcion",
+    PAGO_MANUAL: "pago_manual",
     PAGADO: "pagado",
-    LLAMANDO: "llamando",
+    LLAMADO_DOCTOR: "llamado_doctor",
     ATENDIDO: "atendido"
 };
 
@@ -54,9 +55,9 @@ function obtenerFechaHoyChile() {
         day: "2-digit"
     }).formatToParts(new Date());
 
-    const year = partes.find(p => p.type === "year").value;
-    const month = partes.find(p => p.type === "month").value;
-    const day = partes.find(p => p.type === "day").value;
+    const year = partes.find(p => p.type === "year")?.value;
+    const month = partes.find(p => p.type === "month")?.value;
+    const day = partes.find(p => p.type === "day")?.value;
 
     return `${year}-${month}-${day}`;
 }
@@ -84,12 +85,7 @@ function obtenerPartesFechaHoyChile() {
         if (part.type === "year") year = part.value;
     }
 
-    return {
-        weekday,
-        day,
-        month,
-        year
-    };
+    return { weekday, day, month, year };
 }
 
 function renderAgendaDia() {
@@ -119,7 +115,10 @@ function horaATotalMinutos(hora) {
 }
 
 function normalizarEstado(estado) {
-    return (estado || ESTADOS.PENDIENTE).toString().trim().toLowerCase();
+    return String(estado || ESTADOS.PENDIENTE)
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "_");
 }
 
 function textoEstado(estado) {
@@ -127,9 +126,10 @@ function textoEstado(estado) {
 
     if (e === ESTADOS.PENDIENTE) return "PENDIENTE";
     if (e === ESTADOS.LLEGADO) return "EN RECEPCIÓN";
-    if (e === ESTADOS.LLAMADO_RECEPCION) return "LLAMADO A RECEPCIÓN";
+    if (e === ESTADOS.LLAMADO_RECEPCION) return "LLAMADO A<br>RECEPCIÓN";
+    if (e === ESTADOS.PAGO_MANUAL) return "PAGO MANUAL";
     if (e === ESTADOS.PAGADO) return "PAGADO";
-    if (e === ESTADOS.LLAMANDO) return "LLAMADO A<br>DOCTOR";
+    if (e === ESTADOS.LLAMADO_DOCTOR) return "LLAMADO A<br>CONSULTA";
     if (e === ESTADOS.ATENDIDO) return "ATENDIDO";
 
     return "PENDIENTE";
@@ -141,8 +141,9 @@ function claseBadge(estado) {
     if (e === ESTADOS.PENDIENTE) return "badge-pendiente";
     if (e === ESTADOS.LLEGADO) return "badge-llegado";
     if (e === ESTADOS.LLAMADO_RECEPCION) return "badge-llamado_recepcion";
+    if (e === ESTADOS.PAGO_MANUAL) return "badge-pago_manual";
     if (e === ESTADOS.PAGADO) return "badge-pagado";
-    if (e === ESTADOS.LLAMANDO) return "badge-llamando";
+    if (e === ESTADOS.LLAMADO_DOCTOR) return "badge-llamado_doctor";
     if (e === ESTADOS.ATENDIDO) return "badge-atendido";
 
     return "badge-pendiente";
@@ -156,8 +157,8 @@ function construirBotonAccion(p) {
         return `<button class="btn-action btn-call" onclick="confirmarLlamado('${p.id}','${nombreSeguro}')">Llamar</button>`;
     }
 
-    if (estado === ESTADOS.LLAMANDO) {
-        return `<button class="btn-action btn-finish" onclick="cambiarEstado('${p.id}','${ESTADOS.ATENDIDO}')">Finalizar</button>`;
+    if (estado === ESTADOS.LLAMADO_DOCTOR) {
+        return `<button class="btn-action btn-finish" onclick="confirmarFinalizar('${p.id}','${nombreSeguro}')">Finalizar</button>`;
     }
 
     return `<button class="btn-action" disabled>Llamar</button>`;
@@ -167,7 +168,7 @@ window.cambiarEstado = async (id, nuevo, nombre = "") => {
     try {
         const updateData = { estado: nuevo };
 
-        if (nuevo === ESTADOS.LLAMANDO) {
+        if (nuevo === ESTADOS.LLAMADO_DOCTOR) {
             const ahora = Date.now();
             const horaActual = obtenerHoraChile24();
 
@@ -188,19 +189,29 @@ window.cambiarEstado = async (id, nuevo, nombre = "") => {
         await updateDoc(doc(db, "agendados", id), updateData);
     } catch (e) {
         console.error("Error al cambiar estado:", e);
+        alert("No se pudo actualizar el estado del paciente.");
     }
 };
 
 window.confirmarLlamado = async (id, nombre) => {
     const ok = confirm(`¿Llamar ahora a ${nombre}?`);
     if (!ok) return;
-    await window.cambiarEstado(id, ESTADOS.LLAMANDO, nombre);
+    await window.cambiarEstado(id, ESTADOS.LLAMADO_DOCTOR, nombre);
 };
 
-document.getElementById("btnLogout").onclick = async () => {
-    await signOut(auth);
-    location.href = "login.html";
+window.confirmarFinalizar = async (id, nombre) => {
+    const ok = confirm(`¿Finalizar atención de ${nombre}?`);
+    if (!ok) return;
+    await window.cambiarEstado(id, ESTADOS.ATENDIDO, nombre);
 };
+
+const btnLogout = document.getElementById("btnLogout");
+if (btnLogout) {
+    btnLogout.onclick = async () => {
+        await signOut(auth);
+        location.href = "login.html";
+    };
+}
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
@@ -226,7 +237,11 @@ onAuthStateChanged(auth, async (user) => {
         const data = dSnap.data();
         nombreDoc = data.nombre || "";
         boxDoc = `PISO ${data.piso} - CONSULTA ${data.consulta}`;
-        document.getElementById("display-name").innerText = `DR. ${nombreDoc}`;
+
+        const displayName = document.getElementById("display-name");
+        if (displayName) {
+            displayName.innerText = `DR. ${nombreDoc}`;
+        }
 
         const q = query(
             collection(db, "agendados"),
@@ -238,23 +253,26 @@ onAuthStateChanged(auth, async (user) => {
             const esperaDiv = document.getElementById("lista-espera");
             const historialDiv = document.getElementById("lista-historial");
 
+            if (!esperaDiv || !historialDiv) return;
+
             esperaDiv.innerHTML = "";
             historialDiv.innerHTML = "";
 
-            const pacientes = snapshot.docs.map(docSnap => ({
+            const pacientes = snapshot.docs.map((docSnap) => ({
                 id: docSnap.id,
                 ...docSnap.data()
             }));
 
             const espera = pacientes
-                .filter(p => normalizarEstado(p.estado) !== ESTADOS.ATENDIDO)
+                .filter((p) => normalizarEstado(p.estado) !== ESTADOS.ATENDIDO)
                 .sort((a, b) => {
                     const ordenEstados = {
                         [ESTADOS.PENDIENTE]: 0,
                         [ESTADOS.LLEGADO]: 1,
                         [ESTADOS.LLAMADO_RECEPCION]: 2,
-                        [ESTADOS.PAGADO]: 3,
-                        [ESTADOS.LLAMANDO]: 4
+                        [ESTADOS.PAGO_MANUAL]: 3,
+                        [ESTADOS.PAGADO]: 4,
+                        [ESTADOS.LLAMADO_DOCTOR]: 5
                     };
 
                     const ordenA = ordenEstados[normalizarEstado(a.estado)] ?? 99;
@@ -265,10 +283,10 @@ onAuthStateChanged(auth, async (user) => {
                 });
 
             const historial = pacientes
-                .filter(p => normalizarEstado(p.estado) === ESTADOS.ATENDIDO)
+                .filter((p) => normalizarEstado(p.estado) === ESTADOS.ATENDIDO)
                 .sort((a, b) => horaATotalMinutos(a.hora_consulta) - horaATotalMinutos(b.hora_consulta));
 
-            espera.forEach(p => {
+            espera.forEach((p) => {
                 const row = document.createElement("div");
                 row.className = "row-espera";
 
@@ -288,7 +306,7 @@ onAuthStateChanged(auth, async (user) => {
                 esperaDiv.appendChild(row);
             });
 
-            historial.forEach(p => {
+            historial.forEach((p) => {
                 const row = document.createElement("div");
                 row.className = "row-historial";
 

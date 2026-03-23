@@ -148,7 +148,7 @@ h2 {
 
 .row-espera {
     display: grid;
-    grid-template-columns: 1.95fr 2.35fr 0.9fr 1.15fr 1.05fr 0.95fr 0.42fr;
+    grid-template-columns: 1.8fr 1.95fr 0.82fr 1.02fr 1fr 0.9fr 0.5fr;
     align-items: center;
     gap: 10px;
     padding: 15px 16px;
@@ -160,10 +160,10 @@ h2 {
 
 .row-historial {
     display: grid;
-    grid-template-columns: 1.9fr 2.3fr 0.9fr 1.2fr 1.2fr 1fr;
+    grid-template-columns: 1.95fr 2.35fr 0.9fr 1.15fr 1.05fr 0.62fr;
     align-items: center;
-    gap: 12px;
-    padding: 15px 20px;
+    gap: 10px;
+    padding: 15px 16px;
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border-color);
     border-radius: 15px;
@@ -180,8 +180,29 @@ h2 {
     color: var(--text-muted);
 }
 
+.row-espera > div:last-child,
+.row-espera.header > div:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.row-espera.header > div:last-child {
+    line-height: 1.05;
+}
+
+.row-historial > div:last-child,
+.row-historial.header > div:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
 .name {
     font-weight: 700;
+    line-height: 1.2;
 }
 
 .doc {
@@ -190,6 +211,7 @@ h2 {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.2;
 }
 
 .hora {
@@ -266,6 +288,7 @@ h2 {
     color: var(--badge-atendido);
 }
 
+.actions,
 .direct-wrap {
     display: flex;
     justify-content: center;
@@ -294,7 +317,7 @@ h2 {
 
 .btn-pay {
     background-color: var(--color-pagado);
-    min-width: 110px;
+    min-width: 92px;
 }
 
 .btn-action:hover:not(:disabled) {
@@ -350,6 +373,17 @@ h2 {
     font-weight: 800;
     font-size: 1.2rem;
     line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.actions .check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    line-height: 1;
 }
 
 .empty-msg {
@@ -368,17 +402,7 @@ h2 {
     width: 100%;
 }
 
-/* Ajustes finos visuales */
-.row-espera .name,
-.row-historial .name {
-    line-height: 1.2;
-}
-
-.row-espera .doc,
-.row-historial .doc {
-    line-height: 1.2;
-}
-
+/* placeholders visuales cuando una celda queda vacía */
 .row-espera .actions:empty::after,
 .row-espera .direct-wrap:empty::after {
     content: "";
@@ -387,16 +411,14 @@ h2 {
     height: 24px;
 }
 
-/* Responsive */
 @media (max-width: 1100px) {
     .row-espera,
-   .row-espera.header > div:last-child {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    line-height: 1.05;
-}
+    .row-espera.header,
+    .row-historial,
+    .row-historial.header {
+        grid-template-columns: 1fr;
+        text-align: left;
+    }
 
     .hora,
     .estado-wrap,
@@ -450,8 +472,8 @@ h2 {
     }
 
     .btn-action {
-        min-width: 100px;
-        padding: 9px 14px;
-        font-size: 0.72rem;
+        min-width: 88px;
+        padding: 8px 12px;
+        font-size: 0.7rem;
     }
 }

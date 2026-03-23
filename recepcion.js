@@ -42,13 +42,34 @@ let RECEPCION_ACTUAL = {
 const cacheDoctores = {};
 
 const CONFIG_ESTADOS = {
-    pendiente: { visual: "Pendiente", sector: "agenda" },
-    llegado: { visual: "En recepción", sector: "agenda" },
-    llamado_recepcion: { visual: "Llamado en recepción", sector: "agenda" },
-    pago_manual: { visual: "Pago manual", sector: "agenda" },
-    pagado: { visual: "Pagado", sector: "historial" },
-    llamado_doctor: { visual: "Llamado a consulta", sector: "historial" },
-    atendido: { visual: "Atendido", sector: "historial" }
+    pendiente: {
+        visual: "Pendiente",
+        sector: "agenda"
+    },
+    llegado: {
+        visual: "En recepción",
+        sector: "agenda"
+    },
+    llamado_recepcion: {
+        visual: "Llamado en recepción",
+        sector: "agenda"
+    },
+    pago_manual: {
+        visual: "Pago manual",
+        sector: "agenda"
+    },
+    pagado: {
+        visual: "Pagado",
+        sector: "historial"
+    },
+    llamado_doctor: {
+        visual: "Llamado a consulta",
+        sector: "historial"
+    },
+    atendido: {
+        visual: "Atendido",
+        sector: "historial"
+    }
 };
 
 const ESTADOS_AGENDA = ["pendiente", "llegado", "llamado_recepcion", "pago_manual"];
@@ -149,18 +170,32 @@ function normalizarEstado(estado) {
         .replace(/\s+/g, "_");
 }
 
-function obtenerEstadoVisual(estado) {
-    return CONFIG_ESTADOS[normalizarEstado(estado)]?.visual || String(estado || "pendiente");
+function obtenerEstadoVisual(paciente) {
+    const estado = normalizarEstado(paciente?.estado);
+    const fueManual = paciente?.registro_manual_recepcion === true;
+
+    if (fueManual && ["pagado", "llamado_doctor", "atendido", "pago_manual"].includes(estado)) {
+        return "Pago manual";
+    }
+
+    return CONFIG_ESTADOS[estado]?.visual || String(estado || "pendiente");
 }
 
-function getClaseBadge(estado) {
-    return `badge-${normalizarEstado(estado)}`;
+function getClaseBadge(paciente) {
+    const estado = normalizarEstado(paciente?.estado);
+    const fueManual = paciente?.registro_manual_recepcion === true;
+
+    if (fueManual && ["pagado", "llamado_doctor", "atendido", "pago_manual"].includes(estado)) {
+        return "badge-pago_manual";
+    }
+
+    return `badge-${estado}`;
 }
 
-function crearBadgeEstado(estado) {
+function crearBadgeEstado(paciente) {
     const span = document.createElement("span");
-    span.className = `badge ${getClaseBadge(estado)}`;
-    span.textContent = obtenerEstadoVisual(estado);
+    span.className = `badge ${getClaseBadge(paciente)}`;
+    span.textContent = obtenerEstadoVisual(paciente);
     return span;
 }
 
@@ -184,7 +219,6 @@ async function obtenerNombreDoctor(doctorRef) {
     try {
         const valorLower = valor.toLowerCase();
 
-        // 1) Si viene email, probar como ID del documento
         if (valor.includes("@")) {
             const porDoc = await getDoc(doc(db, "doctores", valorLower));
             if (porDoc.exists()) {
@@ -201,7 +235,6 @@ async function obtenerNombreDoctor(doctorRef) {
             }
         }
 
-        // 2) Probar por uid
         const qUid = query(
             collection(db, "doctores"),
             where("uid", "==", valor)
@@ -221,7 +254,6 @@ async function obtenerNombreDoctor(doctorRef) {
             return nombre;
         }
 
-        // 3) Probar por email dentro del documento
         const qEmail = query(
             collection(db, "doctores"),
             where("email", "==", valorLower)
@@ -241,7 +273,6 @@ async function obtenerNombreDoctor(doctorRef) {
             return nombre;
         }
 
-        // 4) Probar por email_normalizado
         const qEmailNorm = query(
             collection(db, "doctores"),
             where("email_normalizado", "==", valorLower)
@@ -318,7 +349,7 @@ async function activarPagoManual(id, paciente) {
 async function confirmarPago(id, paciente) {
     const nombrePaciente = paciente.nombre || "SIN NOMBRE";
     const estado = normalizarEstado(paciente.estado);
-    const esManual = estado === "pago_manual";
+    const esManual = paciente?.registro_manual_recepcion === true || estado === "pago_manual";
 
     const ok = confirm(
         esManual
@@ -409,6 +440,14 @@ function crearCheckboxPagoManual(id, paciente) {
         return wrap;
     }
 
+    if (paciente?.registro_manual_recepcion === true) {
+        btnCheck.classList.add("direct-activo");
+        btnCheck.textContent = "✓";
+        btnCheck.disabled = true;
+        wrap.appendChild(btnCheck);
+        return wrap;
+    }
+
     btnCheck.textContent = "";
     btnCheck.disabled = true;
 
@@ -425,7 +464,7 @@ function crearCheckboxPagoManual(id, paciente) {
     return wrap;
 }
 
-function crearResultadoHistorial(estado) {
+function crearResultadoHistorial(paciente) {
     const wrap = document.createElement("div");
     wrap.className = "actions";
 
@@ -433,9 +472,11 @@ function crearResultadoHistorial(estado) {
     texto.className = "check";
     texto.textContent = "✔";
 
-    const estadoNormalizado = normalizarEstado(estado);
+    const estadoNormalizado = normalizarEstado(paciente.estado);
 
-    if (estadoNormalizado === "pagado") {
+    if (paciente?.registro_manual_recepcion === true) {
+        texto.title = "Paciente registrado con pago manual";
+    } else if (estadoNormalizado === "pagado") {
         texto.title = "Paciente pagado";
     } else if (estadoNormalizado === "llamado_doctor") {
         texto.title = "Paciente llamado por doctor";
@@ -472,7 +513,7 @@ function crearFilaEspera(id, paciente, nombreDoctor) {
 
     const estadoWrap = document.createElement("div");
     estadoWrap.className = "estado-wrap";
-    estadoWrap.appendChild(crearBadgeEstado(paciente.estado));
+    estadoWrap.appendChild(crearBadgeEstado(paciente));
 
     row.appendChild(name);
     row.appendChild(docDiv);
@@ -508,14 +549,14 @@ function crearFilaHistorial(paciente, nombreDoctor) {
 
     const estadoWrap = document.createElement("div");
     estadoWrap.className = "estado-wrap";
-    estadoWrap.appendChild(crearBadgeEstado(paciente.estado));
+    estadoWrap.appendChild(crearBadgeEstado(paciente));
 
     row.appendChild(name);
     row.appendChild(docDiv);
     row.appendChild(hora);
     row.appendChild(recepcion);
     row.appendChild(estadoWrap);
-    row.appendChild(crearResultadoHistorial(paciente.estado));
+    row.appendChild(crearResultadoHistorial(paciente));
 
     return row;
 }
