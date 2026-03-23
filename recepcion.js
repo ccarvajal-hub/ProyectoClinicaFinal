@@ -41,8 +41,18 @@ let RECEPCION_ACTUAL = {
 
 const cacheDoctores = {};
 
-const ESTADOS_ESPERA = ["pendiente", "llegado", "en_recepcion", "llamado_recepcion", "pago_manual"];
-const ESTADOS_HISTORIAL = ["pagado", "atendido"];
+const CONFIG_ESTADOS = {
+    pendiente: { visual: "Pendiente", sector: "agenda" },
+    llegado: { visual: "En recepción", sector: "agenda" },
+    llamado_recepcion: { visual: "Llamado en recepción", sector: "agenda" },
+    pago_manual: { visual: "Pago manual", sector: "agenda" },
+    pagado: { visual: "Pagado", sector: "historial" },
+    llamado_doctor: { visual: "Llamado a consulta", sector: "historial" },
+    atendido: { visual: "Atendido", sector: "historial" }
+};
+
+const ESTADOS_AGENDA = ["pendiente", "llegado", "llamado_recepcion", "pago_manual"];
+const ESTADOS_HISTORIAL = ["pagado", "llamado_doctor", "atendido"];
 
 function getFechaChileYMD() {
     const partes = new Intl.DateTimeFormat("en-CA", {
@@ -61,6 +71,7 @@ function getFechaChileYMD() {
 
 function mostrarFechaCabecera() {
     const el = document.getElementById("fecha-hoy");
+    if (!el) return;
 
     const texto = new Intl.DateTimeFormat("es-CL", {
         timeZone: "America/Santiago",
@@ -75,8 +86,8 @@ function mostrarFechaCabecera() {
 
 function mostrarRecepcionActual() {
     const textoModulo = RECEPCION_ACTUAL.box || RECEPCION_ACTUAL.nombre;
-
     const subtitle = document.getElementById("recepcion-page-subtitle");
+
     if (subtitle) {
         subtitle.textContent = `MÓDULO: ${String(textoModulo).toUpperCase()}`;
     }
@@ -108,7 +119,7 @@ async function cargarRecepcionDesdeFirestore(user) {
             numero: numeroFinal,
             nombre: box,
             id: `recepcion_${numeroFinal}`,
-            box: box
+            box
         };
 
         mostrarRecepcionActual();
@@ -132,48 +143,24 @@ async function cerrarSesion() {
 }
 
 function normalizarEstado(estado) {
-    return String(estado || "pendiente").trim().toLowerCase().replace(/\s+/g, "_");
+    return String(estado || "pendiente")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "_");
 }
 
-function esPagoManualVisual(paciente) {
-    const estado = normalizarEstado(paciente.estado);
-    return estado === "pago_manual" || paciente.tipo_pago === "manual" || paciente.registro_manual_recepcion === true;
+function obtenerEstadoVisual(estado) {
+    return CONFIG_ESTADOS[normalizarEstado(estado)]?.visual || String(estado || "pendiente");
 }
 
-function formatearEstadoDesdePaciente(paciente) {
-    const estado = normalizarEstado(paciente.estado);
-
-    if (estado === "pagado" && esPagoManualVisual(paciente)) {
-        return "Pago manual";
-    }
-
-    const mapa = {
-        pendiente: "Pendiente",
-        llegado: "En recepción",
-        en_recepcion: "En recepción",
-        llamado_recepcion: "Llamado a recepción",
-        pago_manual: "Pago manual",
-        pagado: "Pagado",
-        atendido: "Atendido"
-    };
-
-    return mapa[estado] || estado;
+function getClaseBadge(estado) {
+    return `badge-${normalizarEstado(estado)}`;
 }
 
-function getClaseBadgeDesdePaciente(paciente) {
-    const estado = normalizarEstado(paciente.estado);
-
-    if (estado === "pagado" && esPagoManualVisual(paciente)) {
-        return "badge-pago_manual";
-    }
-
-    return `badge-${estado}`;
-}
-
-function crearBadgeEstadoDesdePaciente(paciente) {
+function crearBadgeEstado(estado) {
     const span = document.createElement("span");
-    span.className = `badge ${getClaseBadgeDesdePaciente(paciente)}`;
-    span.textContent = formatearEstadoDesdePaciente(paciente);
+    span.className = `badge ${getClaseBadge(estado)}`;
+    span.textContent = obtenerEstadoVisual(estado);
     return span;
 }
 
@@ -184,128 +171,186 @@ function obtenerTextoRecepcion(paciente) {
     return "SIN LLAMAR";
 }
 
-async function obtenerNombreDoctor(email) {
-    if (!email) return "DOCTOR";
+async function obtenerNombreDoctor(doctorRef) {
+    if (!doctorRef) return "DOCTOR";
 
-    const cleanEmail = String(email).toLowerCase().trim();
+    const valor = String(doctorRef).trim();
+    const cacheKey = valor.toLowerCase();
 
-    if (cacheDoctores[cleanEmail]) {
-        return cacheDoctores[cleanEmail];
+    if (cacheDoctores[cacheKey]) {
+        return cacheDoctores[cacheKey];
     }
 
     try {
-        const docRef = doc(db, "doctores", cleanEmail);
-        const docSnap = await getDoc(docRef);
+        const valorLower = valor.toLowerCase();
 
-        if (docSnap.exists()) {
-            const nombre = docSnap.data().nombre || cleanEmail.split("@")[0];
-            cacheDoctores[cleanEmail] = nombre;
+        // 1) Si viene email, probar como ID del documento
+        if (valor.includes("@")) {
+            const porDoc = await getDoc(doc(db, "doctores", valorLower));
+            if (porDoc.exists()) {
+                const data = porDoc.data();
+                const nombre =
+                    data.nombre_completo ||
+                    data.nombre ||
+                    data.displayName ||
+                    data.nombres ||
+                    valor.split("@")[0].toUpperCase();
+
+                cacheDoctores[cacheKey] = nombre;
+                return nombre;
+            }
+        }
+
+        // 2) Probar por uid
+        const qUid = query(
+            collection(db, "doctores"),
+            where("uid", "==", valor)
+        );
+        const snapUid = await getDocs(qUid);
+
+        if (!snapUid.empty) {
+            const data = snapUid.docs[0].data();
+            const nombre =
+                data.nombre_completo ||
+                data.nombre ||
+                data.displayName ||
+                data.nombres ||
+                "DOCTOR";
+
+            cacheDoctores[cacheKey] = nombre;
+            return nombre;
+        }
+
+        // 3) Probar por email dentro del documento
+        const qEmail = query(
+            collection(db, "doctores"),
+            where("email", "==", valorLower)
+        );
+        const snapEmail = await getDocs(qEmail);
+
+        if (!snapEmail.empty) {
+            const data = snapEmail.docs[0].data();
+            const nombre =
+                data.nombre_completo ||
+                data.nombre ||
+                data.displayName ||
+                data.nombres ||
+                valor.split("@")[0].toUpperCase();
+
+            cacheDoctores[cacheKey] = nombre;
+            return nombre;
+        }
+
+        // 4) Probar por email_normalizado
+        const qEmailNorm = query(
+            collection(db, "doctores"),
+            where("email_normalizado", "==", valorLower)
+        );
+        const snapEmailNorm = await getDocs(qEmailNorm);
+
+        if (!snapEmailNorm.empty) {
+            const data = snapEmailNorm.docs[0].data();
+            const nombre =
+                data.nombre_completo ||
+                data.nombre ||
+                data.displayName ||
+                data.nombres ||
+                valor.split("@")[0].toUpperCase();
+
+            cacheDoctores[cacheKey] = nombre;
             return nombre;
         }
     } catch (e) {
         console.error("Error obteniendo doctor:", e);
     }
 
-    const fallback = cleanEmail.split("@")[0].toUpperCase();
-    cacheDoctores[cleanEmail] = fallback;
-    return fallback;
+    cacheDoctores[cacheKey] = "DOCTOR";
+    return "DOCTOR";
+}
+
+async function actualizarEstadoPaciente(id, payload) {
+    try {
+        await updateDoc(doc(db, "agendados", id), payload);
+        return true;
+    } catch (e) {
+        console.error("Error actualizando estado:", e);
+        alert("Error al actualizar el estado: " + e.message);
+        return false;
+    }
 }
 
 async function confirmarLlamadoRecepcion(id, paciente) {
     const nombrePaciente = paciente.nombre || "SIN NOMBRE";
-    const mensaje = `¿Confirmar llamado de ${nombrePaciente} a ${RECEPCION_ACTUAL.box || RECEPCION_ACTUAL.nombre}?`;
+    const modulo = RECEPCION_ACTUAL.box || RECEPCION_ACTUAL.nombre;
 
-    const ok = confirm(mensaje);
+    const ok = confirm(`¿Confirmar llamado de ${nombrePaciente} a ${modulo}?`);
     if (!ok) return false;
 
-    try {
-        await updateDoc(doc(db, "agendados", id), {
-            estado: "llamado_recepcion",
-            recepcion_id: RECEPCION_ACTUAL.id,
-            recepcion_numero: RECEPCION_ACTUAL.numero,
-            recepcion_nombre: RECEPCION_ACTUAL.box || RECEPCION_ACTUAL.nombre,
-            hora_llamado_recepcion: serverTimestamp(),
-            registro_manual_recepcion: false,
-            tipo_pago: null
-        });
-        return true;
-    } catch (e) {
-        console.error("Error al llamar en recepción:", e);
-        alert("Error al confirmar llamado: " + e.message);
-        return false;
-    }
+    return await actualizarEstadoPaciente(id, {
+        estado: "llamado_recepcion",
+        recepcion_id: RECEPCION_ACTUAL.id,
+        recepcion_numero: RECEPCION_ACTUAL.numero,
+        recepcion_nombre: modulo,
+        hora_llamado_recepcion: serverTimestamp()
+    });
 }
 
-async function activarPagoDirecto(id, paciente) {
+async function activarPagoManual(id, paciente) {
     const nombrePaciente = paciente.nombre || "SIN NOMBRE";
-    const mensaje =
-        `¿Activar pago directo para ${nombrePaciente}?\n\n` +
-        `Esto habilitará el pago manual sin pasar por el llamado de recepción.`;
+    const modulo = RECEPCION_ACTUAL.box || RECEPCION_ACTUAL.nombre;
 
-    const ok = confirm(mensaje);
+    const ok = confirm(
+        `¿Activar pago manual para ${nombrePaciente}?\n\nEl paciente pasará a estado "Pago manual".`
+    );
     if (!ok) return false;
 
-    try {
-        await updateDoc(doc(db, "agendados", id), {
-            estado: "pago_manual",
-            recepcion_id: RECEPCION_ACTUAL.id,
-            recepcion_numero: RECEPCION_ACTUAL.numero,
-            recepcion_nombre: RECEPCION_ACTUAL.box || RECEPCION_ACTUAL.nombre,
-            registro_manual_recepcion: true,
-            tipo_pago: "manual",
-            hora_pago_manual_activado: serverTimestamp()
-        });
-
-        return true;
-    } catch (e) {
-        console.error("Error al activar pago directo:", e);
-        alert("Error al activar pago directo: " + e.message);
-        return false;
-    }
+    return await actualizarEstadoPaciente(id, {
+        estado: "pago_manual",
+        recepcion_id: RECEPCION_ACTUAL.id,
+        recepcion_numero: RECEPCION_ACTUAL.numero,
+        recepcion_nombre: modulo,
+        registro_manual_recepcion: true,
+        tipo_pago: "manual",
+        hora_pago_manual_activado: serverTimestamp()
+    });
 }
 
 async function confirmarPago(id, paciente) {
     const nombrePaciente = paciente.nombre || "SIN NOMBRE";
-    const esManual = normalizarEstado(paciente.estado) === "pago_manual" || paciente.registro_manual_recepcion === true;
+    const estado = normalizarEstado(paciente.estado);
+    const esManual = estado === "pago_manual";
 
-    const mensaje = esManual
-        ? `¿Confirmar pago manual de ${nombrePaciente}?`
-        : `¿Confirmar que el paciente ${nombrePaciente} realizó el pago?`;
-
-    const ok = confirm(mensaje);
+    const ok = confirm(
+        esManual
+            ? `¿Confirmar pago manual de ${nombrePaciente}?`
+            : `¿Confirmar que ${nombrePaciente} realizó el pago?`
+    );
     if (!ok) return false;
 
-    try {
-        const payload = {
-            estado: "pagado",
-            hora_pago: serverTimestamp(),
-            recepcion_id: paciente.recepcion_id || RECEPCION_ACTUAL.id,
-            recepcion_numero: paciente.recepcion_numero || RECEPCION_ACTUAL.numero,
-            recepcion_nombre: paciente.recepcion_nombre || RECEPCION_ACTUAL.box || RECEPCION_ACTUAL.nombre
-        };
+    const payload = {
+        estado: "pagado",
+        hora_pago: serverTimestamp(),
+        recepcion_id: paciente.recepcion_id || RECEPCION_ACTUAL.id,
+        recepcion_numero: paciente.recepcion_numero || RECEPCION_ACTUAL.numero,
+        recepcion_nombre: paciente.recepcion_nombre || RECEPCION_ACTUAL.box || RECEPCION_ACTUAL.nombre
+    };
 
-        if (esManual) {
-            payload.registro_manual_recepcion = true;
-            payload.tipo_pago = "manual";
-        } else {
-            payload.registro_manual_recepcion = false;
-            payload.tipo_pago = null;
-        }
-
-        await updateDoc(doc(db, "agendados", id), payload);
-        return true;
-    } catch (e) {
-        console.error("Error al confirmar pago:", e);
-        alert("Error al procesar el pago: " + e.message);
-        return false;
+    if (esManual) {
+        payload.registro_manual_recepcion = true;
+        payload.tipo_pago = "manual";
+    } else {
+        payload.registro_manual_recepcion = false;
+        payload.tipo_pago = null;
     }
+
+    return await actualizarEstadoPaciente(id, payload);
 }
 
-function crearBotonAccion(id, paciente) {
-    const estado = normalizarEstado(paciente.estado);
-    const actions = document.createElement("div");
-    actions.className = "actions";
+function crearControlAccion(id, paciente) {
+    const wrap = document.createElement("div");
+    wrap.className = "actions";
 
+    const estado = normalizarEstado(paciente.estado);
     const btn = document.createElement("button");
     btn.className = "btn-action";
 
@@ -313,91 +358,95 @@ function crearBotonAccion(id, paciente) {
         btn.classList.add("btn-call");
         btn.textContent = "LLAMAR";
         btn.disabled = true;
-        btn.title = "Esperando registro del paciente en el tótem o activación de pago directo";
-        actions.appendChild(btn);
-        return actions;
+        wrap.appendChild(btn);
+        return wrap;
     }
 
     if (estado === "llegado") {
         btn.classList.add("btn-call");
         btn.textContent = "LLAMAR";
         btn.disabled = false;
-        btn.title = `Llamar paciente a ${RECEPCION_ACTUAL.box || RECEPCION_ACTUAL.nombre}`;
         btn.addEventListener("click", async () => {
             btn.disabled = true;
             const ok = await confirmarLlamadoRecepcion(id, paciente);
-            if (!ok) {
-                btn.disabled = false;
-            }
+            if (!ok) btn.disabled = false;
         });
-        actions.appendChild(btn);
-        return actions;
+        wrap.appendChild(btn);
+        return wrap;
     }
 
     if (estado === "llamado_recepcion" || estado === "pago_manual") {
         btn.classList.add("btn-pay");
         btn.textContent = "PAGAR";
         btn.disabled = false;
-        btn.title = "Confirmar pago del paciente";
         btn.addEventListener("click", async () => {
             btn.disabled = true;
             const ok = await confirmarPago(id, paciente);
-            if (!ok) {
-                btn.disabled = false;
-            }
+            if (!ok) btn.disabled = false;
         });
-        actions.appendChild(btn);
-        return actions;
+        wrap.appendChild(btn);
+        return wrap;
     }
 
-    const ok = document.createElement("span");
-    ok.className = "check";
-    ok.textContent = "✔";
-    actions.appendChild(ok);
-    return actions;
+    return wrap;
 }
 
-function crearPagoDirectoControl(id, paciente) {
-    const directWrap = document.createElement("div");
-    directWrap.className = "direct-wrap";
+function crearCheckboxPagoManual(id, paciente) {
+    const wrap = document.createElement("div");
+    wrap.className = "direct-wrap";
 
     const estado = normalizarEstado(paciente.estado);
-    const esManual = esPagoManualVisual(paciente);
+    const btnCheck = document.createElement("button");
+    btnCheck.type = "button";
+    btnCheck.className = "btn-direct";
+    btnCheck.title = "Pago manual";
 
-    const btn = document.createElement("button");
-    btn.className = "btn-direct";
-    btn.title = "Activar pago directo";
-    btn.textContent = "";
-
-    if (esManual || estado === "pago_manual") {
-        btn.classList.add("direct-activo");
-        btn.textContent = "✔";
-        btn.disabled = true;
-        btn.title = "Pago directo activado";
-        directWrap.appendChild(btn);
-        return directWrap;
+    if (estado === "pago_manual") {
+        btnCheck.classList.add("direct-activo");
+        btnCheck.textContent = "✓";
+        btnCheck.disabled = true;
+        wrap.appendChild(btnCheck);
+        return wrap;
     }
+
+    btnCheck.textContent = "";
+    btnCheck.disabled = true;
 
     if (estado === "pendiente") {
-        btn.disabled = false;
-        btn.addEventListener("click", async () => {
-            btn.disabled = true;
-            const activado = await activarPagoDirecto(id, paciente);
-            if (activado) {
-                btn.classList.add("direct-activo");
-                btn.textContent = "✔";
-            } else {
-                btn.disabled = false;
-                btn.textContent = "";
-            }
+        btnCheck.disabled = false;
+        btnCheck.addEventListener("click", async () => {
+            btnCheck.disabled = true;
+            const ok = await activarPagoManual(id, paciente);
+            if (!ok) btnCheck.disabled = false;
         });
-    } else {
-        btn.disabled = true;
-        btn.title = "Pago directo desactivado cuando el paciente ya llegó por tótem";
     }
 
-    directWrap.appendChild(btn);
-    return directWrap;
+    wrap.appendChild(btnCheck);
+    return wrap;
+}
+
+function crearResultadoHistorial(estado) {
+    const wrap = document.createElement("div");
+    wrap.className = "actions";
+
+    const texto = document.createElement("span");
+    texto.className = "check";
+    texto.textContent = "✔";
+
+    const estadoNormalizado = normalizarEstado(estado);
+
+    if (estadoNormalizado === "pagado") {
+        texto.title = "Paciente pagado";
+    } else if (estadoNormalizado === "llamado_doctor") {
+        texto.title = "Paciente llamado por doctor";
+    } else if (estadoNormalizado === "atendido") {
+        texto.title = "Atención finalizada";
+    } else {
+        texto.title = "Movimiento registrado";
+    }
+
+    wrap.appendChild(texto);
+    return wrap;
 }
 
 function crearFilaEspera(id, paciente, nombreDoctor) {
@@ -419,21 +468,19 @@ function crearFilaEspera(id, paciente, nombreDoctor) {
     const recepcion = document.createElement("div");
     recepcion.className = "recepcion-col";
     recepcion.textContent = obtenerTextoRecepcion(paciente);
-    if (!paciente.recepcion_nombre) {
-        recepcion.classList.add("muted");
-    }
+    if (!paciente.recepcion_nombre) recepcion.classList.add("muted");
 
     const estadoWrap = document.createElement("div");
     estadoWrap.className = "estado-wrap";
-    estadoWrap.appendChild(crearBadgeEstadoDesdePaciente(paciente));
+    estadoWrap.appendChild(crearBadgeEstado(paciente.estado));
 
     row.appendChild(name);
     row.appendChild(docDiv);
     row.appendChild(hora);
     row.appendChild(recepcion);
     row.appendChild(estadoWrap);
-    row.appendChild(crearBotonAccion(id, paciente));
-    row.appendChild(crearPagoDirectoControl(id, paciente));
+    row.appendChild(crearControlAccion(id, paciente));
+    row.appendChild(crearCheckboxPagoManual(id, paciente));
 
     return row;
 }
@@ -457,28 +504,18 @@ function crearFilaHistorial(paciente, nombreDoctor) {
     const recepcion = document.createElement("div");
     recepcion.className = "recepcion-col";
     recepcion.textContent = obtenerTextoRecepcion(paciente);
-    if (!paciente.recepcion_nombre) {
-        recepcion.classList.add("muted");
-    }
+    if (!paciente.recepcion_nombre) recepcion.classList.add("muted");
 
     const estadoWrap = document.createElement("div");
     estadoWrap.className = "estado-wrap";
-    estadoWrap.appendChild(crearBadgeEstadoDesdePaciente(paciente));
-
-    const result = document.createElement("div");
-    result.className = "actions";
-
-    const ok = document.createElement("span");
-    ok.className = "check";
-    ok.textContent = "✔";
-    result.appendChild(ok);
+    estadoWrap.appendChild(crearBadgeEstado(paciente.estado));
 
     row.appendChild(name);
     row.appendChild(docDiv);
     row.appendChild(hora);
     row.appendChild(recepcion);
     row.appendChild(estadoWrap);
-    row.appendChild(result);
+    row.appendChild(crearResultadoHistorial(paciente.estado));
 
     return row;
 }
@@ -491,6 +528,8 @@ function iniciarListenerAgendados() {
         async (snapshot) => {
             const esperaDiv = document.getElementById("lista-espera");
             const atendidosDiv = document.getElementById("lista-atendidos");
+
+            if (!esperaDiv || !atendidosDiv) return;
 
             esperaDiv.innerHTML = "";
             atendidosDiv.innerHTML = "";
@@ -506,18 +545,12 @@ function iniciarListenerAgendados() {
                 const estado = normalizarEstado(paciente.estado);
                 const fechaTurno = String(paciente.fecha_turno || "").trim().replace(/\s+/g, "");
 
-                if (fechaTurno !== fechaHoy) {
-                    continue;
-                }
-
-                if (!ESTADOS_ESPERA.includes(estado) && !ESTADOS_HISTORIAL.includes(estado)) {
-                    continue;
-                }
+                if (fechaTurno !== fechaHoy) continue;
+                if (!ESTADOS_AGENDA.includes(estado) && !ESTADOS_HISTORIAL.includes(estado)) continue;
 
                 const nombreDoctor = await obtenerNombreDoctor(paciente.doctor_id);
-                const esHistorial = ESTADOS_HISTORIAL.includes(estado);
 
-                if (esHistorial) {
+                if (ESTADOS_HISTORIAL.includes(estado)) {
                     atendidosDiv.appendChild(crearFilaHistorial(paciente, nombreDoctor));
                     contAtendidos++;
                 } else {
@@ -527,25 +560,36 @@ function iniciarListenerAgendados() {
             }
 
             if (contEspera === 0) {
-                esperaDiv.innerHTML = '<div class="empty-msg">No hay pacientes pendientes hoy.</div>';
+                esperaDiv.innerHTML = '<div class="empty-msg">No hay pacientes en recepción hoy.</div>';
             }
 
             if (contAtendidos === 0) {
-                atendidosDiv.innerHTML = '<div class="empty-msg">No hay pagos o atenciones registradas hoy.</div>';
+                atendidosDiv.innerHTML = '<div class="empty-msg">No hay movimientos registrados hoy.</div>';
             }
         },
         (error) => {
             console.error("Error en onSnapshot:", error);
-            document.getElementById("lista-espera").innerHTML =
-                `<div class="empty-msg">Error cargando agenda: ${error.message}</div>`;
-            document.getElementById("lista-atendidos").innerHTML =
-                `<div class="empty-msg">Error cargando historial: ${error.message}</div>`;
+
+            const esperaDiv = document.getElementById("lista-espera");
+            const atendidosDiv = document.getElementById("lista-atendidos");
+
+            if (esperaDiv) {
+                esperaDiv.innerHTML = `<div class="empty-msg">Error cargando agenda: ${error.message}</div>`;
+            }
+
+            if (atendidosDiv) {
+                atendidosDiv.innerHTML = `<div class="empty-msg">Error cargando historial: ${error.message}</div>`;
+            }
         }
     );
 }
 
 mostrarFechaCabecera();
-document.getElementById("btn-cerrar-sesion").addEventListener("click", cerrarSesion);
+
+const btnCerrarSesion = document.getElementById("btn-cerrar-sesion");
+if (btnCerrarSesion) {
+    btnCerrarSesion.addEventListener("click", cerrarSesion);
+}
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) {

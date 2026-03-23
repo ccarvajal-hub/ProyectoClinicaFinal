@@ -13,10 +13,11 @@
     --radius: 24px;
 
     --badge-pendiente: #718096;
-    --badge-en-recepcion: #ffb347;
+    --badge-llegado: #ffb347;
     --badge-llamado-recepcion: #4299e1;
     --badge-pago-manual: #d69e2e;
     --badge-pagado: #48bb78;
+    --badge-llamado-doctor: #4299e1;
     --badge-atendido: #38a169;
 }
 
@@ -24,11 +25,16 @@
     box-sizing: border-box;
 }
 
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: "Inter", sans-serif;
     background-color: var(--bg-page);
     color: var(--text-main);
-    margin: 0;
     padding: 40px 20px;
     display: flex;
     flex-direction: column;
@@ -142,10 +148,10 @@ h2 {
 
 .row-espera {
     display: grid;
-    grid-template-columns: 1.9fr 2.3fr 0.9fr 1.2fr 1.2fr 1fr 0.8fr;
+    grid-template-columns: 1.95fr 2.35fr 0.9fr 1.15fr 1.05fr 0.95fr 0.42fr;
     align-items: center;
-    gap: 12px;
-    padding: 15px 20px;
+    gap: 10px;
+    padding: 15px 16px;
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border-color);
     border-radius: 15px;
@@ -199,6 +205,8 @@ h2 {
     font-weight: 700;
     color: var(--text-main);
     font-size: 0.74rem;
+    line-height: 1.2;
+    word-break: break-word;
 }
 
 .recepcion-col.muted {
@@ -224,54 +232,60 @@ h2 {
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    color: #fff;
     text-align: center;
     line-height: 1;
+    background: transparent;
 }
 
 .badge-pendiente {
-    color: #a0aec0;
+    color: var(--badge-pendiente);
 }
 
 .badge-llegado,
 .badge-en_recepcion {
-    color: var(--color-recepcion);
+    color: var(--badge-llegado);
 }
 
 .badge-llamado_recepcion {
-    color: var(--color-llamado);
+    color: var(--badge-llamado-recepcion);
 }
 
 .badge-pago_manual {
-    color: var(--color-manual);
+    color: var(--badge-pago-manual);
 }
 
 .badge-pagado {
-    color: var(--color-pagado);
+    color: var(--badge-pagado);
+}
+
+.badge-llamado_doctor {
+    color: var(--badge-llamado-doctor);
 }
 
 .badge-atendido {
-    color: var(--color-atendido);
+    color: var(--badge-atendido);
 }
 
-.actions,
 .direct-wrap {
     display: flex;
     justify-content: center;
     align-items: center;
+    min-height: 40px;
+    width: 100%;
 }
 
 .btn-action {
-    color: white;
+    color: #ffffff;
     border: none;
-    padding: 10px 18px;
+    padding: 9px 12px;
     border-radius: 10px;
     font-weight: 800;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     cursor: pointer;
     text-transform: uppercase;
     transition: 0.2s ease;
-    min-width: 110px;
+    min-width: 92px;
+    letter-spacing: 0.3px;
 }
 
 .btn-call {
@@ -280,6 +294,7 @@ h2 {
 
 .btn-pay {
     background-color: var(--color-pagado);
+    min-width: 110px;
 }
 
 .btn-action:hover:not(:disabled) {
@@ -288,10 +303,11 @@ h2 {
 }
 
 .btn-action:disabled {
-    background-color: #333;
-    color: #666;
+    background-color: #333333;
+    color: #666666;
     cursor: not-allowed;
     opacity: 0.6;
+    transform: none;
 }
 
 .btn-direct {
@@ -320,17 +336,20 @@ h2 {
 .btn-direct:disabled {
     cursor: not-allowed;
     opacity: 0.45;
+    transform: none;
 }
 
 .btn-direct.direct-activo {
     color: #48bb78;
     border-color: rgba(255, 255, 255, 0.45);
+    opacity: 1;
 }
 
 .check {
     color: var(--color-pagado);
     font-weight: 800;
     font-size: 1.2rem;
+    line-height: 1;
 }
 
 .empty-msg {
@@ -349,14 +368,35 @@ h2 {
     width: 100%;
 }
 
+/* Ajustes finos visuales */
+.row-espera .name,
+.row-historial .name {
+    line-height: 1.2;
+}
+
+.row-espera .doc,
+.row-historial .doc {
+    line-height: 1.2;
+}
+
+.row-espera .actions:empty::after,
+.row-espera .direct-wrap:empty::after {
+    content: "";
+    display: block;
+    width: 24px;
+    height: 24px;
+}
+
+/* Responsive */
 @media (max-width: 1100px) {
     .row-espera,
-    .row-espera.header,
-    .row-historial,
-    .row-historial.header {
-        grid-template-columns: 1fr;
-        text-align: left;
-    }
+   .row-espera.header > div:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.05;
+}
 
     .hora,
     .estado-wrap,
@@ -376,5 +416,42 @@ h2 {
     .topbar-right {
         width: 100%;
         justify-content: flex-start;
+    }
+
+    .container {
+        padding: 26px 20px;
+    }
+
+    .page-header h1 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 640px) {
+    body {
+        padding: 22px 12px;
+    }
+
+    .container {
+        padding: 20px 14px;
+        border-radius: 18px;
+    }
+
+    .page-header {
+        margin-bottom: 18px;
+    }
+
+    .page-header h1 {
+        font-size: 1.45rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .btn-action {
+        min-width: 100px;
+        padding: 9px 14px;
+        font-size: 0.72rem;
     }
 }
