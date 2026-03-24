@@ -391,6 +391,9 @@ async function borrarTodosLosPacientes() {
 const btnLogout = document.getElementById("btnLogout");
 if (btnLogout) {
     btnLogout.onclick = async () => {
+        const confirmar = confirm("¿Seguro que quieres cerrar sesión?");
+        if (!confirmar) return;
+
         try {
             await signOut(auth);
             location.href = "login-doctor.html";
@@ -400,7 +403,6 @@ if (btnLogout) {
         }
     };
 }
-
 const btnAgregarPacientes = document.getElementById("btnAgregarPacientes");
 if (btnAgregarPacientes) {
     btnAgregarPacientes.onclick = async () => {
