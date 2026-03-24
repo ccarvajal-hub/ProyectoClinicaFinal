@@ -101,25 +101,39 @@ label {
 input {
     width: 100%;
     padding: 20px 22px;
-    background: #2a2a2a;
-    border: 2px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.06);
+    border: 2px solid rgba(255, 255, 255, 0.10);
     border-radius: 18px;
-    color: white;
+    color: #8f8d8d;
     font-size: 1.2rem;
     box-sizing: border-box;
     outline: none;
-    font-weight: 700;
-    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    font-weight: 400;
+    transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    -webkit-text-fill-color: #ffffff;
 }
 
 input::placeholder {
-    color: #7f7f7f;
-    font-weight: 600;
+    color: #2d323b;
+    font-weight: 400;
 }
 
 input:focus {
+    color: #ffffff;
     border-color: var(--blue-accent);
-    box-shadow: 0 0 0 4px rgba(70, 130, 180, 0.16);
+    box-shadow: 0 0 0 4px rgba(70, 130, 180, 0.14);
+    -webkit-text-fill-color: #ffffff;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-text-fill-color: #ffffff !important;
+    transition: background-color 9999s ease-in-out 0s;
+    box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.06) inset !important;
+    -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.06) inset !important;
+    border: 2px solid var(--blue-accent) !important;
 }
 
 .password-wrap {
