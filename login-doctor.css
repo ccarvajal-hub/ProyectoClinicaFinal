@@ -78,6 +78,7 @@ h1 {
     font-size: 2.8rem;
     font-weight: 800;
     margin: 0;
+    letter-spacing: -2px;
     line-height: 1.05;
     text-align: center;
 }
@@ -104,17 +105,16 @@ input {
     background: rgba(255, 255, 255, 0.06);
     border: 2px solid rgba(255, 255, 255, 0.10);
     border-radius: 18px;
-    color: #f5f7fb;
+    color: #8f8d8d;
     font-size: 1.2rem;
-    box-sizing: border-box;
     outline: none;
     font-weight: 400;
     transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-    -webkit-text-fill-color: #f5f7fb;
+    -webkit-text-fill-color: #ffffff;
 }
 
 input::placeholder {
-    color: #7f8896;
+    color: #2d323b;
     font-weight: 400;
 }
 
@@ -151,21 +151,19 @@ input:-webkit-autofill:active {
     transform: translateY(-50%);
     height: 44px;
     padding: 0 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: none;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.06);
-    color: #dbeafe;
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
     font-size: 0.82rem;
     font-weight: 800;
     cursor: pointer;
     text-transform: uppercase;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.2s ease;
 }
 
 .toggle-password:hover {
-    background: rgba(70, 130, 180, 0.18);
-    border-color: rgba(70, 130, 180, 0.45);
-    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .btn-login {
@@ -194,17 +192,13 @@ input:-webkit-autofill:active {
     transform: none;
 }
 
-.btn-dev-login {
-    margin-top: 12px;
-    background: transparent;
-    border: 2px solid rgba(70, 130, 180, 0.7);
-    color: #9ec6e8;
-    display: none;
-}
-
-.btn-dev-login:hover {
-    background: rgba(70, 130, 180, 0.12);
-    filter: none;
+.small-note {
+    margin-top: 18px;
+    margin-bottom: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-align: center;
 }
 
 .error-msg {
@@ -225,56 +219,104 @@ input:-webkit-autofill:active {
     font-weight: 700;
 }
 
-.small-note {
-    margin-top: 25px;
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    line-height: 1.5;
-    text-align: center;
-}
-
-.dev-tools {
-    display: none;
-    margin-top: 24px;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.dev-tools.visible {
-    display: flex;
-}
-
-.btn-dev {
-    padding: 12px 20px;
-    border-radius: 12px;
+/* Botón dev flotante abajo derecha */
+.btn-dev-floating {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 9998;
+    padding: 12px 18px;
+    border-radius: 14px;
     font-size: 0.76rem;
     font-weight: 800;
     text-transform: uppercase;
     cursor: pointer;
-    background: transparent;
-    transition: 0.2s;
-    border: 1px solid transparent;
-}
-
-.btn-seed {
-    border-color: var(--blue-accent);
+    background: rgba(28, 28, 28, 0.92);
     color: var(--blue-accent);
+    border: 1px solid rgba(70, 130, 180, 0.55);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    transition: 0.2s ease;
+    backdrop-filter: blur(6px);
 }
 
-.btn-seed:hover {
+.btn-dev-floating:hover {
     background: var(--blue-accent);
-    color: white;
+    color: #ffffff;
+    transform: translateY(-1px);
 }
 
-.btn-check {
-    border-color: var(--orange-accent);
-    color: var(--orange-accent);
+/* Modal dev */
+.dev-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
 }
 
-.btn-check:hover {
-    background: var(--orange-accent);
-    color: white;
+.dev-modal.hidden {
+    display: none;
+}
+
+.dev-modal-content {
+    width: 100%;
+    max-width: 430px;
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+}
+
+.dev-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.dev-modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.dev-close {
+    border: none;
+    background: transparent;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #475569;
+}
+
+.dev-account-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dev-account-btn {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #dbe3ef;
+    border-radius: 14px;
+    background: #f8fafc;
+    text-align: left;
+    font-family: "Inter", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.dev-account-btn:hover {
+    background: #eef4ff;
+    border-color: #bfd3ff;
 }
 
 @media (max-width: 560px) {
@@ -296,13 +338,14 @@ input:-webkit-autofill:active {
         padding: 9px 14px;
     }
 
-    .module-pill-bottom {
-        display: inline-flex;
-        margin-top: 32px;
-    }
+   .module-pill-bottom {
+    display: inline-flex;
+    margin-top: 32px;
+}
 
     h1 {
         font-size: 2.15rem;
+        letter-spacing: -1.4px;
     }
 
     input {
@@ -331,7 +374,10 @@ input:-webkit-autofill:active {
         font-size: 0.88rem;
     }
 
-    .btn-dev {
-        width: 100%;
+    .btn-dev-floating {
+        right: 14px;
+        bottom: 14px;
+        padding: 11px 14px;
+        font-size: 0.72rem;
     }
 }

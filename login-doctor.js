@@ -2,16 +2,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
     getAuth,
     signInWithEmailAndPassword,
-    onAuthStateChanged
+    onAuthStateChanged,
+    signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
     getFirestore,
-    collection,
-    addDoc,
-    getDocs,
-    updateDoc,
-    doc
+    doc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const DEV_MODE = true;
 
 const firebaseConfig = {
     apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -26,256 +26,203 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* =========================================================
-   MODO DEV
-   true  = muestra botones dev y login rápido
-   false = oculta todo lo dev
-========================================================= */
-const MODO_DEV = true;
-
-/* =========================================================
-   CREDENCIALES DEV
-   CAMBIA ESTO POR TU USUARIO REAL DE PRUEBA
-========================================================= */
-const DEV_EMAIL = "doctor@clinica.cl";
-const DEV_PASSWORD = "123456";
-
-/* =========================================================
-   ELEMENTOS
-========================================================= */
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
-const loginBtn = document.getElementById("loginBtn");
-const btnLoginDev = document.getElementById("btnLoginDev");
-const togglePassword = document.getElementById("togglePassword");
-const errorText = document.getElementById("error-text");
-const okText = document.getElementById("ok-text");
-const btnCrearPacientes = document.getElementById("btnCrearPacientes");
-const btnResetear = document.getElementById("btnResetear");
-const devTools = document.getElementById("devTools");
+const btnLogin = document.getElementById("btnLogin");
+const errorMessage = document.getElementById("error-message");
+const okMessage = document.getElementById("ok-message");
 
-/* =========================================================
-   UI
-========================================================= */
-function mostrarError(mensaje = "Credenciales incorrectas.") {
-    errorText.textContent = mensaje;
-    errorText.style.display = "block";
-    okText.style.display = "none";
+const togglePassword = document.getElementById("togglePassword");
+
+const btnModoDev = document.getElementById("btnModoDev");
+const devModal = document.getElementById("devModal");
+const btnCerrarDev = document.getElementById("btnCerrarDev");
+const devAccountButtons = document.querySelectorAll(".dev-account-btn");
+
+if (!DEV_MODE) {
+    if (btnModoDev) btnModoDev.style.display = "none";
+    if (devModal) devModal.classList.add("hidden");
 }
 
-function mostrarOk(mensaje = "") {
-    okText.textContent = mensaje;
-    okText.style.display = mensaje ? "block" : "none";
-    errorText.style.display = "none";
+function mostrarError(msg) {
+    if (okMessage) {
+        okMessage.textContent = "";
+        okMessage.style.display = "none";
+    }
+
+    if (errorMessage) {
+        errorMessage.textContent = msg;
+        errorMessage.style.display = "block";
+    }
+}
+
+function mostrarOk(msg) {
+    if (errorMessage) {
+        errorMessage.textContent = "";
+        errorMessage.style.display = "none";
+    }
+
+    if (okMessage) {
+        okMessage.textContent = msg;
+        okMessage.style.display = "block";
+    }
 }
 
 function limpiarMensajes() {
-    errorText.style.display = "none";
-    okText.style.display = "none";
-}
+    if (errorMessage) {
+        errorMessage.textContent = "";
+        errorMessage.style.display = "none";
+    }
 
-function setLoading(loading, texto = "Iniciar Sesión") {
-    loginBtn.disabled = loading;
-    loginBtn.textContent = loading ? "Ingresando..." : texto;
-
-    if (btnLoginDev) {
-        btnLoginDev.disabled = loading;
-        btnLoginDev.textContent = loading ? "Ingresando..." : "Entrar modo dev";
+    if (okMessage) {
+        okMessage.textContent = "";
+        okMessage.style.display = "none";
     }
 }
 
-function aplicarModoDev() {
-    if (MODO_DEV) {
-        if (devTools) devTools.classList.add("visible");
-        if (btnLoginDev) btnLoginDev.style.display = "block";
-        return;
-    }
+async function validarDoctorYEntrar(user) {
+    try {
+        const ref = doc(db, "doctores", user.uid);
+        const snap = await getDoc(ref);
 
-    if (devTools) devTools.classList.remove("visible");
-    if (btnLoginDev) btnLoginDev.style.display = "none";
-}
+        if (!snap.exists()) {
+            await signOut(auth);
+            mostrarError("Esta cuenta no está habilitada como doctor.");
+            return;
+        }
 
-/* =========================================================
-   SESIÓN YA ACTIVA
-========================================================= */
-onAuthStateChanged(auth, (user) => {
-    if (user) {
+        mostrarOk("Acceso correcto. Redirigiendo...");
         window.location.href = "doctor.html";
+    } catch (error) {
+        console.error("Error al validar doctor:", error);
+        await signOut(auth);
+        mostrarError("No se pudo validar la cuenta del doctor.");
     }
-});
+}
 
-/* =========================================================
-   LOGIN NORMAL
-========================================================= */
-async function iniciarSesionDoctor() {
-    if (loginBtn.disabled) return;
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-
+async function hacerLogin() {
     limpiarMensajes();
+
+    const email = (emailInput?.value || "").trim();
+    const password = (passwordInput?.value || "").trim();
 
     if (!email || !password) {
         mostrarError("Ingresa correo y contraseña.");
         return;
     }
 
+    if (btnLogin) {
+        btnLogin.disabled = true;
+        btnLogin.textContent = "Iniciando sesión...";
+    }
+
     try {
-        setLoading(true);
-        await signInWithEmailAndPassword(auth, email, password);
-        mostrarOk("Ingreso correcto.");
-        window.location.href = "doctor.html";
-    } catch (e) {
-        console.error("Error de login:", e);
-        mostrarError("Correo o contraseña incorrectos.");
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await validarDoctorYEntrar(cred.user);
+    } catch (error) {
+        console.error("Error de login:", error);
+
+        if (error.code === "auth/invalid-credential") {
+            mostrarError("Correo o contraseña incorrectos.");
+        } else if (error.code === "auth/user-not-found") {
+            mostrarError("La cuenta no existe.");
+        } else if (error.code === "auth/wrong-password") {
+            mostrarError("Contraseña incorrecta.");
+        } else if (error.code === "auth/invalid-email") {
+            mostrarError("El correo no es válido.");
+        } else {
+            mostrarError("No se pudo iniciar sesión.");
+        }
     } finally {
-        setLoading(false);
+        if (btnLogin) {
+            btnLogin.disabled = false;
+            btnLogin.textContent = "Iniciar sesión";
+        }
     }
 }
 
-/* =========================================================
-   LOGIN RÁPIDO DEV
-========================================================= */
-async function iniciarSesionDoctorDev() {
-    if (!MODO_DEV) return;
-    if (loginBtn.disabled) return;
-
-    limpiarMensajes();
-
-    try {
-        emailInput.value = DEV_EMAIL;
-        passwordInput.value = DEV_PASSWORD;
-
-        setLoading(true);
-        await signInWithEmailAndPassword(auth, DEV_EMAIL, DEV_PASSWORD);
-        mostrarOk("Ingreso dev correcto.");
-        window.location.href = "doctor.html";
-    } catch (e) {
-        console.error("Error en login dev:", e);
-        mostrarError("No se pudo ingresar con el modo dev.");
-    } finally {
-        setLoading(false);
-    }
+if (btnLogin) {
+    btnLogin.addEventListener("click", hacerLogin);
 }
 
-/* =========================================================
-   MOSTRAR / OCULTAR CONTRASEÑA
-========================================================= */
-function togglePasswordVisibility() {
-    const isPassword = passwordInput.type === "password";
-    passwordInput.type = isPassword ? "text" : "password";
-    togglePassword.textContent = isPassword ? "Ocultar" : "Mostrar";
-}
-
-/* =========================================================
-   EVENTOS LOGIN
-========================================================= */
-loginBtn.addEventListener("click", iniciarSesionDoctor);
-
-emailInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") iniciarSesionDoctor();
-});
-
-passwordInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") iniciarSesionDoctor();
-});
-
-if (btnLoginDev) {
-    btnLoginDev.addEventListener("click", iniciarSesionDoctorDev);
-}
-
-if (togglePassword) {
-    togglePassword.addEventListener("click", togglePasswordVisibility);
-}
-
-/* =========================================================
-   BOTÓN DEV: CREAR PACIENTES TEST
-========================================================= */
-if (btnCrearPacientes) {
-    btnCrearPacientes.addEventListener("click", async () => {
-        if (!MODO_DEV) return;
-
-        const pacientes = [
-            {
-                nombre: "JUAN PEREZ",
-                rut: "12345678K",
-                hora_consulta: "09:00",
-                estado: "pendiente",
-                doctor_id: "doctor@clinica.cl",
-                consulta: "101",
-                piso: "Piso 1"
-            },
-            {
-                nombre: "MARIA GONZALEZ",
-                rut: "112223334",
-                hora_consulta: "09:30",
-                estado: "pendiente",
-                doctor_id: "doctor@clinica.cl",
-                consulta: "101",
-                piso: "Piso 1"
-            },
-            {
-                nombre: "RICARDO SOTO",
-                rut: "156667778",
-                hora_consulta: "10:00",
-                estado: "pendiente",
-                doctor_id: "doctor@clinica.cl",
-                consulta: "101",
-                piso: "Piso 1"
-            }
-        ];
-
-        try {
-            for (const p of pacientes) {
-                await addDoc(collection(db, "agendados"), p);
-            }
-
-            alert("Se han creado 3 pacientes de prueba para doctor.");
-        } catch (e) {
-            console.error("Error al crear pacientes de prueba:", e);
-            alert("Error al crear pacientes de prueba.");
+if (passwordInput) {
+    passwordInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            hacerLogin();
         }
     });
 }
 
-/* =========================================================
-   BOTÓN DEV: REINICIAR JORNADA
-========================================================= */
-if (btnResetear) {
-    btnResetear.addEventListener("click", async () => {
-        if (!MODO_DEV) return;
-
-        const confirmado = confirm("¿Reiniciar todos los pacientes a 'Pendiente' y limpiar datos de recepción/pago?");
-        if (!confirmado) return;
-
-        try {
-            const snap = await getDocs(collection(db, "agendados"));
-
-            for (const d of snap.docs) {
-                await updateDoc(doc(db, "agendados", d.id), {
-                    estado: "pendiente",
-                    hora_llegada: "",
-                    hora_pago: "",
-                    hora_llamado_recepcion: "",
-                    hora_pago_manual_activado: "",
-                    registro_manual_recepcion: false,
-                    tipo_pago: null,
-                    recepcion_id: null,
-                    recepcion_numero: null,
-                    recepcion_nombre: null
-                });
-            }
-
-            alert("Jornada reiniciada correctamente.");
-        } catch (error) {
-            console.error("Error al reiniciar jornada:", error);
-            alert("Error al reiniciar jornada.");
+if (emailInput) {
+    emailInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            hacerLogin();
         }
     });
 }
 
-/* =========================================================
-   INICIO
-========================================================= */
-aplicarModoDev();
+if (togglePassword && passwordInput) {
+    togglePassword.addEventListener("click", () => {
+        const mostrando = passwordInput.type === "text";
+        passwordInput.type = mostrando ? "password" : "text";
+        togglePassword.textContent = mostrando ? "Mostrar" : "Ocultar";
+    });
+}
+
+if (DEV_MODE && btnModoDev && devModal && btnCerrarDev) {
+    btnModoDev.addEventListener("click", () => {
+        limpiarMensajes();
+        devModal.classList.remove("hidden");
+    });
+
+    btnCerrarDev.addEventListener("click", () => {
+        devModal.classList.add("hidden");
+    });
+
+    devModal.addEventListener("click", (e) => {
+        if (e.target === devModal) {
+            devModal.classList.add("hidden");
+        }
+    });
+}
+
+if (DEV_MODE) {
+    devAccountButtons.forEach((button) => {
+        button.addEventListener("click", async () => {
+            const email = button.dataset.email || "";
+            const password = button.dataset.password || "";
+
+            if (emailInput) emailInput.value = email;
+            if (passwordInput) {
+                passwordInput.type = "password";
+                passwordInput.value = password;
+            }
+            if (togglePassword) {
+                togglePassword.textContent = "Mostrar";
+            }
+
+            if (devModal) {
+                devModal.classList.add("hidden");
+            }
+
+            await hacerLogin();
+        });
+    });
+}
+
+onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+
+    try {
+        const ref = doc(db, "doctores", user.uid);
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+            window.location.href = "doctor.html";
+        }
+    } catch (error) {
+        console.error("Error al revisar sesión actual:", error);
+    }
+});
+
 limpiarMensajes();

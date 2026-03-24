@@ -14,15 +14,15 @@
     </div>
 
     <div class="container container-pacientes">
-    <div class="topbar">
-        <div class="topbar-left">
-            <h2 class="title-espera">● PACIENTES POR ATENDER</h2>
-            <div class="agenda-dia" id="agenda-dia">Agenda del día: --</div>
+        <div class="topbar">
+            <div class="topbar-left">
+                <h2 class="title-espera">● PACIENTES POR ATENDER</h2>
+                <div class="agenda-dia" id="agenda-dia">Agenda del día: --</div>
+            </div>
+            <div class="topbar-right">
+                <button class="btn-logout" id="btnLogout">Cerrar sesión</button>
+            </div>
         </div>
-        <div class="topbar-right">
-            <button class="btn-logout" id="btnLogout">Cerrar sesión</button>
-        </div>
-    </div>
 
         <div class="row-espera header">
             <div>Paciente</div>
@@ -49,6 +49,16 @@
         </div>
 
         <div id="lista-historial"></div>
+    </div>
+
+    <!-- BOTONES FIJOS ABAJO A LA DERECHA -->
+        <div class="floating-buttons">
+        <button id="btnAgregarPacientes" class="floating-btn btn-agregar">
+            Agregar pacientes
+        </button>
+        <button id="btnBorrarPacientes" class="floating-btn btn-borrar">
+            Borrar todos los pacientes
+        </button>
     </div>
 
     <script type="module" src="doctor.js"></script>

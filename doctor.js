@@ -8,7 +8,10 @@ import {
     updateDoc,
     query,
     where,
-    getDoc
+    getDoc,
+    addDoc,
+    getDocs,
+    deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -164,6 +167,102 @@ function construirBotonAccion(p) {
     return `<button class="btn-action" disabled>Llamar</button>`;
 }
 
+function hashString(texto) {
+    let hash = 0;
+    for (let i = 0; i < texto.length; i++) {
+        hash = ((hash << 5) - hash) + texto.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+
+function calcularDvRut(cuerpo) {
+    let suma = 0;
+    let multiplicador = 2;
+    const texto = String(cuerpo);
+
+    for (let i = texto.length - 1; i >= 0; i--) {
+        suma += Number(texto[i]) * multiplicador;
+        multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+    }
+
+    const resto = 11 - (suma % 11);
+
+    if (resto === 11) return "0";
+    if (resto === 10) return "K";
+    return String(resto);
+}
+
+function generarRutDemo(seedBase, index) {
+    const numeroBase = 10000000 + ((seedBase * 137 + index * 7919) % 89999999);
+    const dv = calcularDvRut(numeroBase);
+    return `${numeroBase}${dv}`;
+}
+
+function obtenerPacientesDemoPorDoctor(uid, doctorNombre, box, fechaHoy) {
+    const primerNombre = [
+        "María", "Valentina", "Camila", "Josefa", "Francisca", "Daniela",
+        "Catalina", "Fernanda", "Javiera", "Antonia", "Sofía", "Constanza",
+        "Carlos", "Javier", "Felipe", "Matías", "Benjamín", "Vicente",
+        "Diego", "Ignacio", "Sebastián", "Tomás", "Andrés", "Nicolás"
+    ];
+
+    const segundoNombre = [
+        "José", "Paz", "Ignacio", "Andrés", "Alejandro", "Belén",
+        "Isidora", "Jesús", "Antonio", "Esperanza", "Elena", "Gabriel",
+        "Vicente", "Rocío", "Emilia", "Renato", "Esteban", "Dominga"
+    ];
+
+    const apellido1 = [
+        "Rojas", "Muñoz", "Pérez", "Soto", "González", "Díaz",
+        "Contreras", "Silva", "Torres", "Araya", "Vera", "Morales",
+        "Castillo", "Fuentes", "Henríquez", "Mardones", "Navarro", "Sepúlveda"
+    ];
+
+    const apellido2 = [
+        "Gómez", "Moreno", "Cáceres", "Vargas", "Pinto", "Salazar",
+        "Tapia", "Bustos", "Lagos", "Carrasco", "Leiva", "Figueroa",
+        "Paredes", "Molina", "Reyes", "Valdés", "Peña", "Alarcón"
+    ];
+
+    const horas = ["09:00", "09:30", "10:00", "10:30"];
+    const seed = hashString(uid || doctorNombre || "doctor-demo");
+
+    const pacientes = [];
+
+    for (let i = 0; i < 4; i++) {
+        const idx1 = (seed + i * 3) % primerNombre.length;
+        const idx2 = (seed + i * 5 + 7) % segundoNombre.length;
+        const idx3 = (seed + i * 7 + 11) % apellido1.length;
+        const idx4 = (seed + i * 9 + 13) % apellido2.length;
+
+        let nombre = `${primerNombre[idx1]} ${segundoNombre[idx2]} ${apellido1[idx3]} ${apellido2[idx4]}`;
+
+        if (pacientes.some(p => p.nombre === nombre)) {
+            nombre = `${primerNombre[(idx1 + i + 1) % primerNombre.length]} ${segundoNombre[(idx2 + i + 2) % segundoNombre.length]} ${apellido1[(idx3 + i + 3) % apellido1.length]} ${apellido2[(idx4 + i + 4) % apellido2.length]}`;
+        }
+
+        pacientes.push({
+            nombre,
+            rut: generarRutDemo(seed, i),
+            hora_consulta: horas[i],
+            hora_llegada: "",
+            estado: ESTADOS.PENDIENTE,
+            fecha_turno: fechaHoy,
+            doctor_id: uid,
+            doctor_nombre: doctorNombre,
+            box: box,
+            tv_origen: "",
+            tv_destino: "",
+            tv_hora_llamado: "",
+            tv_doctor: "",
+            tv_paciente: ""
+        });
+    }
+
+    return pacientes;
+}
+
 window.cambiarEstado = async (id, nuevo, nombre = "") => {
     try {
         const updateData = { estado: nuevo };
@@ -205,6 +304,90 @@ window.confirmarFinalizar = async (id, nombre) => {
     await window.cambiarEstado(id, ESTADOS.ATENDIDO, nombre);
 };
 
+async function agregarPacientesDemo() {
+    if (!uidDoc) {
+        alert("Aún no se ha cargado el doctor.");
+        return;
+    }
+
+    const ok = confirm("¿Agregar 4 pacientes de prueba?");
+    if (!ok) return;
+
+    const fechaHoy = obtenerFechaHoyChile();
+    const pacientesDemo = obtenerPacientesDemoPorDoctor(uidDoc, nombreDoc, boxDoc, fechaHoy);
+
+    try {
+        const q = query(
+            collection(db, "agendados"),
+            where("doctor_id", "==", uidDoc),
+            where("fecha_turno", "==", fechaHoy)
+        );
+
+        const snapshot = await getDocs(q);
+
+        const rutsExistentes = new Set(
+            snapshot.docs.map(docSnap => String(docSnap.data().rut || "").trim())
+        );
+
+        let agregados = 0;
+
+        for (const paciente of pacientesDemo) {
+            if (rutsExistentes.has(paciente.rut)) {
+                continue;
+            }
+
+            await addDoc(collection(db, "agendados"), paciente);
+            agregados++;
+        }
+
+        if (agregados === 0) {
+            alert("Los 4 pacientes de prueba de este doctor ya existen para hoy.");
+            return;
+        }
+
+        alert(`Se agregaron ${agregados} paciente(s) de prueba.`);
+    } catch (error) {
+        console.error("Error al agregar pacientes demo:", error);
+        alert("No se pudieron agregar los pacientes.");
+    }
+}
+
+async function borrarTodosLosPacientes() {
+    if (!uidDoc) {
+        alert("Aún no se ha cargado el doctor.");
+        return;
+    }
+
+    const ok = confirm("¿Seguro que quieres borrar todos los pacientes de hoy de este doctor?");
+    if (!ok) return;
+
+    try {
+        const fechaHoy = obtenerFechaHoyChile();
+
+        const q = query(
+            collection(db, "agendados"),
+            where("doctor_id", "==", uidDoc),
+            where("fecha_turno", "==", fechaHoy)
+        );
+
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            alert("No hay pacientes para borrar.");
+            return;
+        }
+
+        for (const docSnap of snapshot.docs) {
+            await deleteDoc(doc(db, "agendados", docSnap.id));
+        }
+
+        alert("Todos los pacientes fueron borrados.");
+    } catch (error) {
+        console.error("Error al borrar pacientes:", error);
+        alert("No se pudieron borrar los pacientes.");
+    }
+}
+
 const btnLogout = document.getElementById("btnLogout");
 if (btnLogout) {
     btnLogout.onclick = async () => {
@@ -215,6 +398,20 @@ if (btnLogout) {
             console.error("Error al cerrar sesión:", error);
             alert("No se pudo cerrar la sesión.");
         }
+    };
+}
+
+const btnAgregarPacientes = document.getElementById("btnAgregarPacientes");
+if (btnAgregarPacientes) {
+    btnAgregarPacientes.onclick = async () => {
+        await agregarPacientesDemo();
+    };
+}
+
+const btnBorrarPacientes = document.getElementById("btnBorrarPacientes");
+if (btnBorrarPacientes) {
+    btnBorrarPacientes.onclick = async () => {
+        await borrarTodosLosPacientes();
     };
 }
 
