@@ -208,14 +208,19 @@ window.confirmarFinalizar = async (id, nombre) => {
 const btnLogout = document.getElementById("btnLogout");
 if (btnLogout) {
     btnLogout.onclick = async () => {
-        await signOut(auth);
-        location.href = "login.html";
+        try {
+            await signOut(auth);
+            location.href = "login-doctor.html";
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+            alert("No se pudo cerrar la sesión.");
+        }
     };
 }
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
-        location.href = "login.html";
+        location.href = "login-doctor.html";
         return;
     }
 
@@ -230,7 +235,7 @@ onAuthStateChanged(auth, async (user) => {
         if (!dSnap.exists()) {
             alert("Este usuario no pertenece al módulo doctor.");
             await signOut(auth);
-            location.href = "login.html";
+            location.href = "login-doctor.html";
             return;
         }
 
@@ -343,6 +348,6 @@ onAuthStateChanged(auth, async (user) => {
         console.error("Error al validar doctor:", error);
         alert("No se pudo validar el acceso del doctor.");
         await signOut(auth);
-        location.href = "login.html";
+        location.href = "login-doctor.html";
     }
 });
