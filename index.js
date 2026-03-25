@@ -536,14 +536,14 @@ window.addEventListener("load", () => {
 
     if (window.Android) {
         window.Android.printTicket(
-`CLÍNICA
+`CLINICA
 ----------------------
-PACIENTE: JUAN PÉREZ
+PACIENTE: JUAN PEREZ
 RUT: 12.345.678-5
 HORA: 10:30
 ESTADO: LLEGADA CONFIRMADA
 ----------------------
-DIRÍJASE A RECEPCIÓN`
+DIRIJASE A RECEPCION`
 );
     }
 });
