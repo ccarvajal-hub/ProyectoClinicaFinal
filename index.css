@@ -15,7 +15,7 @@
     --border-strong: rgba(77, 128, 178, 0.42);
 
     --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.22);
-    --shadow-button: 0 10px 24px rgba(0, 0, 0, 0.18);
+    --shadow-button: 0 4px 14px rgba(77, 128, 178, 0.14);
 
     --shell-padding: clamp(14px, 2vw, 30px);
     --content-max-width: 900px;
@@ -166,33 +166,37 @@ input {
 
 .hero-block {
     text-align: center;
-    padding: clamp(4px, 1vh, 12px) clamp(10px, 2vw, 18px) 0;
+    padding: clamp(12px, 2vh, 22px) clamp(10px, 2vw, 20px) 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(12px, 1.8vh, 18px);
 }
 
-.hero-block h1 {
-    margin: 0 0 clamp(6px, 1vh, 12px);
-    font-size: clamp(2.5rem, 5vw, 4.2rem);
-    font-weight: 800;
-    letter-spacing: -0.05em;
-    line-height: 0.98;
-}
-
-.hero-title {
+.hero-main-title {
     margin: 0;
-    color: #8ab1da;
-    font-size: clamp(1.45rem, 3vw, 2.35rem);
+    max-width: min(92%, 760px);
+    color: var(--blue-accent);
+    font-family: "Nunito", "Inter", sans-serif;
+    font-size: clamp(2rem, 4.8vw, 3.35rem);
     font-weight: 800;
+    font-style: italic;
     letter-spacing: -0.03em;
-    line-height: 1.04;
+    line-height: 0.95;
+    text-wrap: balance;
 }
 
 .hero-subtitle {
-    margin: clamp(12px, 2vh, 20px) auto 0;
+    margin: 0;
     max-width: min(92%, 760px);
-    color: var(--text-muted);
-    font-size: clamp(0.98rem, 1.35vw, 1.15rem);
-    font-weight: 500;
-    line-height: 1.4;
+    color: #9b9b9b;
+    font-family: "Nunito", "Inter", sans-serif;
+    font-size: clamp(1rem, 1.55vw, 1.28rem);
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+    text-wrap: balance;
 }
 
 .checkin-panel {
@@ -228,17 +232,20 @@ input {
     width: 100%;
     margin: 0 auto;
     padding: 0 clamp(16px, 2vw, 24px);
-    background: rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.05) 100%);
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: clamp(18px, 2vw, 24px);
-    backdrop-filter: blur(2px);
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(77, 128, 178, 0.14);
 }
 
 .rut-icon {
-    width: clamp(28px, 3vw, 38px);
-    height: clamp(28px, 3vw, 38px);
-    color: #84a8d2;
+    width: clamp(34px, 3.8vw, 46px);
+    height: clamp(34px, 3.8vw, 46px);
+    color: #9fc0e5;
     flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .rut-icon svg {
@@ -281,13 +288,13 @@ input {
 .key {
     min-height: clamp(62px, 8vh, 78px);
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: clamp(14px, 1.6vw, 18px);
+    border-radius: 12px;
     background: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.05) 100%);
     color: var(--text-main);
     font-size: clamp(1.35rem, 2.8vw, 1.95rem);
     font-weight: 800;
     cursor: pointer;
-    transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
+    transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
     box-shadow: var(--shadow-button);
     -webkit-tap-highlight-color: transparent;
 }
@@ -297,7 +304,8 @@ input {
 }
 
 .key:hover {
-    border-color: rgba(102, 149, 196, 0.45);
+    border-color: rgba(102, 149, 196, 0.4);
+    box-shadow: 0 5px 16px rgba(77, 128, 178, 0.18);
 }
 
 .key-letter {
@@ -312,8 +320,8 @@ input {
 }
 
 .key-delete svg {
-    width: clamp(26px, 3vw, 34px);
-    height: clamp(26px, 3vw, 34px);
+    width: clamp(32px, 3.8vw, 42px);
+    height: clamp(32px, 3.8vw, 42px);
 }
 
 .actions {
@@ -330,6 +338,7 @@ input {
     border-radius: clamp(16px, 2vw, 20px);
     background: var(--blue-accent);
     color: var(--text-main);
+    font-family: "Nunito", "Inter", sans-serif;
     font-size: clamp(1.08rem, 1.8vw, 1.4rem);
     font-weight: 800;
     letter-spacing: 0.2px;
@@ -542,21 +551,20 @@ input {
         font-size: 0.82rem;
     }
 
-    .hero-block h1 {
-        font-size: 2.3rem;
-    }
-
-    .hero-title {
-        font-size: 1.42rem;
+    .hero-main-title {
+        font-size: 2.1rem;
+        line-height: 0.98;
     }
 
     .hero-subtitle {
-        font-size: 0.98rem;
+        font-size: 1rem;
+        line-height: 1.08;
     }
 
     .rut-input-box {
         min-height: 76px;
         padding: 0 14px;
+        border-radius: 12px;
     }
 
     #rutInput {

@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
 
     <link rel="manifest" href="./manifest.webmanifest">
     <meta name="theme-color" content="#1c1c1c">
@@ -45,36 +46,38 @@
             </header>
 
             <section class="hero-block">
-                <h1>Bienvenido</h1>
-                <p class="hero-title">Su atención comienza aquí</p>
-                <p class="hero-subtitle">
-                    Ingrese su RUT para confirmar su llegada y comenzar el proceso de atención.
-                </p>
-            </section>
+    <h1 class="hero-main-title">Bienvenido, su atención comienza aquí</h1>
+    <p class="hero-subtitle">
+        Ingrese su RUT para confirmar su llegada y comenzar el proceso de atención.
+    </p>
+</section>
 
             <section class="checkin-panel">
                 <div class="rut-display-wrap">
                     <label class="rut-label" for="rutInput">RUT DEL PACIENTE</label>
 
+                    
                     <div class="rut-input-box">
-                        <div class="rut-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <path d="M12 12c2.761 0 5-2.462 5-5.5S14.761 1 12 1 7 3.462 7 6.5 9.239 12 12 12Z" stroke="currentColor" stroke-width="2"/>
-                                <path d="M3 22c0-4.418 4.03-8 9-8s9 3.582 9 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                        </div>
+    <div class="rut-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="2"/>
+            <circle cx="8" cy="12" r="2.2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M12.5 10H17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12.5 14H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </div>
 
-                        <input
-                            type="text"
-                            id="rutInput"
-                            placeholder="12.345.678-K"
-                            autocomplete="off"
-                            autocapitalize="characters"
-                            maxlength="12"
-                            inputmode="none"
-                            readonly
-                        >
-                    </div>
+    <input
+        type="text"
+        id="rutInput"
+        placeholder="12.345.678-K"
+        autocomplete="off"
+        autocapitalize="characters"
+        maxlength="12"
+        inputmode="none"
+        readonly
+    >
+</div>
                 </div>
 
                 <div class="keypad-wrap">
