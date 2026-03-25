@@ -28,6 +28,13 @@
     --radius-md: 20px;
     --radius-sm: 16px;
     --radius-xs: 12px;
+
+    --shell-padding: clamp(10px, 2vw, 24px);
+    --screen-padding-x: clamp(18px, 3vw, 42px);
+    --screen-padding-y: clamp(18px, 3vh, 38px);
+    --screen-radius: clamp(22px, 3vw, 42px);
+    --content-gap: clamp(18px, 2.4vh, 30px);
+    --panel-max-width: min(100%, 860px);
 }
 
 * {
@@ -37,7 +44,7 @@
 html,
 body {
     width: 100%;
-    height: 100%;
+    min-height: 100%;
     margin: 0;
     padding: 0;
 }
@@ -49,7 +56,8 @@ body {
         radial-gradient(circle at bottom right, rgba(95, 143, 192, 0.08), transparent 24%),
         linear-gradient(180deg, #4b4b4b 0%, #404040 100%);
     color: var(--text-main);
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 button,
@@ -59,31 +67,34 @@ input {
 
 .app-shell {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 26px;
+    justify-content: stretch;
+    align-items: stretch;
+    padding: var(--shell-padding);
 }
 
 .totem-screen {
-    width: min(100%, 760px);
-    min-height: min(96vh, 1320px);
+    width: 100%;
+    min-height: calc(100vh - (var(--shell-padding) * 2));
+    min-height: calc(100dvh - (var(--shell-padding) * 2));
     background: linear-gradient(180deg, #1d1d1d 0%, #181818 100%);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 42px;
+    border-radius: var(--screen-radius);
     box-shadow: var(--shadow-main);
-    padding: 34px 30px 30px;
+    padding: var(--screen-padding-y) var(--screen-padding-x);
     display: flex;
     flex-direction: column;
-    gap: 26px;
+    gap: var(--content-gap);
     position: relative;
+    overflow: hidden;
 }
 
 .totem-screen::before {
     content: "";
     position: absolute;
-    inset: 14px;
-    border-radius: 32px;
+    inset: clamp(8px, 1.2vw, 14px);
+    border-radius: calc(var(--screen-radius) - 10px);
     border: 1px solid rgba(255, 255, 255, 0.04);
     pointer-events: none;
 }
@@ -92,7 +103,7 @@ input {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 18px;
+    gap: clamp(14px, 2vw, 24px);
     position: relative;
     z-index: 1;
 }
@@ -100,17 +111,19 @@ input {
 .brand-area {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: clamp(12px, 1.8vw, 16px);
+    min-width: 0;
 }
 
 .brand-mark {
-    width: 46px;
-    height: 46px;
+    width: clamp(42px, 5vw, 54px);
+    height: clamp(42px, 5vw, 54px);
     border-radius: 50%;
     background:
         linear-gradient(135deg, rgba(95, 143, 192, 0.95), rgba(70, 130, 180, 0.55));
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
     position: relative;
+    flex: 0 0 auto;
 }
 
 .brand-mark::before,
@@ -139,16 +152,17 @@ input {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
 }
 
 .brand-name {
-    font-size: 0.95rem;
+    font-size: clamp(0.9rem, 1.2vw, 1.05rem);
     font-weight: 800;
     letter-spacing: 0.8px;
 }
 
 .brand-sub {
-    font-size: 0.78rem;
+    font-size: clamp(0.75rem, 0.95vw, 0.86rem);
     color: var(--text-muted);
     font-weight: 600;
 }
@@ -156,19 +170,21 @@ input {
 .topbar-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: clamp(12px, 1.6vw, 18px);
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .module-pill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
-    padding: 0 18px;
+    min-height: clamp(42px, 5vh, 48px);
+    padding: 0 clamp(14px, 1.8vw, 20px);
     border-radius: 999px;
     background: linear-gradient(135deg, var(--blue-accent-2), #5a73d8);
     color: white;
-    font-size: 0.86rem;
+    font-size: clamp(0.78rem, 1vw, 0.9rem);
     font-weight: 800;
     letter-spacing: 0.5px;
     box-shadow: 0 10px 24px rgba(70, 130, 180, 0.2);
@@ -179,7 +195,7 @@ input {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding-left: 16px;
+    padding-left: clamp(12px, 1.6vw, 18px);
     border-left: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -188,7 +204,7 @@ input {
     align-items: center;
     gap: 8px;
     color: var(--text-soft);
-    font-size: 0.9rem;
+    font-size: clamp(0.82rem, 0.95vw, 0.95rem);
     font-weight: 600;
     white-space: nowrap;
 }
@@ -200,48 +216,48 @@ input {
 
 .hero-block {
     text-align: center;
-    padding: 10px 14px 2px;
+    padding: clamp(2px, 0.8vh, 10px) clamp(8px, 2vw, 16px) 0;
     position: relative;
     z-index: 1;
 }
 
 .hero-block h1 {
-    margin: 0 0 10px;
-    font-size: 3.2rem;
+    margin: 0 0 clamp(6px, 1vh, 12px);
+    font-size: clamp(2.4rem, 5vw, 4.1rem);
     font-weight: 800;
-    letter-spacing: -2px;
-    line-height: 1;
+    letter-spacing: -0.05em;
+    line-height: 0.98;
 }
 
 .hero-title {
     margin: 0;
     color: #8ab1da;
-    font-size: 2.1rem;
+    font-size: clamp(1.45rem, 3.2vw, 2.45rem);
     font-weight: 800;
-    letter-spacing: -1px;
-    line-height: 1.02;
+    letter-spacing: -0.03em;
+    line-height: 1.04;
 }
 
 .hero-subtitle {
-    margin: 18px auto 0;
-    max-width: 560px;
+    margin: clamp(12px, 2vh, 20px) auto 0;
+    max-width: min(92%, 820px);
     color: var(--text-muted);
-    font-size: 1.16rem;
+    font-size: clamp(0.98rem, 1.45vw, 1.22rem);
     font-weight: 500;
-    line-height: 1.35;
+    line-height: 1.4;
 }
 
 .checkin-panel {
-    width: min(100%, 590px);
+    width: var(--panel-max-width);
     margin: 0 auto;
     background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 28px;
-    padding: 28px 24px 24px;
+    border-radius: clamp(22px, 2.6vw, 30px);
+    padding: clamp(20px, 2.6vw, 32px);
     box-shadow: var(--shadow-soft);
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: clamp(16px, 2vh, 24px);
     position: relative;
     z-index: 1;
 }
@@ -253,7 +269,7 @@ input {
 }
 
 .rut-label {
-    font-size: 0.82rem;
+    font-size: clamp(0.78rem, 0.95vw, 0.86rem);
     color: var(--text-muted);
     font-weight: 800;
     letter-spacing: 1px;
@@ -263,18 +279,18 @@ input {
 .rut-input-box {
     display: flex;
     align-items: center;
-    gap: 14px;
-    min-height: 92px;
-    padding: 0 22px;
+    gap: clamp(10px, 1.5vw, 14px);
+    min-height: clamp(76px, 10vh, 98px);
+    padding: 0 clamp(14px, 2vw, 24px);
     background: linear-gradient(180deg, #2a2a2a 0%, #262626 100%);
     border: 2px solid rgba(255,255,255,0.09);
-    border-radius: 22px;
+    border-radius: clamp(18px, 2vw, 24px);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
 }
 
 .rut-icon {
-    width: 38px;
-    height: 38px;
+    width: clamp(28px, 3vw, 40px);
+    height: clamp(28px, 3vw, 40px);
     color: #84a8d2;
     flex: 0 0 auto;
 }
@@ -292,10 +308,10 @@ input {
     outline: none;
     color: var(--text-main);
     text-align: center;
-    font-size: 2.2rem;
+    font-size: clamp(1.6rem, 3.5vw, 2.45rem);
     font-weight: 700;
     letter-spacing: 0.6px;
-    padding-right: 32px;
+    padding-right: clamp(0px, 2vw, 32px);
     cursor: default;
 }
 
@@ -306,27 +322,28 @@ input {
 .rut-help {
     margin: 0;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: clamp(0.84rem, 1vw, 0.94rem);
     line-height: 1.35;
 }
 
 .keypad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
+    gap: clamp(10px, 1.5vw, 16px);
 }
 
 .key {
-    min-height: 82px;
+    min-height: clamp(66px, 9vh, 88px);
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 18px;
+    border-radius: clamp(14px, 1.8vw, 20px);
     background: linear-gradient(180deg, #343434 0%, #2c2c2c 100%);
     color: var(--text-main);
-    font-size: 2rem;
+    font-size: clamp(1.45rem, 3vw, 2.1rem);
     font-weight: 800;
     cursor: pointer;
     transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
     box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+    -webkit-tap-highlight-color: transparent;
 }
 
 .key:active {
@@ -350,32 +367,33 @@ input {
 }
 
 .key-delete svg {
-    width: 38px;
-    height: 38px;
+    width: clamp(28px, 3.2vw, 38px);
+    height: clamp(28px, 3.2vw, 38px);
 }
 
 .actions {
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .btn-confirm {
     width: 100%;
-    min-height: 82px;
+    min-height: clamp(68px, 9vh, 86px);
     border: none;
-    border-radius: 20px;
+    border-radius: clamp(16px, 2vw, 22px);
     background: linear-gradient(135deg, var(--blue-accent), #6e79ea);
     color: var(--text-main);
-    font-size: 1.45rem;
+    font-size: clamp(1.12rem, 2vw, 1.5rem);
     font-weight: 800;
     letter-spacing: 0.2px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
+    gap: clamp(10px, 1.4vw, 14px);
     cursor: pointer;
     text-transform: none;
     box-shadow: 0 16px 32px rgba(70, 130, 180, 0.22);
     transition: transform 0.08s ease, opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .btn-confirm:active {
@@ -388,7 +406,7 @@ input {
 }
 
 .btn-arrow {
-    font-size: 1.7rem;
+    font-size: clamp(1.35rem, 2vw, 1.8rem);
     line-height: 1;
 }
 
@@ -399,30 +417,30 @@ input {
     display: none;
     justify-content: center;
     align-items: center;
-    padding: 24px;
+    padding: clamp(16px, 2vw, 24px);
     background: rgba(0, 0, 0, 0.85);
 }
 
 .modal-content {
     width: 100%;
-    max-width: 520px;
-    padding: 38px 32px 30px;
+    max-width: min(92vw, 560px);
+    padding: clamp(26px, 3vw, 38px) clamp(20px, 3vw, 32px) clamp(22px, 2.6vw, 30px);
     text-align: center;
     background: linear-gradient(180deg, #1f1f1f 0%, #1a1a1a 100%);
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 28px;
+    border-radius: clamp(22px, 2.4vw, 28px);
     box-shadow: 0 24px 60px rgba(0,0,0,0.42);
 }
 
 .modal-icon {
-    width: 70px;
-    height: 70px;
+    width: clamp(58px, 8vw, 72px);
+    height: clamp(58px, 8vw, 72px);
     margin: 0 auto 18px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: clamp(1.7rem, 2.8vw, 2rem);
     font-weight: 900;
 }
 
@@ -434,7 +452,7 @@ input {
 
 #modalTitulo {
     margin: 0 0 24px;
-    font-size: 1.9rem;
+    font-size: clamp(1.45rem, 2.5vw, 1.95rem);
     font-weight: 800;
     letter-spacing: -0.5px;
 }
@@ -449,10 +467,10 @@ input {
 
 .info-box {
     margin-bottom: 26px;
-    padding: 22px;
+    padding: clamp(16px, 2vw, 22px);
     text-align: left;
     background: linear-gradient(180deg, #262626 0%, #212121 100%);
-    border-radius: 22px;
+    border-radius: clamp(18px, 2vw, 22px);
     border: 1px solid rgba(255,255,255,0.06);
 }
 
@@ -472,7 +490,7 @@ input {
     display: block;
     margin-bottom: 5px;
     color: var(--text-muted);
-    font-size: 0.76rem;
+    font-size: clamp(0.72rem, 0.85vw, 0.8rem);
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -480,7 +498,7 @@ input {
 
 .info-value {
     color: var(--text-main);
-    font-size: 1.15rem;
+    font-size: clamp(1rem, 1.4vw, 1.16rem);
     font-weight: 700;
     line-height: 1.3;
 }
@@ -488,7 +506,7 @@ input {
 #modalMensaje {
     margin: 0 0 22px;
     color: var(--text-main);
-    font-size: 1.12rem;
+    font-size: clamp(1rem, 1.35vw, 1.12rem);
     font-weight: 800;
     line-height: 1.35;
     text-transform: uppercase;
@@ -500,24 +518,24 @@ input {
 
 .btn-close {
     width: 100%;
-    min-height: 62px;
+    min-height: clamp(56px, 7vh, 64px);
     background: var(--green-muted);
     color: rgba(255, 255, 255, 0.94);
     border: none;
     border-radius: 16px;
     font-weight: 800;
-    font-size: 1rem;
+    font-size: clamp(0.95rem, 1.1vw, 1rem);
     cursor: pointer;
 }
 
 .alert-overlay {
     position: fixed;
-    top: 26px;
+    top: clamp(10px, 2vh, 26px);
     left: 50%;
     transform: translateX(-50%);
     z-index: 2000;
     display: none;
-    min-width: 360px;
+    min-width: min(360px, calc(100vw - 28px));
     max-width: min(92vw, 760px);
     padding: 16px 22px;
     text-align: center;
@@ -533,7 +551,7 @@ input {
 }
 
 .alert-text {
-    font-size: 0.96rem;
+    font-size: clamp(0.84rem, 1vw, 0.98rem);
     font-weight: 800;
     line-height: 1.25;
     letter-spacing: 0.2px;
@@ -542,17 +560,6 @@ input {
 }
 
 @media (max-width: 900px) {
-    .app-shell {
-        padding: 18px;
-    }
-
-    .totem-screen {
-        width: 100%;
-        min-height: calc(100vh - 36px);
-        padding: 26px 20px 22px;
-        border-radius: 30px;
-    }
-
     .topbar {
         flex-direction: column;
         align-items: stretch;
@@ -562,140 +569,40 @@ input {
         justify-content: space-between;
     }
 
-    .hero-block h1 {
-        font-size: 2.65rem;
-    }
-
-    .hero-title {
-        font-size: 1.7rem;
-    }
-
-    .hero-subtitle {
-        font-size: 1.05rem;
-    }
-
     .checkin-panel {
         width: 100%;
+        max-width: none;
     }
 }
 
 @media (max-width: 640px) {
+    .app-shell {
+        padding: 8px;
+    }
+
     .totem-screen {
-        padding: 20px 16px 18px;
-        gap: 20px;
+        min-height: calc(100vh - 16px);
+        min-height: calc(100dvh - 16px);
     }
 
-    .brand-mark {
-        width: 40px;
-        height: 40px;
-    }
-
-    .module-pill {
-        min-height: 40px;
-        padding: 0 14px;
-        font-size: 0.78rem;
+    .topbar-right {
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .datetime-box {
-        padding-left: 12px;
-    }
-
-    .datetime-row {
-        font-size: 0.8rem;
-    }
-
-    .hero-block {
+        border-left: none;
+        padding-left: 0;
         padding-top: 4px;
     }
 
-    .hero-block h1 {
-        font-size: 2.3rem;
-        letter-spacing: -1px;
-    }
-
-    .hero-title {
-        font-size: 1.4rem;
-    }
-
-    .hero-subtitle {
-        margin-top: 14px;
-        font-size: 0.98rem;
-    }
-
-    .checkin-panel {
-        padding: 20px 16px 18px;
-        border-radius: 22px;
-        gap: 18px;
-    }
-
-    .rut-input-box {
-        min-height: 78px;
-        padding: 0 16px;
-        gap: 10px;
-    }
-
-    .rut-icon {
-        width: 30px;
-        height: 30px;
-    }
-
-    #rutInput {
-        font-size: 1.6rem;
-        padding-right: 10px;
-    }
-
-    .keypad {
-        gap: 10px;
-    }
-
-    .key {
-        min-height: 68px;
-        border-radius: 14px;
-        font-size: 1.5rem;
-    }
-
-    .key-delete svg {
-        width: 30px;
-        height: 30px;
-    }
-
-    .btn-confirm {
-        min-height: 70px;
-        border-radius: 16px;
-        font-size: 1.18rem;
-    }
-
-    .modal-content {
-        padding: 30px 20px 22px;
-        border-radius: 22px;
-    }
-
-    .modal-icon {
-        width: 58px;
-        height: 58px;
-        font-size: 1.7rem;
-    }
-
-    #modalTitulo {
-        font-size: 1.5rem;
-    }
-
-    #modalMensaje {
-        font-size: 1rem;
-    }
-
-    .info-value {
-        font-size: 1.02rem;
+    .module-pill {
+        width: 100%;
     }
 
     .alert-overlay {
         min-width: unset;
-        width: calc(100vw - 24px);
-        top: 14px;
+        width: calc(100vw - 20px);
         padding: 14px 18px;
-    }
-
-    .alert-text {
-        font-size: 0.88rem;
     }
 }

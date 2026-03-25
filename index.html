@@ -22,6 +22,7 @@
             <header class="topbar">
                 <div class="brand-area">
                     <div class="brand-mark"></div>
+
                     <div class="brand-text">
                         <span class="brand-name">CLÍNICA</span>
                         <span class="brand-sub">Sistema de atención</span>
@@ -36,6 +37,7 @@
                             <span class="datetime-icon">📅</span>
                             <span id="fechaActual">--/--/----</span>
                         </div>
+
                         <div class="datetime-row">
                             <span class="datetime-icon">🕒</span>
                             <span id="horaActual">--:--</span>
@@ -76,7 +78,9 @@
                         >
                     </div>
 
-                    <p class="rut-help">Puede ingresar números y K. El sistema valida automáticamente el dígito verificador.</p>
+                    <p class="rut-help">
+                        Puede ingresar números y K. El sistema valida automáticamente el dígito verificador.
+                    </p>
                 </div>
 
                 <div class="keypad">
@@ -94,9 +98,10 @@
 
                     <button type="button" class="key key-letter" data-key="K">K</button>
                     <button type="button" class="key key-number" data-key="0">0</button>
+
                     <button type="button" class="key key-delete" id="btnBorrar" aria-label="Borrar último carácter">
                         <svg viewBox="0 0 24 24" fill="none">
-                            <path d="M10 7H20C21.105 7 22 7.895 22 9V15C22 16.105 21.105 17 20 17H10L3 12L10 7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M10 6H20C21.1046 6 22 6.89543 22 8V16C22 17.1046 21.1046 18 20 18H10L2 12L10 6Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                             <path d="M13 10L17 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                             <path d="M17 10L13 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         </svg>
@@ -104,7 +109,7 @@
                 </div>
 
                 <div class="actions">
-                    <button class="btn-confirm" id="btnConfirmar">
+                    <button class="btn-confirm" id="btnConfirmar" type="button">
                         <span>Confirmar llegada</span>
                         <span class="btn-arrow">→</span>
                     </button>
@@ -137,7 +142,7 @@
 
             <p id="modalMensaje">POR FAVOR, DIRÍJASE A RECEPCIÓN.</p>
 
-            <button class="btn-close" id="btnCerrarModal">ENTENDIDO</button>
+            <button class="btn-close" id="btnCerrarModal" type="button">ENTENDIDO</button>
         </div>
     </div>
 

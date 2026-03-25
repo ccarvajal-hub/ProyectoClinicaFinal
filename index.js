@@ -22,6 +22,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+const CL_TIMEZONE = "America/Santiago";
+
 const input = document.getElementById("rutInput");
 const btn = document.getElementById("btnConfirmar");
 const btnBorrar = document.getElementById("btnBorrar");
@@ -48,12 +50,14 @@ const horaActualEl = document.getElementById("horaActual");
 let resetTimer = null;
 let modalTimer = null;
 let alertTimer = null;
+let procesandoConfirmacion = false;
 
 const MODAL_AUTO_CLOSE_MS = 12000;
 const ALERT_AUTO_CLOSE_MS = 8000;
+const INPUT_AUTO_RESET_MS = 10000;
 
 function limpiarRUT(rut) {
-    return rut.replace(/[^0-9kK]/g, "").toUpperCase();
+    return String(rut || "").replace(/[^0-9kK]/g, "").toUpperCase();
 }
 
 function formatearRUT(rut) {
@@ -107,19 +111,36 @@ function validarRUT(rut) {
     return dvIngresado === dvEsperado;
 }
 
-function obtenerFechaHoyChile() {
+function obtenerPartesFechaHoraChile() {
     const partes = new Intl.DateTimeFormat("en-CA", {
-        timeZone: "America/Santiago",
+        timeZone: CL_TIMEZONE,
         year: "numeric",
         month: "2-digit",
-        day: "2-digit"
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
     }).formatToParts(new Date());
 
-    const year = partes.find((p) => p.type === "year").value;
-    const month = partes.find((p) => p.type === "month").value;
-    const day = partes.find((p) => p.type === "day").value;
+    const get = (tipo) => partes.find((p) => p.type === tipo)?.value || "";
 
+    return {
+        year: get("year"),
+        month: get("month"),
+        day: get("day"),
+        hour: get("hour"),
+        minute: get("minute")
+    };
+}
+
+function obtenerFechaHoyChile() {
+    const { year, month, day } = obtenerPartesFechaHoraChile();
     return `${year}-${month}-${day}`;
+}
+
+function obtenerHoraActualChile24() {
+    const { hour, minute } = obtenerPartesFechaHoraChile();
+    return `${hour}:${minute}`;
 }
 
 function horaATotalMinutos(hora) {
@@ -133,7 +154,7 @@ function horaATotalMinutos(hora) {
 }
 
 function normalizarEstado(estado) {
-    return (estado || "pendiente").toLowerCase().trim();
+    return String(estado || "pendiente").toLowerCase().trim();
 }
 
 function seleccionarCitaCorrecta(docs) {
@@ -214,7 +235,7 @@ function programarResetInput() {
         if (!btn.disabled && modal.style.display !== "flex") {
             input.value = "";
         }
-    }, 10000);
+    }, INPUT_AUTO_RESET_MS);
 }
 
 function reproducirSonidoModal() {
@@ -261,14 +282,20 @@ async function obtenerDatosDoctor(doctorId) {
         return { nombreDoctorMostrar, ubicacionMostrar };
     }
 
-    const idBuscado = doctorId.trim().toLowerCase();
+    const idBuscado = String(doctorId).trim().toLowerCase();
     const docRefDoc = doc(db, "doctores", idBuscado);
     const docSnapDoc = await getDoc(docRefDoc);
 
     if (docSnapDoc.exists()) {
         const dData = docSnapDoc.data();
         nombreDoctorMostrar = dData.nombre || "No asignado";
-        ubicacionMostrar = `Piso ${dData.piso} - Consulta ${dData.consulta}`;
+
+        const piso = dData.piso ?? "";
+        const consulta = dData.consulta ?? "";
+
+        if (piso || consulta) {
+            ubicacionMostrar = `Piso ${piso} - Consulta ${consulta}`.trim();
+        }
     } else {
         nombreDoctorMostrar = "Dr(a). " + idBuscado.split("@")[0].toUpperCase();
     }
@@ -362,7 +389,50 @@ function borrarUltimoCaracterRut() {
     programarResetInput();
 }
 
+function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
+    const lineas = [
+        "CLINICA",
+        "----------------------",
+        `PACIENTE: ${nombre || "PACIENTE"}`,
+        `RUT: ${rut || "---"}`,
+        `HORA: ${hora || "--:--"}`,
+        `MEDICO: ${doctor || "NO ASIGNADO"}`,
+        `UBICACION: ${ubicacion || "POR CONFIRMAR"}`,
+        "ESTADO: LLEGADA CONFIRMADA",
+        "----------------------",
+        "DIRIJASE A RECEPCION"
+    ];
+
+    return lineas.join("\n");
+}
+
+function imprimirTicketSiExisteAndroid(datosTicket) {
+    try {
+        if (window.Android && typeof window.Android.printTicket === "function") {
+            const ticket = construirTextoTicket(datosTicket);
+            window.Android.printTicket(ticket);
+        }
+    } catch (error) {
+        console.error("Error al imprimir ticket:", error);
+    }
+}
+
+function setBotonProcesando(estaProcesando) {
+    btn.disabled = estaProcesando;
+
+    if (estaProcesando) {
+        btn.innerHTML = "<span>Procesando...</span>";
+    } else {
+        btn.innerHTML = `
+            <span>Confirmar llegada</span>
+            <span class="btn-arrow">→</span>
+        `;
+    }
+}
+
 async function confirmarLlegada() {
+    if (procesandoConfirmacion) return;
+
     cancelarResetInput();
     ocultarAlerta();
 
@@ -379,8 +449,8 @@ async function confirmarLlegada() {
         return;
     }
 
-    btn.disabled = true;
-    btn.innerHTML = '<span>Procesando...</span>';
+    procesandoConfirmacion = true;
+    setBotonProcesando(true);
 
     try {
         const fechaHoy = obtenerFechaHoyChile();
@@ -439,11 +509,7 @@ async function confirmarLlegada() {
             return;
         }
 
-        const ahora24 = new Date().toLocaleTimeString("es-CL", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-        });
+        const ahora24 = obtenerHoraActualChile24();
 
         await updateDoc(doc(db, "agendados", docSnap.id), {
             estado: "llegado",
@@ -458,16 +524,21 @@ async function confirmarLlegada() {
             doctor: nombreDoctorMostrar,
             ubicacion: ubicacionMostrar
         });
+
+        imprimirTicketSiExisteAndroid({
+            nombre: p.nombre,
+            rut: formatearRUT(rutLimpio),
+            doctor: nombreDoctorMostrar,
+            ubicacion: ubicacionMostrar,
+            hora: ahora24
+        });
     } catch (error) {
         console.error(error);
         mostrarAlerta("ERROR AL PROCESAR.");
         resetearInputRUT();
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = `
-            <span>Confirmar llegada</span>
-            <span class="btn-arrow">→</span>
-        `;
+        procesandoConfirmacion = false;
+        setBotonProcesando(false);
     }
 }
 
@@ -476,6 +547,7 @@ function actualizarFechaHora() {
 
     if (fechaActualEl) {
         fechaActualEl.textContent = ahora.toLocaleDateString("es-CL", {
+            timeZone: CL_TIMEZONE,
             day: "2-digit",
             month: "2-digit",
             year: "numeric"
@@ -484,11 +556,17 @@ function actualizarFechaHora() {
 
     if (horaActualEl) {
         horaActualEl.textContent = ahora.toLocaleTimeString("es-CL", {
+            timeZone: CL_TIMEZONE,
             hour: "2-digit",
             minute: "2-digit",
             hour12: false
         });
     }
+}
+
+function bloquearGestosNoDeseados() {
+    document.addEventListener("gesturestart", (e) => e.preventDefault());
+    document.addEventListener("dblclick", (e) => e.preventDefault());
 }
 
 keypadButtons.forEach((button) => {
@@ -507,43 +585,47 @@ btnBorrar.addEventListener("click", () => {
 btn.addEventListener("click", confirmarLlegada);
 btnCerrarModal.addEventListener("click", cerrarModal);
 
+modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+        cerrarModal();
+    }
+});
+
 document.addEventListener("keydown", (event) => {
     if (btn.disabled) return;
 
     if (/^[0-9]$/.test(event.key)) {
+        event.preventDefault();
         agregarCaracterAlRut(event.key);
         return;
     }
 
     if (event.key === "k" || event.key === "K") {
+        event.preventDefault();
         agregarCaracterAlRut("K");
         return;
     }
 
     if (event.key === "Backspace") {
+        event.preventDefault();
         borrarUltimoCaracterRut();
         return;
     }
 
     if (event.key === "Enter") {
+        event.preventDefault();
         confirmarLlegada();
+    }
+
+    if (event.key === "Escape" && modal.style.display === "flex") {
+        event.preventDefault();
+        cerrarModal();
     }
 });
 
 window.addEventListener("load", () => {
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
-
-    if (window.Android) {
-        window.Android.printTicket(
-`CLINICA
-----------------------
-PACIENTE: JUAN PEREZ
-RUT: 12.345.678-5
-HORA: 10:30
-ESTADO: LLEGADA CONFIRMADA
-----------------------
-DIRIJASE A RECEPCION`
-);
-    }
+    bloquearGestosNoDeseados();
+    resetearInputRUT();
 });
