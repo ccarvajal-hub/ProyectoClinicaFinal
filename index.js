@@ -534,12 +534,7 @@ window.addEventListener("load", () => {
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
 
-    alert("JS cargó");
-
     if (window.Android) {
-        alert("Android existe");
-        window.Android.showToast("Puente Android conectado");
-    } else {
-        alert("Android NO existe");
+        window.Android.printTicket("PRUEBA TICKET DESDE WEB");
     }
 });
