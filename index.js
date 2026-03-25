@@ -535,6 +535,15 @@ window.addEventListener("load", () => {
     setInterval(actualizarFechaHora, 1000);
 
     if (window.Android) {
-        window.Android.printTicket("PRUEBA TICKET DESDE WEB");
+        window.Android.printTicket(
+`CLÍNICA
+----------------------
+PACIENTE: JUAN PÉREZ
+RUT: 12.345.678-5
+HORA: 10:30
+ESTADO: LLEGADA CONFIRMADA
+----------------------
+DIRÍJASE A RECEPCIÓN`
+);
     }
 });
