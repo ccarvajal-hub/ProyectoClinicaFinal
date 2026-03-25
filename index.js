@@ -275,32 +275,84 @@ function mostrarAlerta(mensaje) {
 }
 
 async function obtenerDatosDoctor(doctorId) {
-    let nombreDoctorMostrar = "No asignado";
+    let nombreDoctorMostrar = "Doctor asignado";
     let ubicacionMostrar = "Por confirmar";
 
     if (!doctorId) {
         return { nombreDoctorMostrar, ubicacionMostrar };
     }
 
-    const idBuscado = String(doctorId).trim().toLowerCase();
-    const docRefDoc = doc(db, "doctores", idBuscado);
-    const docSnapDoc = await getDoc(docRefDoc);
+    const idBuscado = String(doctorId).trim();
 
-    if (docSnapDoc.exists()) {
-        const dData = docSnapDoc.data();
-        nombreDoctorMostrar = dData.nombre || "No asignado";
+    try {
+        // 1) Intentar por ID del documento
+        const docRefDirecto = doc(db, "doctores", idBuscado);
+        const docSnapDirecto = await getDoc(docRefDirecto);
 
-        const piso = dData.piso ?? "";
-        const consulta = dData.consulta ?? "";
+        if (docSnapDirecto.exists()) {
+            const dData = docSnapDirecto.data();
 
-        if (piso || consulta) {
-            ubicacionMostrar = `Piso ${piso} - Consulta ${consulta}`.trim();
+            nombreDoctorMostrar =
+                dData.nombre ||
+                dData.nombre_doctor ||
+                dData.displayName ||
+                "Doctor asignado";
+
+            const piso = dData.piso ?? "";
+            const consulta = dData.consulta ?? "";
+
+            if (piso || consulta) {
+                ubicacionMostrar = `Piso ${piso} - Consulta ${consulta}`.trim();
+            }
+
+            return { nombreDoctorMostrar, ubicacionMostrar };
         }
-    } else {
-        nombreDoctorMostrar = "Dr(a). " + idBuscado.split("@")[0].toUpperCase();
-    }
 
-    return { nombreDoctorMostrar, ubicacionMostrar };
+        // 2) Intentar buscar por campos internos
+        const qDoctores = query(collection(db, "doctores"));
+        const querySnapshot = await getDocs(qDoctores);
+
+        let doctorEncontrado = null;
+
+        querySnapshot.forEach((docSnap) => {
+            if (doctorEncontrado) return;
+
+            const data = docSnap.data();
+
+            const posiblesIds = [
+                docSnap.id,
+                data.uid,
+                data.doctor_id,
+                data.email
+            ]
+                .filter(Boolean)
+                .map((v) => String(v).trim().toLowerCase());
+
+            if (posiblesIds.includes(idBuscado.toLowerCase())) {
+                doctorEncontrado = data;
+            }
+        });
+
+        if (doctorEncontrado) {
+            nombreDoctorMostrar =
+                doctorEncontrado.nombre ||
+                doctorEncontrado.nombre_doctor ||
+                doctorEncontrado.displayName ||
+                "Doctor asignado";
+
+            const piso = doctorEncontrado.piso ?? "";
+            const consulta = doctorEncontrado.consulta ?? "";
+
+            if (piso || consulta) {
+                ubicacionMostrar = `Piso ${piso} - Consulta ${consulta}`.trim();
+            }
+        }
+
+        return { nombreDoctorMostrar, ubicacionMostrar };
+    } catch (error) {
+        console.error("Error obteniendo datos del doctor:", error);
+        return { nombreDoctorMostrar, ubicacionMostrar };
+    }
 }
 
 function abrirModal({
@@ -319,7 +371,7 @@ function abrirModal({
     modalTitulo.className = tipo;
 
     resNombre.innerText = nombre || "---";
-    resDoctor.innerText = doctor || "---";
+    resDoctor.innerText = doctor || "Doctor asignado";
     resUbicacion.innerText = (ubicacion || "---").toUpperCase();
     modalMensaje.textContent = (mensaje || "").toUpperCase();
 
