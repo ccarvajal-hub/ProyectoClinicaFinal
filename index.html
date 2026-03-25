@@ -21,35 +21,45 @@
     <main class="app-shell">
         <section class="totem-screen">
             <header class="topbar">
-                <div class="brand-area">
-                    <div class="brand-mark"></div>
-
-                    <div class="brand-text">
-                        <span class="brand-name">CLÍNICA</span>
-                        <span class="brand-sub">Sistema de atención</span>
-                    </div>
-                </div>
+                
 
                 <div class="topbar-right">
                     <div class="datetime-box">
-                        <div class="datetime-row">
-                            <span class="datetime-icon">📅</span>
-                            <span id="fechaActual">--/--/----</span>
-                        </div>
+    <div class="datetime-row">
+        <span class="datetime-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <rect x="4" y="5" width="16" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M8 3.8V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M16 3.8V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M4 9H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+        </span>
+        <span id="fechaActual">--/--/----</span>
+    </div>
 
-                        <div class="datetime-row">
-                            <span class="datetime-icon">🕒</span>
-                            <span id="horaActual">--:--</span>
-                        </div>
-                    </div>
+    <div class="datetime-row">
+        <span class="datetime-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M12 7.8V12L15.2 13.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </span>
+        <span id="horaActual">--:--</span>
+    </div>
+</div>
                 </div>
             </header>
 
             <section class="hero-block">
-    <h1 class="hero-main-title">Bienvenido, su atención comienza aquí</h1>
+    <h1 class="hero-main-title">
+        <span>Bienvenido a Clinica 2020, tu</span>
+        <span>atención comienza aquí.</span>
+    </h1>
+
     <p class="hero-subtitle">
-        Ingrese su RUT para confirmar su llegada y comenzar el proceso de atención.
-    </p>
+    <span>Ingrese tu RUT para confirmar tu llegada y comenzar el proceso</span>
+    <span>de atención.</span>
+</p>
 </section>
 
             <section class="checkin-panel">
