@@ -539,7 +539,6 @@ window.addEventListener("load", () => {
     if (window.Android) {
         alert("Android existe");
         window.Android.showToast("Puente Android conectado");
-        window.Android.log("La web se comunicó con Android correctamente");
     } else {
         alert("Android NO existe");
     }
