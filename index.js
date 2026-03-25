@@ -533,4 +533,9 @@ document.addEventListener("keydown", (event) => {
 window.addEventListener("load", () => {
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
+
+    if (window.Android) {
+    window.Android.showToast("Puente Android conectado");
+    window.Android.log("La web se comunicó con Android correctamente");
+}
 });
