@@ -534,8 +534,13 @@ window.addEventListener("load", () => {
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
 
+    alert("JS cargó");
+
     if (window.Android) {
-    window.Android.showToast("Puente Android conectado");
-    window.Android.log("La web se comunicó con Android correctamente");
-}
+        alert("Android existe");
+        window.Android.showToast("Puente Android conectado");
+        window.Android.log("La web se comunicó con Android correctamente");
+    } else {
+        alert("Android NO existe");
+    }
 });
