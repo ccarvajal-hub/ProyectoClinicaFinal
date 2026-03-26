@@ -442,16 +442,27 @@ function borrarUltimoCaracterRut() {
 }
 
 function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
+    const nombreFmt = (nombre || "---").toUpperCase();
+    const doctorFmt = (doctor || "---").toUpperCase();
+    const ubicacionFmt = (ubicacion || "---").toUpperCase();
+
     const lineas = [
         "CLINICA",
         "----------------------",
         "LLEGADA CONFIRMADA",
         "----------------------",
-        `PACIENTE: ${nombre || "---"}`,
+        "PACIENTE:",
+        `${nombreFmt}`,
+        "",
         `RUT: ${rut || "---"}`,
-        `DOCTOR: ${doctor || "---"}`,
-        `UBICACION: ${ubicacion || "---"}`,
-        `HORA LLEGADA: ${hora || "--:--"}`,
+        "",
+        "DOCTOR:",
+        `${doctorFmt}`,
+        "",
+        "UBICACION:",
+        `${ubicacionFmt}`,
+        "",
+        `HORA: ${hora || "--:--"}`,
         "----------------------",
         "POR FAVOR, DIRIJASE A RECEPCION"
     ];
