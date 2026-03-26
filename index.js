@@ -118,6 +118,16 @@ function obtenerHoraActualChile24() {
     }).format(new Date());
 }
 
+function obtenerFechaVisualChile() {
+    return new Intl.DateTimeFormat("es-CL", {
+        timeZone: "America/Santiago",
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+    }).format(new Date());
+}
+
 function obtenerFechaHoraVisual() {
     const ahora = new Date();
 
@@ -229,18 +239,30 @@ async function obtenerDatosDoctor(doctorId) {
 /* =========================
    IMPRESIÓN ANDROID
 ========================= */
-function imprimirTicketSiExisteAndroid({ nombre, rut, doctor, ubicacion, hora }) {
+function imprimirTicketSiExisteAndroid({
+    titulo,
+    mensaje,
+    nombre,
+    rut,
+    doctor,
+    ubicacion,
+    fecha,
+    horaLlegada
+}) {
     try {
         if (
             window.AndroidBridge &&
             typeof window.AndroidBridge.printTicket === "function"
         ) {
             const payload = JSON.stringify({
-                nombre,
-                rut,
-                doctor,
-                ubicacion,
-                hora
+                titulo: titulo || "LLEGADA CONFIRMADA",
+                mensaje: mensaje || "POR FAVOR, DIRÍJASE A RECEPCIÓN.",
+                nombre: nombre || "---",
+                rut: rut || "---",
+                doctor: doctor || "---",
+                ubicacion: ubicacion || "---",
+                fecha: fecha || "---",
+                hora: horaLlegada || "---"
             });
 
             window.AndroidBridge.printTicket(payload);
@@ -332,27 +354,33 @@ async function confirmarLlegada() {
         }
 
         const ahora24 = obtenerHoraActualChile24();
+        const fechaVisual = obtenerFechaVisualChile();
 
         await updateDoc(doc(db, "agendados", docSnap.id), {
             estado: "llegado",
             hora_llegada: ahora24
         });
 
-        abrirModal({
+        const datosTicket = {
             titulo: "LLEGADA CONFIRMADA",
             mensaje: "POR FAVOR, DIRÍJASE A RECEPCIÓN.",
-            nombre: p.nombre || "---",
-            doctor: nombreDoctorMostrar,
-            ubicacion: ubicacionMostrar
-        });
-
-        imprimirTicketSiExisteAndroid({
             nombre: p.nombre || "---",
             rut: formatearRUT(rutLimpio),
             doctor: nombreDoctorMostrar,
             ubicacion: ubicacionMostrar,
-            hora: ahora24
+            fecha: fechaVisual.charAt(0).toUpperCase() + fechaVisual.slice(1),
+            horaLlegada: ahora24
+        };
+
+        abrirModal({
+            titulo: datosTicket.titulo,
+            mensaje: datosTicket.mensaje,
+            nombre: datosTicket.nombre,
+            doctor: datosTicket.doctor,
+            ubicacion: datosTicket.ubicacion
         });
+
+        imprimirTicketSiExisteAndroid(datosTicket);
 
         resetearInputRUT();
     } catch (error) {
