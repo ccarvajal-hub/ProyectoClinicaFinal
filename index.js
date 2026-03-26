@@ -102,9 +102,9 @@ function obtenerFechaHoyChile() {
         day: "2-digit"
     }).formatToParts(new Date());
 
-    const year = partes.find(p => p.type === "year")?.value;
-    const month = partes.find(p => p.type === "month")?.value;
-    const day = partes.find(p => p.type === "day")?.value;
+    const year = partes.find((p) => p.type === "year")?.value;
+    const month = partes.find((p) => p.type === "month")?.value;
+    const day = partes.find((p) => p.type === "day")?.value;
 
     return `${year}-${month}-${day}`;
 }
@@ -190,11 +190,59 @@ function cerrarModal() {
     }
 }
 
-function resetearInputRUT() {
-    if (rutInput) {
-        rutInput.value = "";
+/* =========================
+   MANEJO VISUAL DEL RUT
+========================= */
+function obtenerValorRut() {
+    if (!rutInput) return "";
+
+    if ("value" in rutInput) {
+        return String(rutInput.value || "");
+    }
+
+    return String(rutInput.textContent || "");
+}
+
+function asignarValorRut(valor) {
+    if (!rutInput) return;
+
+    const limpio = soloNumerosYk(valor);
+
+    if ("value" in rutInput) {
+        rutInput.value = limpio;
+    } else {
+        rutInput.textContent = limpio;
+    }
+
+    rutInput.setAttribute("data-rut", limpio);
+
+    if (rutInput.isContentEditable) {
+        rutInput.textContent = limpio;
+    }
+}
+
+function enfocarRut() {
+    if (!rutInput) return;
+
+    if (typeof rutInput.focus === "function") {
         rutInput.focus();
     }
+
+    if (rutInput.isContentEditable) {
+        const range = document.createRange();
+        const selection = window.getSelection();
+
+        range.selectNodeContents(rutInput);
+        range.collapse(false);
+
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+}
+
+function resetearInputRUT() {
+    asignarValorRut("");
+    enfocarRut();
     citaSeleccionada = null;
 }
 
@@ -221,7 +269,10 @@ async function obtenerDatosDoctor(doctorId) {
         }
 
         const d = doctorSnap.data();
-        const nombreDoctorMostrar = d.nombre ? `DR. ${String(d.nombre).toUpperCase()}` : "DOCTOR NO ASIGNADO";
+        const nombreDoctorMostrar = d.nombre
+            ? `DR. ${String(d.nombre).toUpperCase()}`
+            : "DOCTOR NO ASIGNADO";
+
         const ubicacionMostrar = (d.piso && d.consulta)
             ? `PISO ${d.piso} - CONSULTA ${d.consulta}`
             : "UBICACIÓN NO DISPONIBLE";
@@ -293,7 +344,7 @@ async function buscarCitaPorRutHoy(rutLimpio) {
 
 async function confirmarLlegada() {
     try {
-        const rutLimpio = limpiarRut(rutInput?.value || "");
+        const rutLimpio = limpiarRut(obtenerValorRut());
 
         if (!rutLimpio) {
             mostrarAlerta("INGRESE SU RUT.");
@@ -394,13 +445,13 @@ async function confirmarLlegada() {
    TECLADO
 ========================= */
 function insertarEnRut(valor) {
-    if (!rutInput) return;
-    rutInput.value = `${rutInput.value}${valor}`;
+    const actual = obtenerValorRut();
+    asignarValorRut(`${actual}${valor}`);
 }
 
 function borrarUltimoRut() {
-    if (!rutInput) return;
-    rutInput.value = rutInput.value.slice(0, -1);
+    const actual = obtenerValorRut();
+    asignarValorRut(actual.slice(0, -1));
 }
 
 function inicializarTeclado() {
@@ -408,25 +459,33 @@ function inicializarTeclado() {
 
     keys.forEach((key) => {
         key.addEventListener("click", () => {
-            const value = key.dataset.value;
+            const rawValue =
+                key.dataset.value ||
+                key.getAttribute("data-value") ||
+                key.textContent ||
+                "";
 
-            if (value === "back") {
+            const value = String(rawValue).trim();
+            const valueUpper = value.toUpperCase();
+            const valueLower = value.toLowerCase();
+
+            if (valueLower === "back" || valueLower === "borrar" || value === "⌫") {
                 borrarUltimoRut();
                 return;
             }
 
-            if (value === "clear") {
+            if (valueLower === "clear" || valueLower === "limpiar" || valueUpper === "C") {
                 resetearInputRUT();
                 return;
             }
 
-            if (value === "confirm") {
+            if (valueLower === "confirm" || valueLower === "confirmar" || valueLower === "ok") {
                 confirmarLlegada();
                 return;
             }
 
-            if (value) {
-                insertarEnRut(value);
+            if (/^[0-9K]$/.test(valueUpper)) {
+                insertarEnRut(valueUpper);
             }
         });
     });
@@ -443,12 +502,35 @@ if (rutInput) {
     rutInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             confirmarLlegada();
+            return;
+        }
+
+        const teclasPermitidas = [
+            "Backspace",
+            "Delete",
+            "ArrowLeft",
+            "ArrowRight",
+            "Tab"
+        ];
+
+        if (teclasPermitidas.includes(e.key)) return;
+
+        if (!/^[0-9kK]$/.test(e.key)) {
+            e.preventDefault();
         }
     });
 
     rutInput.addEventListener("input", () => {
-        rutInput.value = soloNumerosYk(rutInput.value);
+        asignarValorRut(obtenerValorRut());
     });
+
+    if (rutInput.isContentEditable) {
+        rutInput.addEventListener("paste", (e) => {
+            e.preventDefault();
+            const texto = e.clipboardData?.getData("text") || "";
+            asignarValorRut(texto);
+        });
+    }
 }
 
 if (modal) {
@@ -470,7 +552,4 @@ if (btnCerrarModal) {
 actualizarFechaHora();
 setInterval(actualizarFechaHora, 1000);
 inicializarTeclado();
-
-if (rutInput) {
-    rutInput.focus();
-}
+enfocarRut();
