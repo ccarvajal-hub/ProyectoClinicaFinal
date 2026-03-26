@@ -429,6 +429,11 @@ h2 {
     background: linear-gradient(135deg, #d97706, #f59e0b);
 }
 
+.btn-reset {
+    background: #8a5a65;
+    color: #fff;
+}
+
 @media (max-width: 1100px) {
     .floating-buttons {
         right: 16px;

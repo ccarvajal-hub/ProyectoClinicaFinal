@@ -283,6 +283,8 @@ window.cambiarEstado = async (id, nuevo, nombre = "") => {
             updateData.tv_origen = "";
             updateData.tv_destino = "";
             updateData.tv_hora_llamado = "";
+            updateData.tv_doctor = "";
+            updateData.tv_paciente = "";
         }
 
         await updateDoc(doc(db, "agendados", id), updateData);
@@ -388,6 +390,51 @@ async function borrarTodosLosPacientes() {
     }
 }
 
+async function resetearEstadosPacientes() {
+    if (!uidDoc) {
+        alert("Aún no se ha cargado el doctor.");
+        return;
+    }
+
+    const ok = confirm("¿Resetear solo los estados de los pacientes de hoy de este doctor?");
+    if (!ok) return;
+
+    try {
+        const fechaHoy = obtenerFechaHoyChile();
+
+        const q = query(
+            collection(db, "agendados"),
+            where("doctor_id", "==", uidDoc),
+            where("fecha_turno", "==", fechaHoy)
+        );
+
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            alert("No hay pacientes para resetear.");
+            return;
+        }
+
+        for (const docSnap of snapshot.docs) {
+            await updateDoc(doc(db, "agendados", docSnap.id), {
+                estado: ESTADOS.PENDIENTE,
+                hora_llegada: "",
+                ultimo_llamado: "",
+                tv_origen: "",
+                tv_destino: "",
+                tv_hora_llamado: "",
+                tv_doctor: "",
+                tv_paciente: ""
+            });
+        }
+
+        alert("Se resetearon los estados de los pacientes.");
+    } catch (error) {
+        console.error("Error al resetear estados:", error);
+        alert("No se pudieron resetear los estados.");
+    }
+}
+
 const btnLogout = document.getElementById("btnLogout");
 if (btnLogout) {
     btnLogout.onclick = async () => {
@@ -403,10 +450,18 @@ if (btnLogout) {
         }
     };
 }
+
 const btnAgregarPacientes = document.getElementById("btnAgregarPacientes");
 if (btnAgregarPacientes) {
     btnAgregarPacientes.onclick = async () => {
         await agregarPacientesDemo();
+    };
+}
+
+const btnResetEstados = document.getElementById("btnResetEstados");
+if (btnResetEstados) {
+    btnResetEstados.onclick = async () => {
+        await resetearEstadosPacientes();
     };
 }
 
