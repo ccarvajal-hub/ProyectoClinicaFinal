@@ -360,16 +360,13 @@ async function borrarTodosLosPacientes() {
         return;
     }
 
-    const ok = confirm("¿Seguro que quieres borrar todos los pacientes de hoy de este doctor?");
+    const ok = confirm("¿Seguro que quieres borrar TODOS los pacientes de este doctor, incluyendo días anteriores?");
     if (!ok) return;
 
     try {
-        const fechaHoy = obtenerFechaHoyChile();
-
         const q = query(
             collection(db, "agendados"),
-            where("doctor_id", "==", uidDoc),
-            where("fecha_turno", "==", fechaHoy)
+            where("doctor_id", "==", uidDoc)
         );
 
         const snapshot = await getDocs(q);
@@ -383,7 +380,7 @@ async function borrarTodosLosPacientes() {
             await deleteDoc(doc(db, "agendados", docSnap.id));
         }
 
-        alert("Todos los pacientes fueron borrados.");
+        alert("Todos los pacientes de este doctor fueron borrados.");
     } catch (error) {
         console.error("Error al borrar pacientes:", error);
         alert("No se pudieron borrar los pacientes.");

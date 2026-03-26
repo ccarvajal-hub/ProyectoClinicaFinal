@@ -2,28 +2,23 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
     getAuth,
     signInWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
     getFirestore,
     doc,
     getDoc,
-    setDoc,
-    collection,
-    getDocs,
     query,
+    collection,
     where,
-    limit,
+    getDocs,
+    updateDoc,
+    setDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* =========================================================
-   MODO DESARROLLO
-   true  = muestra botones de prueba
-   false = oculta botones de prueba
-========================================================= */
-const MODO_DEV = false;
+const DEV_MODE = true;
 
 const firebaseConfig = {
     apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
@@ -40,292 +35,278 @@ const db = getFirestore(app);
 
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
-const loginBtn = document.getElementById("loginBtn");
-const errorText = document.getElementById("error-text");
-const okText = document.getElementById("ok-text");
-const btnCrearDemo = document.getElementById("btnCrearDemo");
-const btnProbarColeccion = document.getElementById("btnProbarColeccion");
-const devTools = document.getElementById("devTools");
+const btnLogin = document.getElementById("btnLogin");
+const errorMessage = document.getElementById("error-message");
+const okMessage = document.getElementById("ok-message");
 const togglePassword = document.getElementById("togglePassword");
 
-function configurarVistaSegunModo() {
-    if (!devTools) return;
+const btnModoDev = document.getElementById("btnModoDev");
+const devModal = document.getElementById("devModal");
+const btnCerrarDev = document.getElementById("btnCerrarDev");
+const devAccountButtons = document.querySelectorAll(".dev-account-btn");
 
-    if (MODO_DEV) {
-        devTools.classList.add("visible");
-    } else {
-        devTools.classList.remove("visible");
+const btnCrearDemo = document.getElementById("btnCrearDemo");
+const btnProbarColeccion = document.getElementById("btnProbarColeccion");
+
+if (!DEV_MODE) {
+    if (btnModoDev) btnModoDev.style.display = "none";
+    if (devModal) devModal.classList.add("hidden");
+}
+
+function mostrarError(msg) {
+    if (okMessage) {
+        okMessage.textContent = "";
+        okMessage.style.display = "none";
+    }
+
+    if (errorMessage) {
+        errorMessage.textContent = msg;
+        errorMessage.style.display = "block";
     }
 }
 
-function mostrarError(mensaje) {
-    okText.style.display = "none";
-    okText.textContent = "";
-    errorText.textContent = mensaje;
-    errorText.style.display = "block";
-}
+function mostrarOk(msg) {
+    if (errorMessage) {
+        errorMessage.textContent = "";
+        errorMessage.style.display = "none";
+    }
 
-function mostrarOk(mensaje) {
-    errorText.style.display = "none";
-    errorText.textContent = "";
-    okText.textContent = mensaje;
-    okText.style.display = "block";
+    if (okMessage) {
+        okMessage.textContent = msg;
+        okMessage.style.display = "block";
+    }
 }
 
 function limpiarMensajes() {
-    errorText.style.display = "none";
-    errorText.textContent = "";
-    okText.style.display = "none";
-    okText.textContent = "";
+    if (errorMessage) {
+        errorMessage.textContent = "";
+        errorMessage.style.display = "none";
+    }
+
+    if (okMessage) {
+        okMessage.textContent = "";
+        okMessage.style.display = "none";
+    }
 }
 
-function setLoading(loading) {
-    loginBtn.disabled = loading;
-    loginBtn.textContent = loading ? "Ingresando..." : "Iniciar Sesión";
-}
-
-function guardarSesionRecepcion(data) {
-    localStorage.setItem("recepcionistaSesion", JSON.stringify({
-        uid: data.uid || "",
-        nombre: data.nombre || "",
-        email: data.email || "",
-        rol: data.rol || "recepcion",
-        sede: data.sede || "",
-        box: data.box || "",
-        activo: data.activo === true
-    }));
-}
-
-async function obtenerRecepcionistaPorUID(uid) {
+async function buscarRecepcionistaPorUid(uid) {
     const ref = doc(db, "recepcionistas", uid);
     const snap = await getDoc(ref);
 
-    if (!snap.exists()) return null;
+    if (snap.exists()) {
+        return { id: snap.id, ...snap.data() };
+    }
 
-    return { id: snap.id, ...snap.data() };
+    const q = query(collection(db, "recepcionistas"), where("uid", "==", uid));
+    const qs = await getDocs(q);
+
+    if (!qs.empty) {
+        const d = qs.docs[0];
+        return { id: d.id, ...d.data() };
+    }
+
+    return null;
 }
 
-async function obtenerRecepcionistaPorEmail(emailNormalizado) {
-    const q = query(
-        collection(db, "recepcionistas"),
-        where("email_normalizado", "==", emailNormalizado),
-        limit(1)
-    );
-
-    const snap = await getDocs(q);
-
-    if (snap.empty) return null;
-
-    const d = snap.docs[0];
-    return { id: d.id, ...d.data() };
+async function actualizarUltimoLoginRecepcion(idDocumento) {
+    try {
+        await updateDoc(doc(db, "recepcionistas", idDocumento), {
+            ultimo_login: serverTimestamp()
+        });
+    } catch (error) {
+        console.warn("No se pudo actualizar ultimo_login:", error);
+    }
 }
 
-async function loginRecepcion() {
+async function validarRecepcionistaYEntrar(user) {
+    try {
+        const recepcionista = await buscarRecepcionistaPorUid(user.uid);
+
+        if (!recepcionista) {
+            await signOut(auth);
+            mostrarError("Esta cuenta no está habilitada como recepción.");
+            return;
+        }
+
+        await actualizarUltimoLoginRecepcion(recepcionista.id);
+
+        mostrarOk("Acceso correcto. Redirigiendo...");
+        window.location.href = "recepcion.html";
+    } catch (error) {
+        console.error("Error al validar recepción:", error);
+        await signOut(auth);
+        mostrarError("No se pudo validar la cuenta de recepción.");
+    }
+}
+
+async function hacerLogin() {
     limpiarMensajes();
 
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value;
+    const email = (emailInput?.value || "").trim();
+    const password = (passwordInput?.value || "").trim();
 
     if (!email || !password) {
-        mostrarError("Debes ingresar correo y contraseña.");
+        mostrarError("Ingresa correo y contraseña.");
         return;
     }
 
-    setLoading(true);
+    if (btnLogin) {
+        btnLogin.disabled = true;
+        btnLogin.textContent = "Iniciando sesión...";
+    }
 
     try {
         const cred = await signInWithEmailAndPassword(auth, email, password);
-        const user = cred.user;
-
-        let recepcionista = await obtenerRecepcionistaPorUID(user.uid);
-
-        if (!recepcionista) {
-            recepcionista = await obtenerRecepcionistaPorEmail(email);
-        }
-
-        if (!recepcionista) {
-            await signOut(auth);
-            mostrarError("Tu usuario existe en Auth, pero no está creado en la colección recepcionistas.");
-            return;
-        }
-
-        if (recepcionista.activo !== true) {
-            await signOut(auth);
-            mostrarError("Tu usuario de recepción está inactivo.");
-            return;
-        }
-
-        if (recepcionista.rol && recepcionista.rol !== "recepcion") {
-            await signOut(auth);
-            mostrarError("Este usuario no pertenece al módulo de recepción.");
-            return;
-        }
-
-        await setDoc(doc(db, "recepcionistas", user.uid), {
-            ...recepcionista,
-            uid: user.uid,
-            email: user.email || email,
-            email_normalizado: email,
-            ultimo_login: serverTimestamp()
-        }, { merge: true });
-
-        guardarSesionRecepcion({
-            ...recepcionista,
-            uid: user.uid,
-            email: user.email || email
-        });
-
-        mostrarOk("Acceso correcto. Redirigiendo...");
-
-        setTimeout(() => {
-            window.location.href = "recepcion.html";
-        }, 500);
-
+        await validarRecepcionistaYEntrar(cred.user);
     } catch (error) {
-        console.error("Error login recepción:", error);
+        console.error("Error de login:", error);
 
-        switch (error.code) {
-            case "auth/invalid-email":
-                mostrarError("El correo no tiene un formato válido.");
-                break;
-            case "auth/user-disabled":
-                mostrarError("Este usuario fue deshabilitado.");
-                break;
-            case "auth/user-not-found":
-            case "auth/wrong-password":
-            case "auth/invalid-credential":
-                mostrarError("Credenciales incorrectas.");
-                break;
-            case "auth/too-many-requests":
-                mostrarError("Demasiados intentos. Espera un momento y vuelve a probar.");
-                break;
-            default:
-                mostrarError("No fue posible iniciar sesión.");
-                break;
+        if (error.code === "auth/invalid-credential") {
+            mostrarError("Correo o contraseña incorrectos.");
+        } else if (error.code === "auth/user-not-found") {
+            mostrarError("La cuenta no existe.");
+        } else if (error.code === "auth/wrong-password") {
+            mostrarError("Contraseña incorrecta.");
+        } else if (error.code === "auth/invalid-email") {
+            mostrarError("El correo no es válido.");
+        } else {
+            mostrarError("No se pudo iniciar sesión.");
         }
     } finally {
-        setLoading(false);
+        if (btnLogin) {
+            btnLogin.disabled = false;
+            btnLogin.textContent = "Iniciar Sesión";
+        }
     }
 }
 
-async function crearRecepcionistaDemo() {
-    if (!MODO_DEV) return;
-
-    try {
-        const uidReal = prompt("Pega aquí el UID real del usuario creado en Firebase Authentication:");
-        if (!uidReal) {
-            alert("Operación cancelada. Debes ingresar un UID.");
-            return;
-        }
-
-        const uid = uidReal.trim();
-        if (!uid) {
-            alert("El UID no puede estar vacío.");
-            return;
-        }
-
-        const emailIngresado = prompt("Ingresa el correo del recepcionista:");
-        if (!emailIngresado) {
-            alert("Operación cancelada. Debes ingresar un correo.");
-            return;
-        }
-
-        const email = emailIngresado.trim().toLowerCase();
-        if (!email) {
-            alert("El correo no puede estar vacío.");
-            return;
-        }
-
-        const nombreIngresado = prompt("Ingresa el nombre visible del recepcionista:", "Recepción 1");
-        const nombre = (nombreIngresado || "Recepción 1").trim();
-
-        const sedeIngresada = prompt("Ingresa la sede:", "Principal");
-        const sede = (sedeIngresada || "Principal").trim();
-
-        const boxIngresado = prompt("Ingresa el módulo o caja:", "Recepción 1");
-        const box = (boxIngresado || "Recepción 1").trim();
-
-        await setDoc(doc(db, "recepcionistas", uid), {
-            uid: uid,
-            nombre: nombre,
-            email: email,
-            email_normalizado: email,
-            rol: "recepcion",
-            activo: true,
-            sede: sede,
-            box: box,
-            creado_en: serverTimestamp(),
-            ultimo_login: null
-        }, { merge: true });
-
-        alert(
-            "Documento de recepcionista creado correctamente.\n\n" +
-            "ID del documento: " + uid + "\n" +
-            "Email: " + email + "\n\n" +
-            "Ahora ese usuario ya puede intentar iniciar sesión."
-        );
-    } catch (error) {
-        console.error(error);
-        alert("No se pudo crear el documento del recepcionista.");
-    }
+if (btnLogin) {
+    btnLogin.addEventListener("click", hacerLogin);
 }
 
-async function probarColeccion() {
-    if (!MODO_DEV) return;
-
-    try {
-        const snap = await getDocs(collection(db, "recepcionistas"));
-        alert(`Recepcionistas encontrados: ${snap.size}`);
-    } catch (error) {
-        console.error(error);
-        alert("No se pudo leer la colección recepcionistas.");
-    }
-}
-
-function configurarMostrarOcultarPassword() {
-    if (!togglePassword) return;
-
-    togglePassword.addEventListener("click", () => {
-        const esPassword = passwordInput.type === "password";
-        passwordInput.type = esPassword ? "text" : "password";
-        togglePassword.textContent = esPassword ? "Ocultar" : "Mostrar";
-    });
-}
-
-loginBtn.addEventListener("click", loginRecepcion);
-
-[emailInput, passwordInput].forEach((input) => {
-    input.addEventListener("input", limpiarMensajes);
-    input.addEventListener("keydown", (e) => {
+if (passwordInput) {
+    passwordInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
-            loginRecepcion();
+            hacerLogin();
         }
     });
-});
+}
 
-btnCrearDemo?.addEventListener("click", crearRecepcionistaDemo);
-btnProbarColeccion?.addEventListener("click", probarColeccion);
+if (emailInput) {
+    emailInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            hacerLogin();
+        }
+    });
+}
+
+if (togglePassword && passwordInput) {
+    togglePassword.addEventListener("click", () => {
+        const mostrando = passwordInput.type === "text";
+        passwordInput.type = mostrando ? "password" : "text";
+        togglePassword.textContent = mostrando ? "Mostrar" : "Ocultar";
+    });
+}
+
+if (DEV_MODE && btnModoDev && devModal && btnCerrarDev) {
+    btnModoDev.addEventListener("click", () => {
+        limpiarMensajes();
+        devModal.classList.remove("hidden");
+    });
+
+    btnCerrarDev.addEventListener("click", () => {
+        devModal.classList.add("hidden");
+    });
+
+    devModal.addEventListener("click", (e) => {
+        if (e.target === devModal) {
+            devModal.classList.add("hidden");
+        }
+    });
+}
+
+if (DEV_MODE) {
+    devAccountButtons.forEach((button) => {
+        button.addEventListener("click", async () => {
+            const email = button.dataset.email || "";
+            const password = button.dataset.password || "";
+
+            if (emailInput) emailInput.value = email;
+            if (passwordInput) {
+                passwordInput.type = "password";
+                passwordInput.value = password;
+            }
+            if (togglePassword) {
+                togglePassword.textContent = "Mostrar";
+            }
+
+            if (devModal) {
+                devModal.classList.add("hidden");
+            }
+
+            await hacerLogin();
+        });
+    });
+}
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) return;
 
     try {
-        const recepcionista = await obtenerRecepcionistaPorUID(user.uid);
+        const recepcionista = await buscarRecepcionistaPorUid(user.uid);
 
-        if (recepcionista && recepcionista.activo === true) {
-            guardarSesionRecepcion({
-                ...recepcionista,
-                uid: user.uid,
-                email: user.email || recepcionista.email || ""
-            });
-
+        if (recepcionista) {
             window.location.href = "recepcion.html";
         }
-    } catch (e) {
-        console.error("Error verificando sesión activa:", e);
+    } catch (error) {
+        console.error("Error al revisar sesión actual:", error);
     }
 });
 
-configurarVistaSegunModo();
-configurarMostrarOcultarPassword();
-emailInput.focus();
+/* =========================
+   BOTONES DEV ANTIGUOS
+========================= */
+
+if (btnCrearDemo) {
+    btnCrearDemo.addEventListener("click", async () => {
+        try {
+            const demoUid = "recepcion-demo-1";
+
+            await setDoc(doc(db, "recepcionistas", demoUid), {
+                uid: demoUid,
+                nombre: "Recepción Demo",
+                email: "recepcion1@clinica.cl",
+                email_normalizado: "recepcion1@clinica.cl",
+                modulo: "RECEPCIÓN 1",
+                ultimo_login: null,
+                creado_en: serverTimestamp()
+            }, { merge: true });
+
+            mostrarOk("Recepcionista demo creado o actualizado correctamente.");
+        } catch (error) {
+            console.error("Error al crear recepcionista demo:", error);
+            mostrarError("No se pudo crear el recepcionista demo.");
+        }
+    });
+}
+
+if (btnProbarColeccion) {
+    btnProbarColeccion.addEventListener("click", async () => {
+        try {
+            const q = query(collection(db, "recepcionistas"));
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) {
+                mostrarError("La colección recepcionistas existe, pero no tiene documentos.");
+                return;
+            }
+
+            mostrarOk(`Colección recepcionistas OK. Documentos encontrados: ${snapshot.size}`);
+        } catch (error) {
+            console.error("Error al probar colección:", error);
+            mostrarError("No se pudo leer la colección recepcionistas.");
+        }
+    });
+}
+
+limpiarMensajes();

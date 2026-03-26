@@ -14,7 +14,7 @@
 <body>
 
     <div class="login-card">
-        <div class="login-header">            
+        <div class="login-header">
             <h1>Bienvenido</h1>
         </div>
 
@@ -43,21 +43,62 @@
             </div>
         </div>
 
-        <button class="btn-login" id="loginBtn">Iniciar Sesión</button>
+        <button class="btn-login" id="btnLogin" type="button">Iniciar Sesión</button>
 
-        <div id="error-text" class="error-msg"></div>
-        <div id="ok-text" class="ok-msg"></div>
+        <div id="error-message" class="error-msg"></div>
+        <div id="ok-message" class="ok-msg"></div>
 
         <div class="small-note">
-    Para iniciar sesión, tu usuario debe estar registrado en<br>
-    <b>FIREBASE AUTHENTICATION</b>.
-</div>
+            Para iniciar sesión, tu usuario debe estar registrado en<br>
+            <b>FIREBASE AUTHENTICATION</b>.
+        </div>
 
-    <div class="module-pill module-pill-bottom">MÓDULO RECEPCIÓN</div>
+        <div class="module-pill module-pill-bottom">MÓDULO RECEPCIÓN</div>
 
-    <div class="dev-tools" id="devTools">
-        <button class="btn-dev btn-seed" id="btnCrearDemo">Crear recepcionista</button>
-        <button class="btn-dev btn-check" id="btnProbarColeccion">Probar colección</button>
+        <div class="dev-tools" id="devTools">
+            <button class="btn-dev btn-seed" id="btnCrearDemo" type="button">Crear recepcionista</button>
+            <button class="btn-dev btn-check" id="btnProbarColeccion" type="button">Probar colección</button>
+        </div>
+    </div>
+
+    <button id="btnModoDev" type="button" class="btn-dev-floating">Modo dev</button>
+
+    <div id="devModal" class="dev-modal hidden">
+        <div class="dev-modal-content">
+            <div class="dev-modal-header">
+                <h3>Seleccionar cuenta recepción</h3>
+                <button type="button" id="btnCerrarDev" class="dev-close">×</button>
+            </div>
+
+            <div class="dev-account-list">
+                <button
+                    type="button"
+                    class="dev-account-btn"
+                    data-email="recepcion1@clinica.cl"
+                    data-password="123456"
+                >
+                    recepcion1@clinica.cl
+                </button>
+
+                <button
+                    type="button"
+                    class="dev-account-btn"
+                    data-email="recepcion2@clinica.cl"
+                    data-password="123456"
+                >
+                    recepcion2@clinica.cl
+                </button>
+
+                <button
+                    type="button"
+                    class="dev-account-btn"
+                    data-email="recepcion3@clinica.cl"
+                    data-password="123456"
+                >
+                    recepcion3@clinica.cl
+                </button>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="login-recepcion.js"></script>
