@@ -598,22 +598,28 @@ async function confirmarLlegada() {
 function actualizarFechaHora() {
     const ahora = new Date();
 
+    const fechaLarga = ahora.toLocaleDateString("es-CL", {
+        timeZone: CL_TIMEZONE,
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+    });
+
+    const hora24 = ahora.toLocaleTimeString("es-CL", {
+        timeZone: CL_TIMEZONE,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+    });
+
     if (fechaActualEl) {
-        fechaActualEl.textContent = ahora.toLocaleDateString("es-CL", {
-            timeZone: CL_TIMEZONE,
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-        });
+        fechaActualEl.textContent =
+            fechaLarga.charAt(0).toUpperCase() + fechaLarga.slice(1);
     }
 
     if (horaActualEl) {
-        horaActualEl.textContent = ahora.toLocaleTimeString("es-CL", {
-            timeZone: CL_TIMEZONE,
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-        });
+        horaActualEl.textContent = hora24;
     }
 }
 
