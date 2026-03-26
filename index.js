@@ -447,7 +447,7 @@ function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
     const ubicacionFmt = (ubicacion || "---").toUpperCase();
 
     const lineas = [
-        "CLINICA",
+        "CLINICA CEMO",
         "----------------------",
         "LLEGADA CONFIRMADA",
         "----------------------",
