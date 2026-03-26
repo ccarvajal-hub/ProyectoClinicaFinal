@@ -568,7 +568,7 @@ input {
     margin-top: auto;
     padding-top: 0;
     gap: 16px;
-    transform: translateY(-24px);
+    transform: translateY(-14px);
 }
 
     .hero-subtitle {
@@ -577,10 +577,10 @@ input {
     }
 
     .checkin-panel {
-        margin-bottom: auto;
-        gap: 24px;
-        padding-top: 40px;
-    }
+    margin-bottom: auto;
+    gap: 24px;
+    padding-top: 14px;
+}
 
     .rut-display-wrap {
         gap: 14px;
