@@ -279,14 +279,6 @@ window.cambiarEstado = async (id, nuevo, nombre = "") => {
             updateData.tv_paciente = nombre || "";
         }
 
-        if (nuevo === ESTADOS.ATENDIDO) {
-            updateData.tv_origen = "";
-            updateData.tv_destino = "";
-            updateData.tv_hora_llamado = "";
-            updateData.tv_doctor = "";
-            updateData.tv_paciente = "";
-        }
-
         await updateDoc(doc(db, "agendados", id), updateData);
     } catch (e) {
         console.error("Error al cambiar estado:", e);
@@ -414,15 +406,25 @@ async function resetearEstadosPacientes() {
 
         for (const docSnap of snapshot.docs) {
             await updateDoc(doc(db, "agendados", docSnap.id), {
-                estado: ESTADOS.PENDIENTE,
-                hora_llegada: "",
-                ultimo_llamado: "",
-                tv_origen: "",
-                tv_destino: "",
-                tv_hora_llamado: "",
-                tv_doctor: "",
-                tv_paciente: ""
-            });
+    estado: ESTADOS.PENDIENTE,
+    hora_llegada: "",
+    ultimo_llamado: "",
+    tv_origen: "",
+    tv_destino: "",
+    tv_hora_llamado: "",
+    tv_doctor: "",
+    tv_paciente: "",
+
+    registro_manual_recepcion: false,
+    tipo_pago: null,
+    hora_pago_manual_activado: null,
+    hora_pago: null,
+
+    recepcion_id: "",
+    recepcion_numero: null,
+    recepcion_nombre: "",
+    hora_llamado_recepcion: null
+});
         }
 
         alert("Se resetearon los estados de los pacientes.");

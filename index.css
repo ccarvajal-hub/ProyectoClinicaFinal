@@ -556,8 +556,7 @@ input {
     .topbar-right {
         justify-content: flex-end;
     }
-
-    
+}
 
 @media (max-width: 640px) {
     .app-shell {
@@ -582,7 +581,6 @@ input {
     .datetime-box {
         padding-left: 12px;
     }
-}
 
     .datetime-row {
         justify-content: flex-start;
