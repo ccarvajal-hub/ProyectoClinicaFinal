@@ -161,15 +161,15 @@ input {
     gap: 10px;
     color: #bcbcbc;
     font-family: "Nunito", "Inter", sans-serif;
-    font-size: clamp(1,13rem, 1vw, 1rem);
-    font-weight: 650;
+    font-size: clamp(1.2rem, 1.45vw, 1.4rem);
+    font-weight: 700;
     white-space: nowrap;
-    line-height: 1,05;
+    line-height: 1;
 }
 
 .datetime-icon {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     color: #a9a9a9;
     display: inline-flex;
     align-items: center;
@@ -327,10 +327,14 @@ input {
     transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
     box-shadow: none;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .key:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
 }
 
 .key:hover {
@@ -381,6 +385,10 @@ input {
     box-shadow: none;
     transition: transform 0.08s ease, opacity 0.15s ease, background 0.15s ease;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .btn-confirm:active {
@@ -390,6 +398,13 @@ input {
 .btn-confirm:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+#btnBorrar {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .btn-arrow {
@@ -565,11 +580,11 @@ input {
     }
 
     .hero-block {
-    margin-top: auto;
-    padding-top: 0;
-    gap: 16px;
-    transform: translateY(-30px);
-}
+        margin-top: auto;
+        padding-top: 0;
+        gap: 16px;
+        transform: translateY(-30px);
+    }
 
     .hero-subtitle {
         font-size: 1.22rem;
@@ -577,10 +592,10 @@ input {
     }
 
     .checkin-panel {
-    margin-bottom: auto;
-    gap: 24px;
-    padding-top: 14px;
-}
+        margin-bottom: auto;
+        gap: 24px;
+        padding-top: 14px;
+    }
 
     .rut-display-wrap {
         gap: 14px;
@@ -665,12 +680,12 @@ input {
 
     .datetime-row {
         justify-content: flex-start;
-        font-size: 0.96rem;
+        font-size: 1.08rem;
     }
 
     .datetime-icon {
-        width: 17px;
-        height: 17px;
+        width: 20px;
+        height: 20px;
     }
 
     .brand-mark {

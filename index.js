@@ -51,11 +51,91 @@ let resetTimer = null;
 let modalTimer = null;
 let alertTimer = null;
 let procesandoConfirmacion = false;
+let uiAudioCtx = null;
 
 const MODAL_AUTO_CLOSE_MS = 12000;
 const ALERT_AUTO_CLOSE_MS = 8000;
 const INPUT_AUTO_RESET_MS = 10000;
 
+/* =========================
+   SONIDOS UI
+========================= */
+function getUiAudioContext() {
+    try {
+        if (!uiAudioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return null;
+            uiAudioCtx = new AudioContextClass();
+        }
+
+        if (uiAudioCtx.state === "suspended") {
+            uiAudioCtx.resume().catch(() => {});
+        }
+
+        return uiAudioCtx;
+    } catch (error) {
+        console.warn("No se pudo crear AudioContext:", error);
+        return null;
+    }
+}
+
+function reproducirBeep({
+    frequency = 880,
+    type = "sine",
+    duration = 0.08,
+    volume = 0.03,
+    endFrequency = null
+} = {}) {
+    try {
+        const ctx = getUiAudioContext();
+        if (!ctx) return;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+
+        if (typeof endFrequency === "number") {
+            osc.frequency.linearRampToValueAtTime(endFrequency, ctx.currentTime + duration);
+        }
+
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(volume, ctx.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + duration + 0.01);
+    } catch (error) {
+        console.warn("No se pudo reproducir beep:", error);
+    }
+}
+
+function reproducirSonidoTecla() {
+    reproducirBeep({
+        frequency: 900,
+        type: "sine",
+        duration: 0.07,
+        volume: 0.03
+    });
+}
+
+function reproducirSonidoConfirmar() {
+    reproducirBeep({
+        frequency: 720,
+        endFrequency: 980,
+        type: "triangle",
+        duration: 0.14,
+        volume: 0.05
+    });
+}
+
+/* =========================
+   HELPERS RUT / FECHA
+========================= */
 function limpiarRUT(rut) {
     return String(rut || "").replace(/[^0-9kK]/g, "").toUpperCase();
 }
@@ -198,6 +278,9 @@ function seleccionarCitaCorrecta(docs) {
     return citasValidas[0].doc;
 }
 
+/* =========================
+   TIMERS / ALERTAS
+========================= */
 function cancelarResetInput() {
     if (resetTimer) {
         clearTimeout(resetTimer);
@@ -274,6 +357,9 @@ function mostrarAlerta(mensaje) {
     }, ALERT_AUTO_CLOSE_MS);
 }
 
+/* =========================
+   DOCTOR
+========================= */
 async function obtenerDatosDoctor(doctorId) {
     let nombreDoctorMostrar = "Doctor asignado";
     let ubicacionMostrar = "Por confirmar";
@@ -285,7 +371,6 @@ async function obtenerDatosDoctor(doctorId) {
     const idBuscado = String(doctorId).trim();
 
     try {
-        // 1) Intentar por ID del documento
         const docRefDirecto = doc(db, "doctores", idBuscado);
         const docSnapDirecto = await getDoc(docRefDirecto);
 
@@ -308,7 +393,6 @@ async function obtenerDatosDoctor(doctorId) {
             return { nombreDoctorMostrar, ubicacionMostrar };
         }
 
-        // 2) Intentar buscar por campos internos
         const qDoctores = query(collection(db, "doctores"));
         const querySnapshot = await getDocs(qDoctores);
 
@@ -355,6 +439,9 @@ async function obtenerDatosDoctor(doctorId) {
     }
 }
 
+/* =========================
+   MODAL
+========================= */
 function abrirModal({
     titulo,
     tipo,
@@ -393,6 +480,9 @@ function cerrarModal() {
     resetearInputRUT();
 }
 
+/* =========================
+   FIREBASE BUSQUEDA
+========================= */
 async function buscarCitasHoyPorRut(rutLimpio, fechaHoy) {
     const resultados = [];
     const idsVistos = new Set();
@@ -423,6 +513,9 @@ async function buscarCitasHoyPorRut(rutLimpio, fechaHoy) {
     return resultados;
 }
 
+/* =========================
+   TECLADO
+========================= */
 function agregarCaracterAlRut(caracter) {
     const limpioActual = limpiarRUT(input.value);
 
@@ -441,13 +534,16 @@ function borrarUltimoCaracterRut() {
     programarResetInput();
 }
 
+/* =========================
+   IMPRESION
+========================= */
 function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
     const nombreFmt = (nombre || "---").toUpperCase();
     const doctorFmt = (doctor || "---").toUpperCase();
     const ubicacionFmt = (ubicacion || "---").toUpperCase();
 
     const lineas = [
-        "CLINICA CEMO",
+        "CLINICA",
         "----------------------",
         "LLEGADA CONFIRMADA",
         "----------------------",
@@ -481,8 +577,12 @@ function imprimirTicketSiExisteAndroid(datosTicket) {
     }
 }
 
+/* =========================
+   BOTON
+========================= */
 function setBotonProcesando(estaProcesando) {
     btn.disabled = estaProcesando;
+    btnBorrar.disabled = estaProcesando;
 
     if (estaProcesando) {
         btn.innerHTML = "<span>Procesando...</span>";
@@ -494,6 +594,9 @@ function setBotonProcesando(estaProcesando) {
     }
 }
 
+/* =========================
+   FLUJO PRINCIPAL
+========================= */
 async function confirmarLlegada() {
     if (procesandoConfirmacion) return;
 
@@ -606,6 +709,9 @@ async function confirmarLlegada() {
     }
 }
 
+/* =========================
+   FECHA / HORA
+========================= */
 function actualizarFechaHora() {
     const ahora = new Date();
 
@@ -634,25 +740,45 @@ function actualizarFechaHora() {
     }
 }
 
+/* =========================
+   GESTOS
+========================= */
 function bloquearGestosNoDeseados() {
-    document.addEventListener("gesturestart", (e) => e.preventDefault());
-    document.addEventListener("dblclick", (e) => e.preventDefault());
+    document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
+    document.addEventListener("dblclick", (e) => e.preventDefault(), { passive: false });
 }
 
+/* =========================
+   EVENTOS
+========================= */
 keypadButtons.forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+
         const key = button.dataset.key;
         if (!key || btn.disabled) return;
+
+        reproducirSonidoTecla();
         agregarCaracterAlRut(key);
     });
 });
 
-btnBorrar.addEventListener("click", () => {
+btnBorrar.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
     if (btn.disabled) return;
+
+    reproducirSonidoTecla();
     borrarUltimoCaracterRut();
 });
 
-btn.addEventListener("click", confirmarLlegada);
+btn.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    if (btn.disabled) return;
+
+    reproducirSonidoConfirmar();
+    confirmarLlegada();
+});
+
 btnCerrarModal.addEventListener("click", cerrarModal);
 
 modal.addEventListener("click", (event) => {
