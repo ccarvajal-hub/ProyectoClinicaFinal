@@ -569,9 +569,18 @@ function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
 function imprimirTicketSiExisteAndroid(datosTicket) {
     try {
         if (window.Android && typeof window.Android.printTicket === "function") {
-            const ticket = construirTextoTicket(datosTicket);
-            window.Android.printTicket(ticket);
-        }
+  const ticketText = `CLINICA SAN ANDRES
+PACIENTE: ${nombrePaciente}
+DOCTOR: ${nombreDoctor}
+UBICACION: ${ubicacion}
+FECHA: ${fecha}
+HORA: ${hora}
+POR FAVOR,
+DIRIJASE A RECEPCION
+ESPERE SU LLAMADO`;
+
+  window.Android.printTicket(ticketText);
+}
     } catch (error) {
         console.error("Error al imprimir ticket:", error);
     }
