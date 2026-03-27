@@ -23,7 +23,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.03.27.03";
+const APP_VERSION = "Totem v2026.03.27.04";
 
 const input = document.getElementById("rutInput");
 const btn = document.getElementById("btnConfirmar");
@@ -549,31 +549,29 @@ function borrarUltimoCaracterRut() {
    IMPRESION
 ========================= */
 function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
-    const nombreFmt = (nombre || "---").toUpperCase();
-    const doctorFmt = (doctor || "---").toUpperCase();
-    const ubicacionFmt = (ubicacion || "---").toUpperCase();
+  const nombreFmt = (nombre || "---").toUpperCase();
+  const doctorFmt = (doctor || "---").toUpperCase();
+  const ubicacionFmt = (ubicacion || "---").toUpperCase();
+  const horaFmt = hora || "--:--";
+  const rutFmt = rut || "---";
 
-    const lineas = [
-        "CLINICA CEMO",
-        "",
-        "COMPROBANTE DE LLEGADA",
-        "----------------------",
-        "",
-        `PACIENTE: ${nombreFmt}`,
-        `RUT: ${rut || "---"}`,
-        "",
-        `DOCTOR: ${doctorFmt}`,
-        `UBICACION: ${ubicacionFmt}`,
-        "",
-        "",
-        "----------------------",
-        `HORA: ${hora || "--:--"}`,
-        "",
-        "POR FAVOR DIRIJASE A RECEPCION",
-        "ESPERE SU LLAMADO"
-    ];
+  const textoTicket = `CLINICA CEMO
+------------------------------
 
-    return lineas.join("\n");
+HORA: ${horaFmt}
+
+LLEGADA CONFIRMADA
+------------------------------
+${nombreFmt}
+RUT: ${rutFmt}
+DOCTOR: ${doctorFmt}
+UBICACION: ${ubicacionFmt}
+------------------------------
+POR FAVOR, DIRIJASE A RECEPCION
+ESPERE SU LLAMADO
+------------------------------`;
+
+  return textoTicket;
 }
 
 function imprimirTicketSiExisteAndroid(datosTicket) {
