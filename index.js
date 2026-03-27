@@ -360,6 +360,25 @@ function mostrarAlerta(mensaje) {
 /* =========================
    DOCTOR
 ========================= */
+function construirUbicacionDoctor(piso, consulta) {
+    const pisoTexto = String(piso ?? "").trim();
+    const consultaTexto = String(consulta ?? "").trim();
+
+    if (pisoTexto && consultaTexto) {
+        return `Piso ${pisoTexto} - Consulta ${consultaTexto}`;
+    }
+
+    if (pisoTexto) {
+        return `Piso ${pisoTexto}`;
+    }
+
+    if (consultaTexto) {
+        return `Consulta ${consultaTexto}`;
+    }
+
+    return "Por confirmar";
+}
+
 async function obtenerDatosDoctor(doctorId) {
     let nombreDoctorMostrar = "Doctor asignado";
     let ubicacionMostrar = "Por confirmar";
@@ -383,12 +402,7 @@ async function obtenerDatosDoctor(doctorId) {
                 dData.displayName ||
                 "Doctor asignado";
 
-            const piso = dData.piso ?? "";
-            const consulta = dData.consulta ?? "";
-
-            if (piso || consulta) {
-                ubicacionMostrar = `Piso ${piso} - Consulta ${consulta}`.trim();
-            }
+            ubicacionMostrar = construirUbicacionDoctor(dData.piso, dData.consulta);
 
             return { nombreDoctorMostrar, ubicacionMostrar };
         }
@@ -424,12 +438,10 @@ async function obtenerDatosDoctor(doctorId) {
                 doctorEncontrado.displayName ||
                 "Doctor asignado";
 
-            const piso = doctorEncontrado.piso ?? "";
-            const consulta = doctorEncontrado.consulta ?? "";
-
-            if (piso || consulta) {
-                ubicacionMostrar = `Piso ${piso} - Consulta ${consulta}`.trim();
-            }
+            ubicacionMostrar = construirUbicacionDoctor(
+                doctorEncontrado.piso,
+                doctorEncontrado.consulta
+            );
         }
 
         return { nombreDoctorMostrar, ubicacionMostrar };
@@ -569,18 +581,11 @@ function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
 function imprimirTicketSiExisteAndroid(datosTicket) {
     try {
         if (window.Android && typeof window.Android.printTicket === "function") {
-  const ticketText = `CLINICA CEMO
-PACIENTE: ${nombrePaciente}
-DOCTOR: ${nombreDoctor}
-UBICACION: ${ubicacion}
-FECHA: ${fecha}
-HORA: ${hora}
-POR FAVOR,
-DIRIJASE A RECEPCION
-ESPERE SU LLAMADO`;
-
-  window.Android.printTicket(ticketText);
-}
+            const ticketText = construirTextoTicket(datosTicket);
+            window.Android.printTicket(ticketText);
+        } else {
+            console.warn("Android.printTicket no está disponible.");
+        }
     } catch (error) {
         console.error("Error al imprimir ticket:", error);
     }
