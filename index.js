@@ -23,6 +23,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
+const APP_VERSION = "Totem v2026.03.27.03";
 
 const input = document.getElementById("rutInput");
 const btn = document.getElementById("btnConfirmar");
@@ -43,9 +44,6 @@ const customAlertText = document.getElementById("customAlertText");
 
 const modalSound = document.getElementById("modalSound");
 const alertSound = document.getElementById("alertSound");
-
-const fechaActualEl = document.getElementById("fechaActual");
-const horaActualEl = document.getElementById("horaActual");
 
 let resetTimer = null;
 let modalTimer = null;
@@ -304,12 +302,13 @@ function cancelarAutoCierreAlert() {
 
 function resetearInputRUT() {
     cancelarResetInput();
-    input.value = "";
+    if (input) input.value = "";
 }
 
 function programarResetInput() {
     cancelarResetInput();
 
+    if (!input || !btn || !modal) return;
     if (!input.value.trim()) return;
     if (btn.disabled) return;
     if (modal.style.display === "flex") return;
@@ -341,11 +340,13 @@ function reproducirSonidoAlerta() {
 
 function ocultarAlerta() {
     cancelarAutoCierreAlert();
-    customAlert.classList.remove("show");
+    if (customAlert) customAlert.classList.remove("show");
 }
 
 function mostrarAlerta(mensaje) {
     cancelarAutoCierreAlert();
+
+    if (!customAlert || !customAlertText) return;
 
     customAlertText.textContent = mensaje;
     customAlert.classList.add("show");
@@ -364,17 +365,9 @@ function construirUbicacionDoctor(piso, consulta) {
     const pisoTexto = String(piso ?? "").trim();
     const consultaTexto = String(consulta ?? "").trim();
 
-    if (pisoTexto && consultaTexto) {
-        return `Piso ${pisoTexto} - Consulta ${consultaTexto}`;
-    }
-
-    if (pisoTexto) {
-        return `Piso ${pisoTexto}`;
-    }
-
-    if (consultaTexto) {
-        return `Consulta ${consultaTexto}`;
-    }
+    if (pisoTexto && consultaTexto) return `Piso ${pisoTexto} - Consulta ${consultaTexto}`;
+    if (pisoTexto) return `Piso ${pisoTexto}`;
+    if (consultaTexto) return `Consulta ${consultaTexto}`;
 
     return "Por confirmar";
 }
@@ -466,16 +459,18 @@ function abrirModal({
     cancelarAutoCierreModal();
     ocultarAlerta();
 
-    modalTitulo.textContent = titulo;
-    modalTitulo.className = tipo;
+    if (modalTitulo) {
+        modalTitulo.textContent = titulo;
+        modalTitulo.className = tipo;
+    }
 
-    resNombre.innerText = nombre || "---";
-    resDoctor.innerText = doctor || "Doctor asignado";
-    resUbicacion.innerText = (ubicacion || "---").toUpperCase();
-    modalMensaje.textContent = (mensaje || "").toUpperCase();
+    if (resNombre) resNombre.innerText = nombre || "---";
+    if (resDoctor) resDoctor.innerText = doctor || "Doctor asignado";
+    if (resUbicacion) resUbicacion.innerText = ubicacion || "---";
+    if (modalMensaje) modalMensaje.textContent = mensaje || "";
 
-    modal.style.display = "flex";
-    input.value = "";
+    if (modal) modal.style.display = "flex";
+    if (input) input.value = "";
 
     reproducirSonidoModal();
 
@@ -488,7 +483,7 @@ function abrirModal({
 
 function cerrarModal() {
     cancelarAutoCierreModal();
-    modal.style.display = "none";
+    if (modal) modal.style.display = "none";
     resetearInputRUT();
 }
 
@@ -529,6 +524,8 @@ async function buscarCitasHoyPorRut(rutLimpio, fechaHoy) {
    TECLADO
 ========================= */
 function agregarCaracterAlRut(caracter) {
+    if (!input) return;
+
     const limpioActual = limpiarRUT(input.value);
 
     if (limpioActual.length >= 9) return;
@@ -538,6 +535,8 @@ function agregarCaracterAlRut(caracter) {
 }
 
 function borrarUltimoCaracterRut() {
+    if (!input) return;
+
     const limpioActual = limpiarRUT(input.value);
 
     if (!limpioActual.length) return;
@@ -570,7 +569,7 @@ function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
     ];
 
     return lineas.join("\n");
-}  return lineas.join("\n");
+}
 
 function imprimirTicketSiExisteAndroid(datosTicket) {
     try {
@@ -589,16 +588,15 @@ function imprimirTicketSiExisteAndroid(datosTicket) {
    BOTON
 ========================= */
 function setBotonProcesando(estaProcesando) {
+    if (!btn || !btnBorrar) return;
+
     btn.disabled = estaProcesando;
     btnBorrar.disabled = estaProcesando;
 
     if (estaProcesando) {
-        btn.innerHTML = "<span>Procesando...</span>";
+        btn.textContent = "Procesando...";
     } else {
-        btn.innerHTML = `
-            <span>Confirmar llegada</span>
-            <span class="btn-arrow">→</span>
-        `;
+        btn.textContent = "Confirmar llegada";
     }
 }
 
@@ -606,7 +604,7 @@ function setBotonProcesando(estaProcesando) {
    FLUJO PRINCIPAL
 ========================= */
 async function confirmarLlegada() {
-    if (procesandoConfirmacion) return;
+    if (procesandoConfirmacion || !input) return;
 
     cancelarResetInput();
     ocultarAlerta();
@@ -694,7 +692,7 @@ async function confirmarLlegada() {
         abrirModal({
             titulo: "LLEGADA CONFIRMADA",
             tipo: "success",
-            mensaje: "POR FAVOR, DIRÍJASE A RECEPCIÓN.",
+            mensaje: "Por favor, diríjase a recepción.",
             nombre: p.nombre,
             doctor: nombreDoctorMostrar,
             ubicacion: ubicacionMostrar
@@ -718,33 +716,61 @@ async function confirmarLlegada() {
 }
 
 /* =========================
-   FECHA / HORA
+   FECHA / HORA + VERSION
 ========================= */
+function asegurarVersionEnPantalla() {
+    const versionEl = document.getElementById("appVersion");
+    if (!versionEl) return;
+
+    versionEl.textContent = APP_VERSION;
+}
+
 function actualizarFechaHora() {
+    const fechaEl = document.getElementById("fechaActual");
+    const horaEl = document.getElementById("horaActual");
+
+    if (!fechaEl || !horaEl) return;
+
     const ahora = new Date();
 
-    const fechaLarga = ahora.toLocaleDateString("es-CL", {
-        timeZone: CL_TIMEZONE,
-        weekday: "long",
-        day: "2-digit",
-        month: "long",
-        year: "numeric"
-    });
+    try {
+        const fechaLarga = ahora.toLocaleDateString("es-CL", {
+            timeZone: CL_TIMEZONE,
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        });
 
-    const hora24 = ahora.toLocaleTimeString("es-CL", {
-        timeZone: CL_TIMEZONE,
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false
-    });
+        const hora24 = ahora.toLocaleTimeString("es-CL", {
+            timeZone: CL_TIMEZONE,
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false
+        });
 
-    if (fechaActualEl) {
-        fechaActualEl.textContent =
+        fechaEl.textContent =
             fechaLarga.charAt(0).toUpperCase() + fechaLarga.slice(1);
-    }
 
-    if (horaActualEl) {
-        horaActualEl.textContent = hora24;
+        horaEl.textContent = hora24;
+    } catch (error) {
+        const fechaLarga = ahora.toLocaleDateString("es-CL", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        });
+
+        const hora24 = ahora.toLocaleTimeString("es-CL", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false
+        });
+
+        fechaEl.textContent =
+            fechaLarga.charAt(0).toUpperCase() + fechaLarga.slice(1);
+
+        horaEl.textContent = hora24;
     }
 }
 
@@ -764,39 +790,47 @@ keypadButtons.forEach((button) => {
         event.preventDefault();
 
         const key = button.dataset.key;
-        if (!key || btn.disabled) return;
+        if (!key || (btn && btn.disabled)) return;
 
         reproducirSonidoTecla();
         agregarCaracterAlRut(key);
     });
 });
 
-btnBorrar.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-    if (btn.disabled) return;
+if (btnBorrar) {
+    btnBorrar.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        if (btn && btn.disabled) return;
 
-    reproducirSonidoTecla();
-    borrarUltimoCaracterRut();
-});
+        reproducirSonidoTecla();
+        borrarUltimoCaracterRut();
+    });
+}
 
-btn.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-    if (btn.disabled) return;
+if (btn) {
+    btn.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        if (btn.disabled) return;
 
-    reproducirSonidoConfirmar();
-    confirmarLlegada();
-});
+        reproducirSonidoConfirmar();
+        confirmarLlegada();
+    });
+}
 
-btnCerrarModal.addEventListener("click", cerrarModal);
+if (btnCerrarModal) {
+    btnCerrarModal.addEventListener("click", cerrarModal);
+}
 
-modal.addEventListener("click", (event) => {
-    if (event.target === modal) {
-        cerrarModal();
-    }
-});
+if (modal) {
+    modal.addEventListener("click", (event) => {
+        if (event.target === modal) {
+            cerrarModal();
+        }
+    });
+}
 
 document.addEventListener("keydown", (event) => {
-    if (btn.disabled) return;
+    if (btn && btn.disabled) return;
 
     if (/^[0-9]$/.test(event.key)) {
         event.preventDefault();
@@ -821,15 +855,19 @@ document.addEventListener("keydown", (event) => {
         confirmarLlegada();
     }
 
-    if (event.key === "Escape" && modal.style.display === "flex") {
+    if (event.key === "Escape" && modal && modal.style.display === "flex") {
         event.preventDefault();
         cerrarModal();
     }
 });
 
-window.addEventListener("load", () => {
+document.addEventListener("DOMContentLoaded", () => {
+    asegurarVersionEnPantalla();
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
+});
+
+window.addEventListener("load", () => {
     bloquearGestosNoDeseados();
     resetearInputRUT();
 });
