@@ -569,7 +569,7 @@ function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
 function imprimirTicketSiExisteAndroid(datosTicket) {
     try {
         if (window.Android && typeof window.Android.printTicket === "function") {
-  const ticketText = `CLINICA SAN ANDRES
+  const ticketText = `CLINICA CEMO
 PACIENTE: ${nombrePaciente}
 DOCTOR: ${nombreDoctor}
 UBICACION: ${ubicacion}
