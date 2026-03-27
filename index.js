@@ -558,13 +558,18 @@ function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
         "",
         "COMPROBANTE DE LLEGADA",
         "----------------------",
+        "",
         `PACIENTE: ${nombreFmt}`,
         `RUT: ${rut || "---"}`,
+        "",
         `DOCTOR: ${doctorFmt}`,
         `UBICACION: ${ubicacionFmt}`,
-        `HORA: ${hora || "--:--"}`,
+        "",
+        "",
         "----------------------",
-        "POR FAVOR, DIRIJASE A RECEPCION",
+        `HORA: ${hora || "--:--"}`,
+        "",
+        "POR FAVOR DIRIJASE A RECEPCION",
         "ESPERE SU LLAMADO"
     ];
 
