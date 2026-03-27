@@ -544,7 +544,7 @@ function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
 
     const lineas = [
         "CLINICA CEMO",
-        "----------------------",
+        "",
         "LLEGADA CONFIRMADA",
         "----------------------",
         "PACIENTE:",
