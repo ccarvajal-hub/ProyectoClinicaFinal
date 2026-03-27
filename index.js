@@ -557,26 +557,20 @@ function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
     const lineas = [
         "CLINICA CEMO",
         "",
-        "LLEGADA CONFIRMADA",
+        "COMPROBANTE DE LLEGADA",
         "----------------------",
-        "PACIENTE:",
-        `${nombreFmt}`,
-        "",
+        `PACIENTE: ${nombreFmt}`,
         `RUT: ${rut || "---"}`,
-        "",
-        "DOCTOR:",
-        `${doctorFmt}`,
-        "",
-        "UBICACION:",
-        `${ubicacionFmt}`,
-        "",
+        `DOCTOR: ${doctorFmt}`,
+        `UBICACION: ${ubicacionFmt}`,
         `HORA: ${hora || "--:--"}`,
         "----------------------",
-        "POR FAVOR, DIRIJASE A RECEPCION"
+        "POR FAVOR, DIRIJASE A RECEPCION",
+        "ESPERE SU LLAMADO"
     ];
 
     return lineas.join("\n");
-}
+}  return lineas.join("\n");
 
 function imprimirTicketSiExisteAndroid(datosTicket) {
     try {
