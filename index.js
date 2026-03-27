@@ -549,28 +549,61 @@ function borrarUltimoCaracterRut() {
    IMPRESION
 ========================= */
 function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
+    const ANCHO = 32;
+
     const nombreFmt = (nombre || "---").toUpperCase();
     const doctorFmt = (doctor || "---").toUpperCase();
     const ubicacionFmt = (ubicacion || "---").toUpperCase();
+    const rutFmt = rut || "---";
+    const horaFmt = hora || "--:--";
+
+    function centrarLinea(texto = "") {
+        const t = String(texto);
+        if (!t) return "";
+        if (t.length >= ANCHO) return t;
+        const espacios = Math.floor((ANCHO - t.length) / 2);
+        return " ".repeat(espacios) + t;
+    }
+
+    function cortarLinea(texto = "", ancho = ANCHO) {
+        const t = String(texto);
+        if (t.length <= ancho) return [t];
+
+        const palabras = t.split(" ");
+        const lineas = [];
+        let actual = "";
+
+        for (const palabra of palabras) {
+            const candidata = actual ? `${actual} ${palabra}` : palabra;
+            if (candidata.length <= ancho) {
+                actual = candidata;
+            } else {
+                if (actual) lineas.push(actual);
+                actual = palabra;
+            }
+        }
+
+        if (actual) lineas.push(actual);
+        return lineas;
+    }
 
     const lineas = [
-        "CLINICA CEMO",
+        centrarLinea("CLINICA CEMO"),
         "",
-        "COMPROBANTE DE LLEGADA",
-        "----------------------",
+        centrarLinea("COMPROBANTE DE LLEGADA"),
+        centrarLinea("----------------------"),
         "",
-        `PACIENTE: ${nombreFmt}`,
-        `RUT: ${rut || "---"}`,
+        ...cortarLinea(`PACIENTE: ${nombreFmt}`).map(centrarLinea),
+        centrarLinea(`RUT: ${rutFmt}`),
         "",
-        `DOCTOR: ${doctorFmt}`,
-        `UBICACION: ${ubicacionFmt}`,
+        ...cortarLinea(`DOCTOR: ${doctorFmt}`).map(centrarLinea),
+        ...cortarLinea(`UBICACION: ${ubicacionFmt}`).map(centrarLinea),
         "",
+        centrarLinea("----------------------"),
+        centrarLinea(`HORA: ${horaFmt}`),
         "",
-        "----------------------",
-        `HORA: ${hora || "--:--"}`,
-        "",
-        "POR FAVOR DIRIJASE A RECEPCION",
-        "ESPERE SU LLAMADO"
+        centrarLinea("POR FAVOR DIRIJASE A RECEPCION"),
+        centrarLinea("ESPERE SU LLAMADO")
     ];
 
     return lineas.join("\n");
