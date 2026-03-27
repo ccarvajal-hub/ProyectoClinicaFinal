@@ -23,7 +23,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.03.27.04";
+const APP_VERSION = "Totem v2026.03.27.05";
 
 const input = document.getElementById("rutInput");
 const btn = document.getElementById("btnConfirmar");
@@ -562,7 +562,7 @@ HORA: ${horaFmt}
 
 LLEGADA CONFIRMADA
 ------------------------------
-${nombreFmt}
+PACIENTE: ${nombreFmt}
 RUT: ${rutFmt}
 DOCTOR: ${doctorFmt}
 UBICACION: ${ubicacionFmt}
