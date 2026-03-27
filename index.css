@@ -142,7 +142,7 @@ input {
     justify-content: flex-end;
     flex: 0 0 auto;
     margin-left: auto;
-    margin-right: -155px;
+    margin-right: -1px;
 }
 
 .datetime-box {
