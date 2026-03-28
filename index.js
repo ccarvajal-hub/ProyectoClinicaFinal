@@ -599,7 +599,7 @@ function setBotonProcesando(estaProcesando) {
     if (estaProcesando) {
         btn.textContent = "Procesando...";
     } else {
-        btn.textContent = "Confirmar llegada";
+        btn.textContent = "CONFIRMAR LLEGADA";
     }
 }
 

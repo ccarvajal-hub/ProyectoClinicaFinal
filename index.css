@@ -164,7 +164,7 @@ input {
     color: #a9a9a9;
     font-family: "Urbanist", sans-serif;
     font-size: clamp(1.1rem, 1.1vw, 1.1rem);
-    font-weight: 550;
+    font-weight: 520;
     
     white-space: nowrap;
     line-height: 1;
@@ -377,7 +377,7 @@ input {
     color: var(--text-main);
     font-family: "Urbanist", sans-serif;
     font-size: clamp(1.22rem, 2vw, 1.52rem);
-    font-weight: 800;
+    font-weight: 700;
     
     letter-spacing: 0.2px;
     display: inline-flex;
