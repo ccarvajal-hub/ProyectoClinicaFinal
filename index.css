@@ -194,7 +194,7 @@ input {
     flex-direction: column;
     align-items: center;
     gap: clamp(14px, 2vh, 20px);
-    transform: translateY(-100px);
+    transform: translateY(-20px);
 }
 
 .hero-main-title {
@@ -219,7 +219,6 @@ input {
     font-family: "Urbanist", sans-serif;
     font-size: clamp(1.18rem, 1.9vw, 1.55rem);
     font-weight: 600;
-    
     line-height: 1.16;
     letter-spacing: 0.005em;
 }
@@ -235,7 +234,7 @@ input {
     display: flex;
     flex-direction: column;
     gap: clamp(32px, 4vh, 46px);
-    padding-top: clamp(10px, 4.5vh, 44px);
+    padding-top: clamp(80px, 4.5vh, 44px);
 }
 
 .rut-display-wrap {
@@ -601,7 +600,7 @@ input {
         margin-top: auto;
         padding-top: 0;
         gap: 16px;
-        transform: translateY(-30px);
+        transform: translateY(-50px);
     }
 
     .hero-subtitle {
@@ -612,7 +611,7 @@ input {
     .checkin-panel {
         margin-bottom: auto;
         gap: 24px;
-        padding-top: 14px;
+        padding-top: 0px;
     }
 
     .rut-display-wrap {
@@ -719,6 +718,7 @@ input {
     .hero-main-title {
         font-size: 2.1rem;
         line-height: 0.98;
+        transform: translateY(-12px);
     }
 
     .hero-subtitle {
