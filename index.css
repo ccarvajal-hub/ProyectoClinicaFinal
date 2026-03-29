@@ -165,7 +165,6 @@ input {
     font-family: "Urbanist", sans-serif;
     font-size: clamp(1.1rem, 1.1vw, 1.1rem);
     font-weight: 450;
-    
     white-space: nowrap;
     line-height: 1;
 }
