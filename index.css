@@ -19,6 +19,12 @@
 
     --shell-padding: clamp(14px, 2vw, 30px);
     --content-max-width: 900px;
+
+    /* CONTROLES DE POSICIÓN */
+    --hero-block-offset-y: 120px;
+    --hero-title-offset-y: -20px;
+    --hero-subtitle-offset-y: 0px;
+    --checkin-panel-offset-y: 150px;
 }
 
 * {
@@ -193,7 +199,8 @@ input {
     flex-direction: column;
     align-items: center;
     gap: clamp(14px, 2vh, 20px);
-    transform: translateY(-20px);
+    position: relative;
+    top: var(--hero-block-offset-y);
 }
 
 .hero-main-title {
@@ -205,6 +212,8 @@ input {
     font-weight: 790;
     letter-spacing: -0.04em;
     line-height: 0.98;
+    position: relative;
+    top: var(--hero-title-offset-y);
 }
 
 .hero-main-title span {
@@ -220,6 +229,8 @@ input {
     font-weight: 600;
     line-height: 1.16;
     letter-spacing: 0.005em;
+    position: relative;
+    top: var(--hero-subtitle-offset-y);
 }
 
 .hero-subtitle span {
@@ -233,7 +244,9 @@ input {
     display: flex;
     flex-direction: column;
     gap: clamp(32px, 4vh, 46px);
-    padding-top: clamp(80px, 4.5vh, 44px);
+    padding-top: clamp(10px, 4.5vh, 44px);
+    position: relative;
+    top: var(--checkin-panel-offset-y);
 }
 
 .rut-display-wrap {
@@ -376,7 +389,6 @@ input {
     font-family: "Urbanist", sans-serif;
     font-size: clamp(1rem, 1vw, 1rem);
     font-weight: 500;
-    
     letter-spacing: 0.2px;
     display: inline-flex;
     align-items: center;
@@ -596,10 +608,9 @@ input {
     }
 
     .hero-block {
-        margin-top: auto;
+        margin-top: 0;
         padding-top: 0;
         gap: 16px;
-        transform: translateY(-50px);
     }
 
     .hero-subtitle {
@@ -608,9 +619,9 @@ input {
     }
 
     .checkin-panel {
-        margin-bottom: auto;
+        margin-bottom: 0;
         gap: 24px;
-        padding-top: 0px;
+        padding-top: 14px;
     }
 
     .rut-display-wrap {
@@ -717,7 +728,6 @@ input {
     .hero-main-title {
         font-size: 2.1rem;
         line-height: 0.98;
-        transform: translateY(-12px);
     }
 
     .hero-subtitle {
