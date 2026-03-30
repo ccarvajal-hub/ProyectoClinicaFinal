@@ -161,7 +161,7 @@ input {
     text-align: right;
     white-space: nowrap;
     position: relative;
-    top: -22px;
+    top: -2px;
     right: -12px;
 }
 
@@ -710,7 +710,7 @@ input {
 
     .datetime-row {
         justify-content: flex-end;
-        font-size: 1.08rem;
+        font-size: 1rem;
     }
 
     .datetime-icon {
