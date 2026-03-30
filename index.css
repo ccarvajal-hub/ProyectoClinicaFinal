@@ -20,7 +20,6 @@
     --shell-padding: clamp(14px, 2vw, 30px);
     --content-max-width: 900px;
 
-    /* CONTROLES DE POSICIÓN */
     --hero-block-offset-y: 120px;
     --hero-title-offset-y: -20px;
     --hero-subtitle-offset-y: 0px;
@@ -429,6 +428,63 @@ input {
     font-style: italic;
 }
 
+/* MODAL QR */
+.qr-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: none;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: clamp(20px, 4vh, 40px);
+    pointer-events: none;
+}
+
+.qr-modal-content {
+    width: min(90vw, 340px);
+    padding: 18px 18px 16px;
+    text-align: center;
+    background: linear-gradient(180deg, #232323 0%, #1b1b1b 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.42);
+    pointer-events: auto;
+}
+
+.qr-modal-header h3 {
+    margin: 0 0 14px;
+    font-size: clamp(0.95rem, 1.2vw, 1.08rem);
+    font-weight: 800;
+    color: #dce9ff;
+    letter-spacing: 0.04em;
+}
+
+.qr-modal-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#qrCodeContainer {
+    width: 220px;
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    padding: 12px;
+    border-radius: 20px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+
+#qrCodeContainer img,
+#qrCodeContainer canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* MODAL CONFIRMACIÓN */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -660,6 +716,11 @@ input {
     .modal-content {
         width: min(92vw, 680px);
     }
+
+    #qrCodeContainer {
+        width: 200px;
+        min-height: 200px;
+    }
 }
 
 /* TABLET CHICA / HORIZONTAL */
@@ -794,5 +855,18 @@ input {
     .alert-overlay {
         width: calc(100vw - 20px);
         padding: 14px 18px;
+    }
+
+    .qr-modal-content {
+        width: min(92vw, 300px);
+        padding: 16px 16px 14px;
+        border-radius: 20px;
+    }
+
+    #qrCodeContainer {
+        width: 170px;
+        min-height: 170px;
+        padding: 8px;
+        border-radius: 16px;
     }
 }

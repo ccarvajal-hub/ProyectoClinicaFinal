@@ -123,6 +123,20 @@
         </section>
     </main>
 
+    <!-- MODAL QR SEPARADO -->
+    <div class="qr-modal-overlay" id="qrModal">
+        <div class="qr-modal-content">
+            <div class="qr-modal-header">
+                <h3>ESCANEA ESTE CÓDIGO</h3>
+            </div>
+
+            <div class="qr-modal-body">
+                <div id="qrCodeContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMACIÓN -->
     <div class="modal-overlay" id="modalConfirmacion">
         <div class="modal-content">
             <div class="modal-icon success-icon">✓</div>
@@ -143,12 +157,6 @@
                     <span class="info-label">Ubicación</span>
                     <span class="info-value" id="resUbicacion">---</span>
                 </div>
-            </div>
-
-            <div class="qr-section" id="qrSection">
-                <div class="qr-title">ESCANEA ESTE CÓDIGO PARA VER TU ATENCIÓN EN EL CELULAR</div>
-                <div id="qrCodeContainer"></div>
-                <div class="qr-link" id="qrLinkTexto"></div>
             </div>
 
             <p id="modalMensaje">POR FAVOR, DIRÍJASE A RECEPCIÓN.</p>
