@@ -160,6 +160,9 @@ input {
     align-items: flex-end;
     text-align: right;
     white-space: nowrap;
+    position: relative;
+    top: -25px;
+    right: -15px;
 }
 
 .datetime-row {
