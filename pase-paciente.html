@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pase Paciente - Clínica CEMO</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./pase-paciente.css" />
+</head>
+<body>
+    <div class="page-bg"></div>
+
+    <main class="app-shell">
+        <section class="card">
+            <header class="topbar">
+                <div class="brand-block">
+                    <div class="brand-row">
+                        <div class="brand-logo">C</div>
+                        <div>
+                            <div class="brand-pill">CLÍNICA CEMO</div>
+                            <h1>Tu atención en vivo</h1>
+                        </div>
+                    </div>
+
+                    <p class="subtitle">
+                        Revisa tu estado, ubicación e indicaciones en tiempo real.
+                    </p>
+                </div>
+
+                <div class="status-box">
+                    <span class="status-label">Estado actual</span>
+                    <span class="status-badge status-pending" id="estadoVisual">Cargando...</span>
+                </div>
+            </header>
+
+            <section id="contenidoActivo">
+                <div class="hero-card">
+                    <div class="hero-left">
+                        <div class="hero-kicker">SEGUIMIENTO DE ATENCIÓN</div>
+                        <div class="hero-message" id="mensajePrincipal">
+                            Cargando información de tu atención...
+                        </div>
+                    </div>
+
+                    <div class="hero-actions">
+                        <button id="btnAvisos" class="btn-primary" type="button">
+                            Activar avisos
+                        </button>
+                        <div id="avisosEstado" class="small-note">
+                            Puedes activar avisos desde este dispositivo.
+                        </div>
+                    </div>
+                </div>
+
+                <section class="grid-info">
+                    <article class="info-card">
+                        <span class="info-label">Paciente</span>
+                        <strong class="info-value" id="pacienteNombre">---</strong>
+                    </article>
+
+                    <article class="info-card">
+                        <span class="info-label">RUT</span>
+                        <strong class="info-value" id="pacienteRut">---</strong>
+                    </article>
+
+                    <article class="info-card">
+                        <span class="info-label">Doctor</span>
+                        <strong class="info-value" id="doctorNombre">---</strong>
+                    </article>
+
+                    <article class="info-card">
+                        <span class="info-label">Ubicación</span>
+                        <strong class="info-value" id="ubicacionTexto">---</strong>
+                    </article>
+                </section>
+
+                <section class="queue-grid">
+                    <article class="queue-card">
+                        <span class="queue-label">Pacientes antes que tú</span>
+                        <strong class="queue-value" id="pacientesAntes">--</strong>
+                    </article>
+
+                    <article class="queue-card">
+                        <span class="queue-label">Espera estimada</span>
+                        <strong class="queue-value" id="esperaEstimada">--</strong>
+                    </article>
+                </section>
+
+                <section class="route-grid">
+                    <article class="instructions-card">
+                        <h2>Cómo llegar</h2>
+                        <p id="indicacionesTexto">
+                            Por favor, espera mientras cargamos la información de tu atención.
+                        </p>
+
+                        <ul class="steps-list" id="listaPasos">
+                            <li>Dirígete al área indicada por la clínica.</li>
+                            <li>Mantente atento a esta pantalla.</li>
+                            <li>Espera tu llamado.</li>
+                        </ul>
+                    </article>
+
+                    <article class="map-card">
+                        <div class="map-header">
+                            <h2>Mapa referencial</h2>
+                            <span class="map-chip" id="mapaDestinoTexto">Destino</span>
+                        </div>
+
+                        <div class="mini-map">
+                            <div class="map-box recepcion">Recepción</div>
+                            <div class="map-path path-1"></div>
+                            <div class="map-path path-2"></div>
+                            <div class="map-box espera">Sala de espera</div>
+                            <div class="map-path path-3"></div>
+                            <div class="map-box consulta" id="mapaConsultaBox">Consulta</div>
+                        </div>
+
+                        <p class="map-note">
+                            Este mapa es referencial y sirve como apoyo visual para orientar al paciente.
+                        </p>
+                    </article>
+                </section>
+
+                <section class="footer-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">ID Pase</span>
+                        <span class="meta-value" id="passIdTexto">---</span>
+                    </div>
+
+                    <div class="meta-item">
+                        <span class="meta-label">Última actualización</span>
+                        <span class="meta-value" id="ultimaActualizacion">---</span>
+                    </div>
+                </section>
+            </section>
+
+            <section class="expired-view hidden" id="contenidoExpirado">
+                <div class="expired-icon">✓</div>
+                <h2 id="expiredTitle">Atención finalizada</h2>
+                <p id="expiredMessage">
+                    Este pase ya no está activo. Si tienes una nueva atención, escanea un nuevo código QR.
+                </p>
+            </section>
+        </section>
+    </main>
+
+    <script type="module" src="./pase-paciente.js"></script>
+</body>
+</html>

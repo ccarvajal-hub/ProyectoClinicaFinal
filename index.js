@@ -7,7 +7,9 @@ import {
     getDocs,
     doc,
     updateDoc,
-    getDoc
+    getDoc,
+    setDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -23,7 +25,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.03.30.04";
+const APP_VERSION = "Totem v2026.03.30.06";
+
+/* IMPORTANTE:
+   Si pase-paciente.html está en el mismo dominio y raíz, esto funciona bien.
+   Si después lo mueves a otra carpeta, cambiamos esta ruta. */
+const PASE_BASE_URL = `${window.location.origin}/pase-paciente.html`;
 
 const input = document.getElementById("rutInput");
 const btn = document.getElementById("btnConfirmar");
@@ -38,6 +45,10 @@ const btnCerrarModal = document.getElementById("btnCerrarModal");
 const resNombre = document.getElementById("resNombre");
 const resDoctor = document.getElementById("resDoctor");
 const resUbicacion = document.getElementById("resUbicacion");
+
+const qrSection = document.getElementById("qrSection");
+const qrCodeContainer = document.getElementById("qrCodeContainer");
+const qrLinkTexto = document.getElementById("qrLinkTexto");
 
 const customAlert = document.getElementById("customAlert");
 const customAlertText = document.getElementById("customAlertText");
@@ -219,6 +230,11 @@ function obtenerFechaHoyChile() {
 function obtenerHoraActualChile24() {
     const { hour, minute } = obtenerPartesFechaHoraChile();
     return `${hour}:${minute}`;
+}
+
+function obtenerFechaHoraExpiracionFinDiaChile() {
+    const { year, month, day } = obtenerPartesFechaHoraChile();
+    return `${year}-${month}-${day}T23:59:59`;
 }
 
 function horaATotalMinutos(hora) {
@@ -445,6 +461,68 @@ async function obtenerDatosDoctor(doctorId) {
 }
 
 /* =========================
+   PASE PACIENTE / QR
+========================= */
+function construirUrlPase(passId) {
+    return `${PASE_BASE_URL}?pass=${encodeURIComponent(passId)}`;
+}
+
+function limpiarQRCode() {
+    if (qrCodeContainer) {
+        qrCodeContainer.innerHTML = "";
+    }
+
+    if (qrLinkTexto) {
+        qrLinkTexto.textContent = "";
+    }
+
+    if (qrSection) {
+        qrSection.style.display = "none";
+    }
+}
+
+function renderizarQRCode(passUrl) {
+    if (!qrCodeContainer || !qrSection) return;
+
+    limpiarQRCode();
+    qrSection.style.display = "flex";
+
+    if (qrLinkTexto) {
+        qrLinkTexto.textContent = passUrl;
+    }
+
+    if (typeof window.QRCode !== "function") {
+        console.warn("QRCode library no está disponible.");
+        return;
+    }
+
+    new window.QRCode(qrCodeContainer, {
+        text: passUrl,
+        width: 180,
+        height: 180,
+        correctLevel: window.QRCode.CorrectLevel.M
+    });
+}
+
+async function crearPasePaciente({ agendadoId }) {
+    const paseRef = doc(collection(db, "pases_paciente"));
+    const passId = paseRef.id;
+
+    await setDoc(paseRef, {
+        pass_id: passId,
+        agendado_id: agendadoId,
+        activo: true,
+        push_enabled: false,
+        push_token: "",
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+        expira_at: obtenerFechaHoraExpiracionFinDiaChile()
+    });
+
+    return passId;
+}
+
+/* =========================
    MODAL
 ========================= */
 function abrirModal({
@@ -454,6 +532,7 @@ function abrirModal({
     nombre,
     doctor,
     ubicacion,
+    passUrl = "",
     autoClose = true
 }) {
     cancelarAutoCierreModal();
@@ -468,6 +547,12 @@ function abrirModal({
     if (resDoctor) resDoctor.innerText = doctor || "Doctor asignado";
     if (resUbicacion) resUbicacion.innerText = ubicacion || "---";
     if (modalMensaje) modalMensaje.textContent = mensaje || "";
+
+    if (passUrl) {
+        renderizarQRCode(passUrl);
+    } else {
+        limpiarQRCode();
+    }
 
     if (modal) modal.style.display = "flex";
     if (input) input.value = "";
@@ -484,6 +569,7 @@ function abrirModal({
 function cerrarModal() {
     cancelarAutoCierreModal();
     if (modal) modal.style.display = "none";
+    limpiarQRCode();
     resetearInputRUT();
 }
 
@@ -548,14 +634,14 @@ function borrarUltimoCaracterRut() {
 /* =========================
    IMPRESION
 ========================= */
-function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
-  const nombreFmt = (nombre || "---").toUpperCase();
-  const doctorFmt = (doctor || "---").toUpperCase();
-  const ubicacionFmt = (ubicacion || "---").toUpperCase();
-  const horaFmt = hora || "--:--";
-  const rutFmt = rut || "---";
+function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora, passUrl = "" }) {
+    const nombreFmt = (nombre || "---").toUpperCase();
+    const doctorFmt = (doctor || "---").toUpperCase();
+    const ubicacionFmt = (ubicacion || "---").toUpperCase();
+    const horaFmt = hora || "--:--";
+    const rutFmt = rut || "---";
 
-  const textoTicket = `CLINICA CEMO
+    let textoTicket = `CLINICA CEMO
 ------------------------------
 
 HORA: ${horaFmt}
@@ -568,10 +654,20 @@ DOCTOR: ${doctorFmt}
 UBICACION: ${ubicacionFmt}
 ------------------------------
 POR FAVOR, DIRIJASE A RECEPCION
-ESPERE SU LLAMADO
+ESPERE SU LLAMADO`;
+
+    if (passUrl) {
+        textoTicket += `
+
+------------------------------
+PASE DIGITAL:
+${passUrl}`;
+    }
+
+    textoTicket += `
 ------------------------------`;
 
-  return textoTicket;
+    return textoTicket;
 }
 
 function imprimirTicketSiExisteAndroid(datosTicket) {
@@ -692,13 +788,23 @@ async function confirmarLlegada() {
             hora_llegada: ahora24
         });
 
+        const nuevoPassId = await crearPasePaciente({
+            agendadoId: docSnap.id
+        });
+
+        const passUrl = construirUrlPase(nuevoPassId);
+
+        console.log("Pase paciente creado:", nuevoPassId);
+        console.log("URL pase:", passUrl);
+
         abrirModal({
             titulo: "LLEGADA CONFIRMADA",
             tipo: "success",
-            mensaje: "Por favor, diríjase a recepción.",
+            mensaje: "Por favor, diríjase a recepción. También puede escanear el QR para seguir su atención desde el celular.",
             nombre: p.nombre,
             doctor: nombreDoctorMostrar,
-            ubicacion: ubicacionMostrar
+            ubicacion: ubicacionMostrar,
+            passUrl
         });
 
         imprimirTicketSiExisteAndroid({
@@ -706,7 +812,8 @@ async function confirmarLlegada() {
             rut: formatearRUT(rutLimpio),
             doctor: nombreDoctorMostrar,
             ubicacion: ubicacionMostrar,
-            hora: ahora24
+            hora: ahora24,
+            passUrl
         });
     } catch (error) {
         console.error(error);
@@ -868,6 +975,7 @@ document.addEventListener("DOMContentLoaded", () => {
     asegurarVersionEnPantalla();
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
+    limpiarQRCode();
 });
 
 window.addEventListener("load", () => {

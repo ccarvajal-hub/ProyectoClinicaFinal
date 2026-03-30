@@ -117,7 +117,6 @@
                 <div class="actions">
                     <button class="btn-confirm" id="btnConfirmar" type="button">
                         <span>CONFIRMAR LLEGADA</span>
-                        
                     </button>
                 </div>
             </section>
@@ -146,6 +145,12 @@
                 </div>
             </div>
 
+            <div class="qr-section" id="qrSection">
+                <div class="qr-title">ESCANEA ESTE CÓDIGO PARA VER TU ATENCIÓN EN EL CELULAR</div>
+                <div id="qrCodeContainer"></div>
+                <div class="qr-link" id="qrLinkTexto"></div>
+            </div>
+
             <p id="modalMensaje">POR FAVOR, DIRÍJASE A RECEPCIÓN.</p>
 
             <button class="btn-close" id="btnCerrarModal" type="button">ENTENDIDO</button>
@@ -166,6 +171,7 @@
 
     <div id="appVersion" class="app-version">v---</div>
 
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script type="module" src="./index.js"></script>
 
     <!--
