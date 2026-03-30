@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.03.30.08";
+const APP_VERSION = "Totem v2026.03.30.09";
 
 const PASE_BASE_URL = `${window.location.origin}/pase-paciente.html`;
 
