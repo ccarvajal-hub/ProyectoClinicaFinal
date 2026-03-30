@@ -23,7 +23,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.03.30.03";
+const APP_VERSION = "Totem v2026.03.30.04";
 
 const input = document.getElementById("rutInput");
 const btn = document.getElementById("btnConfirmar");

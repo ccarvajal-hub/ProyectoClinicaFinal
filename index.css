@@ -161,8 +161,8 @@ input {
     text-align: right;
     white-space: nowrap;
     position: relative;
-    top: -2px;
-    right: -18px;
+    top: -20px;
+    right: -10px;
 }
 
 .datetime-row {
