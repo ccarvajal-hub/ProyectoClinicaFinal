@@ -654,7 +654,7 @@ input {
     .btn-confirm {
         width: min(100%, 560px);
         min-height: 74px;
-        font-size: 1.3rem;
+        font-size: 1.1rem;
     }
 
     .modal-content {
