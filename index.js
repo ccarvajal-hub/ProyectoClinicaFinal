@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.03.30.07";
+const APP_VERSION = "Totem v2026.03.30.08";
 
 const PASE_BASE_URL = `${window.location.origin}/pase-paciente.html`;
 
@@ -493,9 +493,9 @@ function renderizarQRCode(passUrl) {
 
     new window.QRCode(qrCodeContainer, {
         text: passUrl,
-        width: 200,
-        height: 200,
-        correctLevel: window.QRCode.CorrectLevel.M
+        width: 280,
+        height: 280,
+        correctLevel: window.QRCode.CorrectLevel.H
     });
 }
 

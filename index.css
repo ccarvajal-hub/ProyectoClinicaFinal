@@ -435,8 +435,7 @@ input {
     z-index: 1100;
     display: none;
     justify-content: center;
-    align-items: flex-start;
-    padding-top: clamp(20px, 4vh, 40px);
+    align-items: center;
     pointer-events: none;
 }
 
@@ -449,6 +448,8 @@ input {
     border-radius: 24px;
     box-shadow: 0 24px 60px rgba(0,0,0,0.42);
     pointer-events: auto;
+    position: relative;
+    top: 185px;
 }
 
 .qr-modal-header h3 {
@@ -474,7 +475,10 @@ input {
     background: #ffffff;
     padding: 12px;
     border-radius: 20px;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(72, 187, 120, 0.65);
+    box-shadow:
+        0 0 0 1px rgba(72, 187, 120, 0.18),
+        0 10px 28px rgba(0, 0, 0, 0.22);
 }
 
 #qrCodeContainer img,
@@ -505,6 +509,8 @@ input {
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: clamp(22px, 2.4vw, 28px);
     box-shadow: 0 24px 60px rgba(0,0,0,0.42);
+    position: relative;
+    top: -55px;
 }
 
 .modal-icon {
@@ -850,6 +856,7 @@ input {
     .modal-content {
         padding: 30px 20px 22px;
         border-radius: 22px;
+        top: -40px;
     }
 
     .alert-overlay {
@@ -861,6 +868,7 @@ input {
         width: min(92vw, 300px);
         padding: 16px 16px 14px;
         border-radius: 20px;
+        top: 150px;
     }
 
     #qrCodeContainer {
