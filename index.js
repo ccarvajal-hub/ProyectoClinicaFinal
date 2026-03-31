@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.03.30.09";
+const APP_VERSION = "Totem v2026.03.31.01";
 
 const PASE_BASE_URL = `${window.location.origin}/pase-paciente.html`;
 
@@ -40,7 +40,7 @@ const modalMensaje = document.getElementById("modalMensaje");
 const btnCerrarModal = document.getElementById("btnCerrarModal");
 
 const qrModal = document.getElementById("qrModal");
-const qrCodeContainer = document.getElementById("qrCodeContainer");
+const qrCodeContainer = document.getElementById("qrCode");
 
 const resNombre = document.getElementById("resNombre");
 const resDoctor = document.getElementById("resDoctor");
@@ -493,10 +493,31 @@ function renderizarQRCode(passUrl) {
 
     new window.QRCode(qrCodeContainer, {
         text: passUrl,
-        width: 280,
-        height: 280,
+        width: 512,
+        height: 512,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
         correctLevel: window.QRCode.CorrectLevel.H
     });
+
+    setTimeout(() => {
+        const qrImg = qrCodeContainer.querySelector("img");
+        const qrCanvas = qrCodeContainer.querySelector("canvas");
+
+        if (qrImg) {
+            qrImg.style.width = "240px";
+            qrImg.style.height = "240px";
+            qrImg.style.display = "block";
+            qrImg.style.imageRendering = "pixelated";
+        }
+
+        if (qrCanvas) {
+            qrCanvas.style.width = "240px";
+            qrCanvas.style.height = "240px";
+            qrCanvas.style.display = "block";
+            qrCanvas.style.imageRendering = "pixelated";
+        }
+    }, 50);
 }
 
 async function crearPasePaciente({ agendadoId }) {

@@ -131,7 +131,7 @@
             </div>
 
             <div class="qr-modal-body">
-                <div id="qrCodeContainer"></div>
+                <div id="qrCode"></div>
             </div>
         </div>
     </div>
@@ -179,7 +179,17 @@
 
     <div id="appVersion" class="app-version">v---</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <!-- PRIMERO INTENTA ONLINE -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- SI FALLA ONLINE, USA LA COPIA LOCAL -->
+    <script>
+        if (typeof QRCode === "undefined") {
+            document.write('<script src="./js/qrcode.min.js"><\/script>');
+        }
+    </script>
+
+    <!-- TU JS PRINCIPAL -->
     <script type="module" src="./index.js"></script>
 
     <!--
