@@ -482,13 +482,12 @@ input {
         0 10px 28px rgba(0, 0, 0, 0.22);
 }
 
-#qrCode img,
-#qrCode canvas {
+#qrCode svg,
+#qrCode canvas,
+#qrCode img {
     width: 240px !important;
     height: 240px !important;
     display: block;
-    image-rendering: crisp-edges;
-    image-rendering: pixelated;
 }
 
 /* MODAL CONFIRMACIÓN */
@@ -513,7 +512,7 @@ input {
     border-radius: clamp(22px, 2.4vw, 28px);
     box-shadow: 0 24px 60px rgba(0,0,0,0.42);
     position: relative;
-    top: 100px;
+    top: -140px;
 }
 
 .modal-icon {
@@ -725,7 +724,7 @@ input {
     .modal-content {
         padding: 30px 20px 22px;
         border-radius: 22px;
-        top: -120px;
+        top: -140px;
     }
 
     #qrCode {
@@ -872,7 +871,7 @@ input {
     .modal-content {
         padding: 30px 20px 22px;
         border-radius: 22px;
-        top: -120px;
+        top: -140px;
     }
 
     .alert-overlay {

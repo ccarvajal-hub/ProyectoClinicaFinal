@@ -173,14 +173,14 @@
         <source src="./modal.mp3" type="audio/mpeg">
     </audio>
 
-    <audio id="alertSound" preload="auto">
+    <audio id="alertSound" preload="auto"><script type="module" src="./index.js"></script>
         <source src="./alert.mp3" type="audio/mpeg">
     </audio>
 
     <div id="appVersion" class="app-version">v---</div>
 
     <!-- PRIMERO INTENTA ONLINE -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/easyqrcodejs@4.6.0/dist/easy.qrcode.min.js"></script>
 
     <!-- SI FALLA ONLINE, USA LA COPIA LOCAL -->
     <script>
