@@ -32,6 +32,7 @@ body {
 
 body {
     position: relative;
+    overflow-x: hidden;
 }
 
 .page-bg {
@@ -46,9 +47,9 @@ body {
 .app-shell {
     min-height: 100vh;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
-    padding: 28px 16px;
+    padding: 14px;
 }
 
 .card {
@@ -56,69 +57,72 @@ body {
     max-width: 980px;
     background: var(--card);
     border: 1px solid var(--line);
-    border-radius: var(--radius-xl);
+    border-radius: 22px;
     box-shadow: var(--shadow);
     backdrop-filter: blur(12px);
-    padding: 28px;
+    padding: 18px;
 }
 
 .topbar {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    gap: 20px;
-    align-items: flex-start;
-    margin-bottom: 24px;
+    gap: 16px;
+    align-items: stretch;
+    margin-bottom: 18px;
 }
 
 .brand-row {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
 }
 
 .brand-logo {
-    width: 56px;
-    height: 56px;
-    border-radius: 18px;
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
     display: grid;
     place-items: center;
     background: linear-gradient(135deg, rgba(105, 167, 255, 0.22), rgba(105, 167, 255, 0.08));
     border: 1px solid rgba(105, 167, 255, 0.3);
-    font-size: 1.8rem;
+    font-size: 1.55rem;
     font-weight: 900;
     color: #dce9ff;
+    flex-shrink: 0;
 }
 
 .brand-pill {
     display: inline-flex;
-    padding: 8px 14px;
+    padding: 7px 12px;
     border-radius: 999px;
     background: rgba(105, 167, 255, 0.14);
     border: 1px solid rgba(105, 167, 255, 0.25);
     color: #dce9ff;
-    font-size: 0.82rem;
+    font-size: 0.76rem;
     font-weight: 800;
     letter-spacing: 0.08em;
 }
 
 .brand-block h1 {
     margin: 10px 0 8px;
-    font-size: clamp(2rem, 4vw, 2.9rem);
-    line-height: 1.05;
+    font-size: clamp(1.7rem, 7vw, 2.9rem);
+    line-height: 1.04;
 }
 
 .subtitle {
     margin: 0;
     color: var(--muted);
-    font-size: 1rem;
+    font-size: 0.98rem;
+    line-height: 1.55;
 }
 
 .status-box {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: stretch;
     gap: 8px;
-    min-width: 180px;
+    min-width: 0;
 }
 
 .status-label {
@@ -130,11 +134,12 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
-    padding: 10px 16px;
+    min-height: 48px;
+    width: 100%;
+    padding: 12px 16px;
     border-radius: 999px;
-    font-size: 0.92rem;
-    font-weight: 800;
+    font-size: 0.96rem;
+    font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     border: 1px solid transparent;
@@ -166,18 +171,19 @@ body {
 
 .hero-card {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    gap: 18px;
-    align-items: center;
+    gap: 16px;
+    align-items: stretch;
     background: var(--card-soft);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    padding: 20px;
-    margin-bottom: 18px;
+    padding: 18px;
+    margin-bottom: 16px;
 }
 
 .hero-kicker {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     color: var(--accent-2);
@@ -185,12 +191,13 @@ body {
 }
 
 .hero-message {
-    font-size: 1.05rem;
-    line-height: 1.6;
+    font-size: 1.14rem;
+    line-height: 1.65;
+    font-weight: 700;
 }
 
 .hero-actions {
-    min-width: 220px;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -201,7 +208,7 @@ body {
     appearance: none;
     border: none;
     border-radius: 16px;
-    min-height: 50px;
+    min-height: 52px;
     padding: 0 18px;
     background: linear-gradient(135deg, #69a7ff, #4e8ff0);
     color: white;
@@ -232,22 +239,22 @@ body {
 .queue-grid,
 .route-grid {
     display: grid;
-    gap: 16px;
+    gap: 14px;
 }
 
 .grid-info {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-bottom: 18px;
+    grid-template-columns: 1fr;
+    margin-bottom: 16px;
 }
 
 .queue-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-bottom: 18px;
+    grid-template-columns: 1fr;
+    margin-bottom: 16px;
 }
 
 .route-grid {
-    grid-template-columns: 1.05fr 0.95fr;
-    margin-bottom: 18px;
+    grid-template-columns: 1fr;
+    margin-bottom: 16px;
 }
 
 .info-card,
@@ -262,12 +269,12 @@ body {
 
 .info-card,
 .queue-card {
-    padding: 18px;
+    padding: 16px;
 }
 
 .instructions-card,
 .map-card {
-    padding: 20px;
+    padding: 18px;
 }
 
 .info-label,
@@ -275,24 +282,26 @@ body {
 .meta-label {
     display: block;
     color: var(--muted);
-    font-size: 0.9rem;
-    margin-bottom: 10px;
+    font-size: 0.88rem;
+    margin-bottom: 8px;
 }
 
 .info-value {
-    font-size: 1.12rem;
-    line-height: 1.35;
+    font-size: 1.08rem;
+    line-height: 1.4;
+    font-weight: 800;
 }
 
 .queue-value {
-    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-size: clamp(1.9rem, 9vw, 2.8rem);
     line-height: 1;
+    font-weight: 900;
 }
 
 .instructions-card h2,
 .map-card h2 {
     margin: 0 0 12px;
-    font-size: 1.12rem;
+    font-size: 1.08rem;
 }
 
 .instructions-card p,
@@ -315,9 +324,10 @@ body {
 
 .map-header {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
     gap: 10px;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 14px;
 }
 
@@ -337,7 +347,7 @@ body {
 
 .mini-map {
     position: relative;
-    height: 260px;
+    height: 220px;
     border-radius: 18px;
     background:
         linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.025)),
@@ -349,9 +359,9 @@ body {
 
 .map-box {
     position: absolute;
-    border-radius: 16px;
-    padding: 12px 14px;
-    font-size: 0.9rem;
+    border-radius: 14px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
     font-weight: 800;
     border: 1px solid var(--line);
     background: rgba(255,255,255,0.06);
@@ -359,21 +369,21 @@ body {
 }
 
 .recepcion {
-    top: 22px;
-    left: 24px;
-    width: 140px;
+    top: 18px;
+    left: 14px;
+    width: 100px;
 }
 
 .espera {
-    top: 102px;
-    left: 24px;
-    width: 160px;
+    top: 92px;
+    left: 14px;
+    width: 120px;
 }
 
 .consulta {
-    right: 24px;
-    bottom: 34px;
-    width: 180px;
+    right: 14px;
+    bottom: 28px;
+    width: 126px;
     background: rgba(73, 207, 136, 0.12);
     border-color: rgba(73, 207, 136, 0.28);
 }
@@ -385,30 +395,30 @@ body {
 }
 
 .path-1 {
-    top: 58px;
-    left: 156px;
-    width: 34px;
+    top: 50px;
+    left: 112px;
+    width: 26px;
     height: 8px;
 }
 
 .path-2 {
-    top: 58px;
-    left: 186px;
+    top: 50px;
+    left: 134px;
     width: 8px;
-    height: 94px;
+    height: 86px;
 }
 
 .path-3 {
-    top: 148px;
-    left: 190px;
-    width: calc(100% - 250px);
+    top: 132px;
+    left: 138px;
+    width: calc(100% - 186px);
     height: 8px;
 }
 
 .footer-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
 }
 
 .meta-item {
@@ -421,21 +431,22 @@ body {
     display: block;
     font-size: 0.95rem;
     word-break: break-word;
+    line-height: 1.5;
 }
 
 .expired-view {
     text-align: center;
-    padding: 42px 18px 8px;
+    padding: 36px 12px 8px;
 }
 
 .expired-icon {
-    width: 84px;
-    height: 84px;
-    margin: 0 auto 20px;
+    width: 78px;
+    height: 78px;
+    margin: 0 auto 18px;
     border-radius: 50%;
     display: grid;
     place-items: center;
-    font-size: 2rem;
+    font-size: 1.9rem;
     font-weight: 900;
     background: rgba(73, 207, 136, 0.16);
     border: 1px solid rgba(73, 207, 136, 0.35);
@@ -444,7 +455,7 @@ body {
 
 .expired-view h2 {
     margin: 0 0 12px;
-    font-size: 1.9rem;
+    font-size: 1.7rem;
 }
 
 .expired-view p {
@@ -458,62 +469,281 @@ body {
     display: none !important;
 }
 
-@media (max-width: 860px) {
-    .topbar,
-    .hero-card {
-        flex-direction: column;
-        align-items: stretch;
+@media (min-width: 700px) {
+    .app-shell {
+        padding: 22px 16px;
     }
 
-    .status-box {
-        align-items: flex-start;
-    }
-
-    .hero-actions {
-        min-width: 0;
-    }
-
-    .route-grid,
-    .grid-info,
-    .queue-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 560px) {
     .card {
-        padding: 20px;
-        border-radius: 22px;
+        padding: 24px;
+        border-radius: 24px;
     }
 
-    .brand-row {
-        align-items: flex-start;
+    .grid-info {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .brand-logo {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-        font-size: 1.45rem;
+    .queue-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .queue-value {
-        font-size: 2rem;
+    .footer-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .map-header {
+        flex-direction: row;
+        align-items: center;
     }
 
     .mini-map {
-        height: 220px;
+        height: 240px;
     }
 
     .recepcion {
-        width: 110px;
+        top: 20px;
+        left: 22px;
+        width: 126px;
     }
 
     .espera {
-        width: 130px;
+        top: 98px;
+        left: 22px;
+        width: 146px;
     }
 
     .consulta {
+        right: 22px;
+        bottom: 30px;
+        width: 156px;
+    }
+
+    .path-1 {
+        top: 54px;
+        left: 146px;
+        width: 30px;
+        height: 8px;
+    }
+
+    .path-2 {
+        top: 54px;
+        left: 172px;
+        width: 8px;
+        height: 90px;
+    }
+
+    .path-3 {
+        top: 140px;
+        left: 176px;
+        width: calc(100% - 228px);
+        height: 8px;
+    }
+}
+
+@media (min-width: 980px) {
+    .app-shell {
+        align-items: center;
+        padding: 28px 16px;
+    }
+
+    .card {
+        padding: 28px;
+        border-radius: var(--radius-xl);
+    }
+
+    .topbar {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: flex-start;
+        margin-bottom: 24px;
+    }
+
+    .brand-row {
+        gap: 14px;
+    }
+
+    .brand-logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+        font-size: 1.8rem;
+    }
+
+    .brand-pill {
+        padding: 8px 14px;
+        font-size: 0.82rem;
+    }
+
+    .brand-block h1 {
+        font-size: clamp(2rem, 4vw, 2.9rem);
+        line-height: 1.05;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .status-box {
+        align-items: flex-end;
+        min-width: 180px;
+    }
+
+    .status-badge {
+        width: auto;
+        min-height: 44px;
+        padding: 10px 16px;
+        font-size: 0.92rem;
+        font-weight: 800;
+    }
+
+    .hero-card {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 18px;
+        align-items: center;
+        padding: 20px;
+        margin-bottom: 18px;
+    }
+
+    .hero-message {
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    .hero-actions {
+        min-width: 220px;
+    }
+
+    .grid-info,
+    .queue-grid,
+    .route-grid {
+        gap: 16px;
+    }
+
+    .grid-info {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-bottom: 18px;
+    }
+
+    .queue-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-bottom: 18px;
+    }
+
+    .route-grid {
+        grid-template-columns: 1.05fr 0.95fr;
+        margin-bottom: 18px;
+    }
+
+    .info-card,
+    .queue-card {
+        padding: 18px;
+    }
+
+    .instructions-card,
+    .map-card {
+        padding: 20px;
+    }
+
+    .info-label,
+    .queue-label,
+    .meta-label {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .info-value {
+        font-size: 1.12rem;
+        line-height: 1.35;
+    }
+
+    .queue-value {
+        font-size: clamp(1.8rem, 5vw, 2.8rem);
+    }
+
+    .instructions-card h2,
+    .map-card h2 {
+        font-size: 1.12rem;
+    }
+
+    .map-header {
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .mini-map {
+        height: 260px;
+    }
+
+    .map-box {
+        border-radius: 16px;
+        padding: 12px 14px;
+        font-size: 0.9rem;
+    }
+
+    .recepcion {
+        top: 22px;
+        left: 24px;
         width: 140px;
+    }
+
+    .espera {
+        top: 102px;
+        left: 24px;
+        width: 160px;
+    }
+
+    .consulta {
+        right: 24px;
+        bottom: 34px;
+        width: 180px;
+    }
+
+    .path-1 {
+        top: 58px;
+        left: 156px;
+        width: 34px;
+        height: 8px;
+    }
+
+    .path-2 {
+        top: 58px;
+        left: 186px;
+        width: 8px;
+        height: 94px;
+    }
+
+    .path-3 {
+        top: 148px;
+        left: 190px;
+        width: calc(100% - 250px);
+        height: 8px;
+    }
+
+    .footer-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .meta-item {
+        flex: 1 1 220px;
+    }
+
+    .expired-view {
+        padding: 42px 18px 8px;
+    }
+
+    .expired-icon {
+        width: 84px;
+        height: 84px;
+        margin-bottom: 20px;
+        font-size: 2rem;
+    }
+
+    .expired-view h2 {
+        font-size: 1.9rem;
     }
 }

@@ -25,9 +25,10 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.03.31.05";
+const APP_VERSION = "Totem v2026.03.31.07";
 
-const PASE_BASE_URL = `${window.location.origin}/pase-paciente.html`;
+/* URL fija del pase en GitHub Pages */
+const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
 
 const input = document.getElementById("rutInput");
 const btn = document.getElementById("btnConfirmar");
@@ -493,14 +494,12 @@ function renderizarQRCode(passUrl) {
 
     new window.QRCode(qrCodeContainer, {
         text: passUrl,
-        width: 200,
-        height: 200,
+        width: 240,
+        height: 240,
         colorDark: "#000000",
         colorLight: "#ffffff",
-        correctLevel: window.QRCode.CorrectLevel.M
+        correctLevel: window.QRCode.CorrectLevel.H
     });
-}
-
 
     setTimeout(() => {
         const qrImg = qrCodeContainer.querySelector("img");
@@ -510,17 +509,19 @@ function renderizarQRCode(passUrl) {
             qrImg.style.width = "240px";
             qrImg.style.height = "240px";
             qrImg.style.display = "block";
-            qrImg.style.imageRendering = "pixelated";
+            qrImg.style.margin = "0 auto";
+            qrImg.style.imageRendering = "crisp-edges";
         }
 
         if (qrCanvas) {
             qrCanvas.style.width = "240px";
             qrCanvas.style.height = "240px";
             qrCanvas.style.display = "block";
-            qrCanvas.style.imageRendering = "pixelated";
+            qrCanvas.style.margin = "0 auto";
+            qrCanvas.style.imageRendering = "crisp-edges";
         }
     }, 50);
-
+}
 
 async function crearPasePaciente({ agendadoId }) {
     const paseRef = doc(collection(db, "pases_paciente"));
