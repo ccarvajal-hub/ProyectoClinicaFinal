@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.03.31.04";
+const APP_VERSION = "Totem v2026.03.31.05";
 
 const PASE_BASE_URL = `${window.location.origin}/pase-paciente.html`;
 
@@ -487,19 +487,19 @@ function renderizarQRCode(passUrl) {
     limpiarQRCode();
 
     if (typeof window.QRCode !== "function") {
-        console.warn("EasyQRCodeJS no está disponible.");
+        console.warn("QRCode library no está disponible.");
         return;
     }
 
     new window.QRCode(qrCodeContainer, {
         text: passUrl,
-        width: 240,
-        height: 240,
+        width: 200,
+        height: 200,
         colorDark: "#000000",
         colorLight: "#ffffff",
-        correctLevel: window.QRCode.CorrectLevel.H,
-        drawer: "svg"
+        correctLevel: window.QRCode.CorrectLevel.M
     });
+}
 
 
     setTimeout(() => {
@@ -520,7 +520,7 @@ function renderizarQRCode(passUrl) {
             qrCanvas.style.imageRendering = "pixelated";
         }
     }, 50);
-}
+
 
 async function crearPasePaciente({ agendadoId }) {
     const paseRef = doc(collection(db, "pases_paciente"));

@@ -469,9 +469,6 @@ input {
 #qrCode {
     width: 220px;
     height: 220px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     margin: 0 auto;
     padding: 10px;
     background: #ffffff;
@@ -483,11 +480,11 @@ input {
 }
 
 #qrCode canvas,
-#qrCode img,
-#qrCode svg {
+#qrCode img {
     display: block;
     width: 200px !important;
     height: 200px !important;
+    margin: 0 auto;
 }
 
 /* MODAL CONFIRMACIÓN */
@@ -738,9 +735,7 @@ input {
     #qrCode canvas {
         width: 200px !important;
         height: 200px !important;
-        display: block;
-        image-rendering: crisp-edges;
-        image-rendering: pixelated;
+        display: block;        
     }
 }
 
