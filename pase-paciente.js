@@ -36,10 +36,7 @@ const ubicacionTexto = document.getElementById("ubicacionTexto");
 const pacientesAntes = document.getElementById("pacientesAntes");
 const esperaEstimada = document.getElementById("esperaEstimada");
 const indicacionesTexto = document.getElementById("indicacionesTexto");
-const passIdTexto = document.getElementById("passIdTexto");
 const ultimaActualizacion = document.getElementById("ultimaActualizacion");
-const mapaDestinoTexto = document.getElementById("mapaDestinoTexto");
-const mapaConsultaBox = document.getElementById("mapaConsultaBox");
 const listaPasos = document.getElementById("listaPasos");
 
 const contenidoActivo = document.getElementById("contenidoActivo");
@@ -525,9 +522,6 @@ async function renderizarAgendado(agendadoId, agendadoData, passId) {
     indicacionesTexto.textContent = generarIndicaciones(estado, ubicacionMostrar);
     renderizarPasos(generarPasos(estado, ubicacionMostrar));
 
-    passIdTexto.textContent = passId;
-    mapaDestinoTexto.textContent = ubicacionMostrar || "Destino";
-    mapaConsultaBox.textContent = ubicacionMostrar || "Consulta";
     ultimaActualizacion.textContent = new Date().toLocaleString("es-CL", {
         timeZone: CL_TIMEZONE,
         hour12: false
@@ -560,7 +554,6 @@ async function iniciar() {
         return;
     }
 
-    passIdTexto.textContent = passId;
     actualizarUIAvisosSegunPermiso();
 
     try {

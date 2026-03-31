@@ -78,20 +78,6 @@ body {
     gap: 12px;
 }
 
-.brand-logo {
-    width: 50px;
-    height: 50px;
-    border-radius: 16px;
-    display: grid;
-    place-items: center;
-    background: linear-gradient(135deg, rgba(105, 167, 255, 0.22), rgba(105, 167, 255, 0.08));
-    border: 1px solid rgba(105, 167, 255, 0.3);
-    font-size: 1.55rem;
-    font-weight: 900;
-    color: #dce9ff;
-    flex-shrink: 0;
-}
-
 .brand-pill {
     display: inline-flex;
     padding: 7px 12px;
@@ -260,7 +246,6 @@ body {
 .info-card,
 .queue-card,
 .instructions-card,
-.map-card,
 .meta-item {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--line);
@@ -272,8 +257,7 @@ body {
     padding: 16px;
 }
 
-.instructions-card,
-.map-card {
+.instructions-card {
     padding: 18px;
 }
 
@@ -298,14 +282,12 @@ body {
     font-weight: 900;
 }
 
-.instructions-card h2,
-.map-card h2 {
+.instructions-card h2 {
     margin: 0 0 12px;
     font-size: 1.08rem;
 }
 
-.instructions-card p,
-.map-note {
+.instructions-card p {
     margin: 0;
     line-height: 1.65;
     color: var(--text);
@@ -320,99 +302,6 @@ body {
 
 .steps-list li + li {
     margin-top: 6px;
-}
-
-.map-header {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 10px;
-    align-items: flex-start;
-    margin-bottom: 14px;
-}
-
-.map-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 34px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: rgba(73, 207, 136, 0.14);
-    border: 1px solid rgba(73, 207, 136, 0.3);
-    color: #d7f7e5;
-    font-size: 0.8rem;
-    font-weight: 800;
-}
-
-.mini-map {
-    position: relative;
-    height: 220px;
-    border-radius: 18px;
-    background:
-        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.025)),
-        rgba(255,255,255,0.02);
-    border: 1px solid var(--line);
-    overflow: hidden;
-    margin-bottom: 12px;
-}
-
-.map-box {
-    position: absolute;
-    border-radius: 14px;
-    padding: 10px 12px;
-    font-size: 0.82rem;
-    font-weight: 800;
-    border: 1px solid var(--line);
-    background: rgba(255,255,255,0.06);
-    text-align: center;
-}
-
-.recepcion {
-    top: 18px;
-    left: 14px;
-    width: 100px;
-}
-
-.espera {
-    top: 92px;
-    left: 14px;
-    width: 120px;
-}
-
-.consulta {
-    right: 14px;
-    bottom: 28px;
-    width: 126px;
-    background: rgba(73, 207, 136, 0.12);
-    border-color: rgba(73, 207, 136, 0.28);
-}
-
-.map-path {
-    position: absolute;
-    background: linear-gradient(90deg, rgba(105, 167, 255, 0.95), rgba(140, 196, 255, 0.95));
-    border-radius: 999px;
-}
-
-.path-1 {
-    top: 50px;
-    left: 112px;
-    width: 26px;
-    height: 8px;
-}
-
-.path-2 {
-    top: 50px;
-    left: 134px;
-    width: 8px;
-    height: 86px;
-}
-
-.path-3 {
-    top: 132px;
-    left: 138px;
-    width: calc(100% - 186px);
-    height: 8px;
 }
 
 .footer-meta {
@@ -488,55 +377,7 @@ body {
     }
 
     .footer-meta {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .map-header {
-        flex-direction: row;
-        align-items: center;
-    }
-
-    .mini-map {
-        height: 240px;
-    }
-
-    .recepcion {
-        top: 20px;
-        left: 22px;
-        width: 126px;
-    }
-
-    .espera {
-        top: 98px;
-        left: 22px;
-        width: 146px;
-    }
-
-    .consulta {
-        right: 22px;
-        bottom: 30px;
-        width: 156px;
-    }
-
-    .path-1 {
-        top: 54px;
-        left: 146px;
-        width: 30px;
-        height: 8px;
-    }
-
-    .path-2 {
-        top: 54px;
-        left: 172px;
-        width: 8px;
-        height: 90px;
-    }
-
-    .path-3 {
-        top: 140px;
-        left: 176px;
-        width: calc(100% - 228px);
-        height: 8px;
+        grid-template-columns: 1fr;
     }
 }
 
@@ -561,13 +402,6 @@ body {
 
     .brand-row {
         gap: 14px;
-    }
-
-    .brand-logo {
-        width: 56px;
-        height: 56px;
-        border-radius: 18px;
-        font-size: 1.8rem;
     }
 
     .brand-pill {
@@ -632,7 +466,7 @@ body {
     }
 
     .route-grid {
-        grid-template-columns: 1.05fr 0.95fr;
+        grid-template-columns: 1fr;
         margin-bottom: 18px;
     }
 
@@ -641,8 +475,7 @@ body {
         padding: 18px;
     }
 
-    .instructions-card,
-    .map-card {
+    .instructions-card {
         padding: 20px;
     }
 
@@ -662,64 +495,8 @@ body {
         font-size: clamp(1.8rem, 5vw, 2.8rem);
     }
 
-    .instructions-card h2,
-    .map-card h2 {
+    .instructions-card h2 {
         font-size: 1.12rem;
-    }
-
-    .map-header {
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 14px;
-    }
-
-    .mini-map {
-        height: 260px;
-    }
-
-    .map-box {
-        border-radius: 16px;
-        padding: 12px 14px;
-        font-size: 0.9rem;
-    }
-
-    .recepcion {
-        top: 22px;
-        left: 24px;
-        width: 140px;
-    }
-
-    .espera {
-        top: 102px;
-        left: 24px;
-        width: 160px;
-    }
-
-    .consulta {
-        right: 24px;
-        bottom: 34px;
-        width: 180px;
-    }
-
-    .path-1 {
-        top: 58px;
-        left: 156px;
-        width: 34px;
-        height: 8px;
-    }
-
-    .path-2 {
-        top: 58px;
-        left: 186px;
-        width: 8px;
-        height: 94px;
-    }
-
-    .path-3 {
-        top: 148px;
-        left: 190px;
-        width: calc(100% - 250px);
-        height: 8px;
     }
 
     .footer-meta {
