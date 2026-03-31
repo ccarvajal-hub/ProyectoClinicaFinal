@@ -30,7 +30,6 @@ const MINUTOS_POR_PACIENTE = 10;
 const estadoVisual = document.getElementById("estadoVisual");
 const mensajePrincipal = document.getElementById("mensajePrincipal");
 const pacienteNombre = document.getElementById("pacienteNombre");
-const pacienteRut = document.getElementById("pacienteRut");
 const doctorNombre = document.getElementById("doctorNombre");
 const ubicacionTexto = document.getElementById("ubicacionTexto");
 const pacientesAntes = document.getElementById("pacientesAntes");
@@ -50,8 +49,6 @@ const avisosEstado = document.getElementById("avisosEstado");
 let stopAgendadoListener = null;
 let passIdActual = "";
 let ultimoEstadoRenderizado = "";
-let ultimoNombreDoctor = "";
-let ultimaUbicacion = "";
 
 function getPassIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -201,23 +198,19 @@ function expiraAtYaPaso(expiraAt) {
 function mapearEstadoVisual(estado) {
     const e = normalizarEstado(estado);
 
-    if (["pendiente", "agendado", "confirmado", "llegado"].includes(e)) {
-        return { texto: "En espera", clase: "status-pending" };
-    }
-
-    if (["llamado_recepcion", "pago_manual", "pagado", "en_recepcion"].includes(e)) {
-        return { texto: "En proceso", clase: "status-progress" };
+    if (e === "llamado_recepcion") {
+        return { texto: "LLAMADO RECEPCIÓN", clase: "status-progress" };
     }
 
     if (["llamado_doctor", "llamando", "llamado", "atendiendo"].includes(e)) {
-        return { texto: "Es tu turno", clase: "status-success" };
+        return { texto: "LLAMADO CONSULTA", clase: "status-success" };
     }
 
     if (e === "atendido") {
-        return { texto: "Finalizado", clase: "status-danger" };
+        return { texto: "ATENDIDO", clase: "status-danger" };
     }
 
-    return { texto: "En espera", clase: "status-pending" };
+    return { texto: "EN ESPERA", clase: "status-pending" };
 }
 
 function actualizarEstadoVisual(estado) {
@@ -245,8 +238,8 @@ function generarMensajePrincipal(estado, doctor, ubicacion) {
         return "Recepción te está llamando. Acércate al mesón para continuar con tu atención.";
     }
 
-    if (["pendiente", "agendado", "confirmado", "llegado"].includes(e)) {
-        return "Tu llegada ya fue registrada correctamente. Espera tu llamado en recepción.";
+    if (["pendiente", "agendado", "confirmado", "llegado", "en_recepcion"].includes(e)) {
+        return "Tu llegada ya fue registrada correctamente. Espera tu llamado.";
     }
 
     if (e === "atendido") {
@@ -275,8 +268,8 @@ function generarIndicaciones(estado, ubicacion) {
         return "Acércate a recepción para continuar con el proceso de atención.";
     }
 
-    if (["pendiente", "agendado", "confirmado", "llegado"].includes(e)) {
-        return "Dirígete a recepción y espera tu llamado. Esta página se actualizará automáticamente.";
+    if (["pendiente", "agendado", "confirmado", "llegado", "en_recepcion"].includes(e)) {
+        return "Espera atento a esta pantalla hasta tu próximo llamado.";
     }
 
     if (e === "atendido") {
@@ -314,9 +307,9 @@ function generarPasos(estado, ubicacion) {
     }
 
     return [
-        "Dirígete a recepción.",
-        "Espera en la sala o zona indicada.",
-        "Mantente atento a esta pantalla y a tu llamado."
+        "Mantente en espera.",
+        "Revisa esta pantalla con frecuencia.",
+        "Avanza cuando aparezca tu llamado."
     ];
 }
 
@@ -513,7 +506,6 @@ async function renderizarAgendado(agendadoId, agendadoData, passId) {
     actualizarEstadoVisual(estado);
 
     pacienteNombre.textContent = agendadoData.nombre || "---";
-    pacienteRut.textContent = formatearRUT(agendadoData.rut || "---");
     doctorNombre.textContent = nombreDoctorMostrar;
     ubicacionTexto.textContent = ubicacionMostrar;
     pacientesAntes.textContent = String(antes);
@@ -528,10 +520,7 @@ async function renderizarAgendado(agendadoId, agendadoData, passId) {
     });
 
     dispararNotificacionLocalSiCorresponde(estado, nombreDoctorMostrar, ubicacionMostrar);
-
     ultimoEstadoRenderizado = estado;
-    ultimoNombreDoctor = nombreDoctorMostrar;
-    ultimaUbicacion = ubicacionMostrar;
 
     if (estado === "atendido") {
         await desactivarPase(passId);
