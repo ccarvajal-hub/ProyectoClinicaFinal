@@ -90,16 +90,17 @@
   };
 
   function getNowTimeString() {
-    try {
-      return new Date().toLocaleTimeString("es-CL", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
-    } catch {
-      return "--:--:--";
-    }
+  try {
+    return new Date().toLocaleTimeString("es-CL", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return "--:--:--";
   }
+}
 
   function titleCase(text) {
     return String(text || "")
