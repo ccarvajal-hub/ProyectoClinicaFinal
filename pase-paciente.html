@@ -1,120 +1,109 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pase Paciente - Clínica CEMO</title>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
+  <title>Ticket Digital - Clínica CEMO</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./pase-paciente.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="./ticket-digital.css" />
 </head>
 <body>
-    <div class="page-bg"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
 
-    <main class="app-shell">
-        <section class="card">
-            <header class="topbar">
-                <div class="brand-block">
-                    <div class="brand-row">
-                        <div>
-                            <h1>Tu atención en vivo</h1>
-                        </div>
-                    </div>
+  <main class="ticket-shell">
+    <section class="ticket-card">
+      <div class="top-badge">CLÍNICA CEMO</div>
 
-                    <p class="subtitle">
-                        Revisa tu estado, ubicación e indicaciones en tiempo real.
-                    </p>
-                </div>
+      <header class="hero">
+        <h1 class="ticket-title">TICKET DIGITAL</h1>
+        <p class="ticket-subtitle">Revisa tu estado actual en tiempo real</p>
+      </header>
 
-                <div class="status-box">
-                    <span class="status-label">Estado actual</span>
-                    <span class="status-badge status-pending" id="estadoVisual">Cargando...</span>
-                </div>
-            </header>
+      <section class="status-hero-card">
+        <div class="status-hero-copy">
+          <span class="status-hero-label">SEGUIMIENTO DE ATENCIÓN</span>
+          <h2>Tu atención avanza paso a paso</h2>
+          <p>
+            Verás aquí cada cambio importante de tu proceso apenas ocurra.
+          </p>
+        </div>
 
-            <section id="contenidoActivo">
-                <div class="hero-card">
-                    <div class="hero-left">
-                        <div class="hero-kicker">SEGUIMIENTO DE ATENCIÓN</div>
-                        <div class="hero-message" id="mensajePrincipal">
-                            Cargando información de tu atención...
-                        </div>
-                    </div>
+        <div class="status-hero-action">
+          <button id="btn-actualizar" class="btn-refresh" type="button">
+            ACTUALIZAR ESTADO
+          </button>
+          <span id="ultima-actualizacion" class="last-update">
+            Última actualización: --
+          </span>
+        </div>
+      </section>
 
-                    <div class="hero-actions">
-                        <button id="btnAvisos" class="btn-primary" type="button">
-                            Activar avisos
-                        </button>
-                        <div id="avisosEstado" class="small-note">
-                            Puedes activar avisos desde este dispositivo.
-                        </div>
-                    </div>
-                </div>
+      <section class="summary-grid">
+        <article class="info-box info-box-featured">
+          <span class="info-label">Paciente</span>
+          <div id="paciente-nombre" class="info-value info-value-patient">
+            Cargando...
+          </div>
+        </article>
 
-                <section class="grid-info">
-                    <article class="info-card">
-                        <span class="info-label">Paciente</span>
-                        <strong class="info-value" id="pacienteNombre">---</strong>
-                    </article>
+        <article class="info-box">
+          <span class="info-label">Doctor</span>
+          <div id="doctor-nombre" class="info-value">--</div>
+        </article>
 
-                    <article class="info-card">
-                        <span class="info-label">Doctor</span>
-                        <strong class="info-value" id="doctorNombre">---</strong>
-                    </article>
+        <article class="info-box">
+          <span class="info-label">Ubicación</span>
+          <div id="ubicacion-texto" class="info-value">--</div>
+        </article>
 
-                    <article class="info-card">
-                        <span class="info-label">Ubicación</span>
-                        <strong class="info-value" id="ubicacionTexto">---</strong>
-                    </article>
-                </section>
+        <article class="info-box">
+          <span class="info-label">Tiempo estimado</span>
+          <div id="tiempo-estimado" class="info-value info-value-time">
+            Calculando...
+          </div>
+        </article>
+      </section>
 
-                <section class="queue-grid">
-                    <article class="queue-card">
-                        <span class="queue-label">Pacientes antes que tú</span>
-                        <strong class="queue-value" id="pacientesAntes">--</strong>
-                    </article>
+      <section class="current-status-card">
+        <div class="status-card-header">
+          <span class="status-card-label">ESTADO ACTUAL</span>
+          <div id="estado-chip" class="estado-chip estado-espera">
+            EN ESPERA
+          </div>
+        </div>
 
-                    <article class="queue-card">
-                        <span class="queue-label">Espera estimada</span>
-                        <strong class="queue-value" id="esperaEstimada">--</strong>
-                    </article>
-                </section>
+        <div id="estado-mensaje" class="estado-mensaje">
+          Estamos preparando tu atención. Mantente atento a los próximos llamados.
+        </div>
+      </section>
 
-                <section class="route-grid">
-                    <article class="instructions-card">
-                        <h2>Indicaciones</h2>
-                        <p id="indicacionesTexto">
-                            Por favor, espera mientras cargamos la información de tu atención.
-                        </p>
+      <section class="timeline-card">
+        <div class="timeline-header">
+          <span class="timeline-label">PROGRESO</span>
+          <span class="timeline-note">Seguimiento en tiempo real</span>
+        </div>
 
-                        <ul class="steps-list" id="listaPasos">
-                            <li>Dirígete al área indicada por la clínica.</li>
-                            <li>Mantente atento a esta pantalla.</li>
-                            <li>Espera tu llamado.</li>
-                        </ul>
-                    </article>
-                </section>
+        <div id="timeline-steps" class="timeline-steps"></div>
+      </section>
+    </section>
+  </main>
 
-                <section class="footer-meta">
-                    <div class="meta-item">
-                        <span class="meta-label">Última actualización</span>
-                        <span class="meta-value" id="ultimaActualizacion">---</span>
-                    </div>
-                </section>
-            </section>
+  <!-- Firebase compat, usando tu configuración existente -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="./firebase-config.js"></script>
 
-            <section class="expired-view hidden" id="contenidoExpirado">
-                <div class="expired-icon">✓</div>
-                <h2 id="expiredTitle">Atención finalizada</h2>
-                <p id="expiredMessage">
-                    Este pase ya no está activo. Si tienes una nueva atención, escanea un nuevo código QR.
-                </p>
-            </section>
-        </section>
-    </main>
-
-    <script type="module" src="./pase-paciente.js"></script>
+  <script src="./ticket-digital.js"></script>
 </body>
 </html>

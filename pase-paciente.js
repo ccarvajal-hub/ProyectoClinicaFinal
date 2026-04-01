@@ -1,635 +1,458 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-    getFirestore,
-    doc,
-    getDoc,
-    updateDoc,
-    collection,
-    query,
-    where,
-    getDocs,
-    onSnapshot,
-    serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+(() => {
+  const $ = (id) => document.getElementById(id);
 
-const firebaseConfig = {
-    apiKey: "AIzaSyC6sHSNXX9b3ky32Zt5_HYyDj7GiCWCbts",
-    authDomain: "llamado-cliente.firebaseapp.com",
-    projectId: "llamado-cliente",
-    storageBucket: "llamado-cliente.appspot.com",
-    messagingSenderId: "444376711880",
-    appId: "1:444376711880:web:01c32061eea040ef0f9bfd"
-};
+  const refs = {
+    pacienteNombre: $("paciente-nombre"),
+    doctorNombre: $("doctor-nombre"),
+    ubicacionTexto: $("ubicacion-texto"),
+    tiempoEstimado: $("tiempo-estimado"),
+    estadoChip: $("estado-chip"),
+    estadoMensaje: $("estado-mensaje"),
+    timelineSteps: $("timeline-steps"),
+    btnActualizar: $("btn-actualizar"),
+    ultimaActualizacion: $("ultima-actualizacion"),
+  };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+  const urlParams = new URLSearchParams(window.location.search);
+  let unsubscribeFirestore = null;
+  let latestData = null;
 
-const CL_TIMEZONE = "America/Santiago";
-const MINUTOS_POR_PACIENTE = 10;
+  const STEP_ORDER = [
+    "EN ESPERA",
+    "LLAMADO RECEPCION",
+    "LLAMADO CONSULTA",
+    "ATENDIDO",
+  ];
 
-const estadoVisual = document.getElementById("estadoVisual");
-const mensajePrincipal = document.getElementById("mensajePrincipal");
-const pacienteNombre = document.getElementById("pacienteNombre");
-const doctorNombre = document.getElementById("doctorNombre");
-const ubicacionTexto = document.getElementById("ubicacionTexto");
-const pacientesAntes = document.getElementById("pacientesAntes");
-const esperaEstimada = document.getElementById("esperaEstimada");
-const indicacionesTexto = document.getElementById("indicacionesTexto");
-const ultimaActualizacion = document.getElementById("ultimaActualizacion");
-const listaPasos = document.getElementById("listaPasos");
+  const STATUS_MAP = {
+    pendiente: {
+      label: "EN ESPERA",
+      chipClass: "estado-espera",
+      message:
+        "Estamos preparando tu atención. Mantente atento a los próximos llamados.",
+      stepIndex: 0,
+    },
+    agendado: {
+      label: "EN ESPERA",
+      chipClass: "estado-espera",
+      message:
+        "Tu atención está registrada. Te avisaremos cuando avance al siguiente paso.",
+      stepIndex: 0,
+    },
+    confirmado: {
+      label: "EN ESPERA",
+      chipClass: "estado-espera",
+      message:
+        "Tu llegada fue registrada correctamente. Ahora solo debes esperar el siguiente llamado.",
+      stepIndex: 0,
+    },
+    llegado: {
+      label: "EN ESPERA",
+      chipClass: "estado-espera",
+      message:
+        "Tu llegada ya fue confirmada. Estamos preparando el siguiente paso de tu atención.",
+      stepIndex: 0,
+    },
+    llamado_recepcion: {
+      label: "LLAMADO RECEPCION",
+      chipClass: "estado-recepcion",
+      message:
+        "Ya puedes dirigirte a recepción. Tu atención sigue avanzando.",
+      stepIndex: 1,
+    },
+    pago_manual: {
+      label: "LLAMADO RECEPCION",
+      chipClass: "estado-recepcion",
+      message:
+        "Recepción está gestionando tu atención. Avanzarás pronto al siguiente paso.",
+      stepIndex: 1,
+    },
+    pagado: {
+      label: "EN ESPERA",
+      chipClass: "estado-espera",
+      message:
+        "Tu atención administrativa ya está lista. Falta el llamado a consulta.",
+      stepIndex: 0,
+    },
+    llamado_doctor: {
+      label: "LLAMADO CONSULTA",
+      chipClass: "estado-consulta",
+      message:
+        "Ya puedes dirigirte a tu consulta. El doctor te está esperando.",
+      stepIndex: 2,
+    },
+    atendido: {
+      label: "ATENDIDO",
+      chipClass: "estado-atendido",
+      message:
+        "Tu atención fue finalizada correctamente. Gracias por preferirnos.",
+      stepIndex: 3,
+    },
+  };
 
-const contenidoActivo = document.getElementById("contenidoActivo");
-const contenidoExpirado = document.getElementById("contenidoExpirado");
-const expiredTitle = document.getElementById("expiredTitle");
-const expiredMessage = document.getElementById("expiredMessage");
-
-const btnAvisos = document.getElementById("btnAvisos");
-const avisosEstado = document.getElementById("avisosEstado");
-
-let stopAgendadoListener = null;
-let passIdActual = "";
-let ultimoEstadoRenderizado = "";
-
-function getPassIdFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("pass") || "";
-}
-
-function limpiarRUT(rut) {
-    return String(rut || "").replace(/[^0-9kK]/g, "").toUpperCase();
-}
-
-function formatearRUT(rut) {
-    const limpio = limpiarRUT(rut).slice(0, 9);
-
-    if (limpio.length <= 1) return limpio;
-
-    const cuerpo = limpio.slice(0, -1);
-    const dv = limpio.slice(-1);
-
-    let cuerpoFormateado = "";
-    let contador = 0;
-
-    for (let i = cuerpo.length - 1; i >= 0; i--) {
-        cuerpoFormateado = cuerpo[i] + cuerpoFormateado;
-        contador++;
-
-        if (contador === 3 && i !== 0) {
-            cuerpoFormateado = "." + cuerpoFormateado;
-            contador = 0;
-        }
+  function getNowTimeString() {
+    try {
+      return new Date().toLocaleTimeString("es-CL", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+    } catch {
+      return "--:--:--";
     }
+  }
 
-    return `${cuerpoFormateado}-${dv}`;
-}
+  function cleanRut(value) {
+    return String(value || "")
+      .replace(/\./g, "")
+      .replace(/-/g, "")
+      .trim()
+      .toUpperCase();
+  }
 
-function horaATotalMinutos(hora) {
-    if (!hora || typeof hora !== "string") return 999999;
+  function titleCase(text) {
+    return String(text || "")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  function safeText(value, fallback = "--") {
+    if (value === null || value === undefined) return fallback;
+    const text = String(value).trim();
+    return text ? text : fallback;
+  }
+
+  function getFirstDefined(obj, keys, fallback = "") {
+    for (const key of keys) {
+      if (obj && obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== "") {
+        return obj[key];
+      }
+    }
+    return fallback;
+  }
+
+  function normalizeStatus(rawStatus) {
+    const status = String(rawStatus || "").trim().toLowerCase();
+    return STATUS_MAP[status] ? status : "pendiente";
+  }
+
+  function getChileDate() {
+    try {
+      const now = new Date();
+      return now.toLocaleDateString("sv-SE", {
+        timeZone: "America/Santiago",
+      });
+    } catch {
+      const d = new Date();
+      return d.toISOString().slice(0, 10);
+    }
+  }
+
+  function minutesBetweenNowAndHour(hora) {
+    if (!hora || !/^\d{1,2}:\d{2}$/.test(hora)) return null;
 
     const [hh, mm] = hora.split(":").map(Number);
-    if (Number.isNaN(hh) || Number.isNaN(mm)) return 999999;
+    const now = new Date();
+    const chile = new Date(
+      now.toLocaleString("en-US", { timeZone: "America/Santiago" })
+    );
 
-    return hh * 60 + mm;
-}
+    const target = new Date(chile);
+    target.setHours(hh, mm, 0, 0);
 
-function normalizarEstado(estado) {
-    return String(estado || "pendiente").toLowerCase().trim();
-}
+    const diffMs = target.getTime() - chile.getTime();
+    return Math.round(diffMs / 60000);
+  }
 
-function construirUbicacionDoctor(piso, consulta) {
-    const pisoTexto = String(piso ?? "").trim();
-    const consultaTexto = String(consulta ?? "").trim();
+  function resolveEstimatedTime(data) {
+    const explicitText = getFirstDefined(data, [
+      "tiempo_estimado",
+      "tiempoEstimado",
+      "tiempo_espera",
+      "tiempoEspera",
+      "estimado",
+    ]);
 
-    if (pisoTexto && consultaTexto) return `Piso ${pisoTexto} - Consulta ${consultaTexto}`;
-    if (pisoTexto) return `Piso ${pisoTexto}`;
-    if (consultaTexto) return `Consulta ${consultaTexto}`;
+    if (explicitText) {
+      return safeText(explicitText, "Por confirmar");
+    }
+
+    const explicitMinutes = getFirstDefined(data, [
+      "minutos_estimados",
+      "minutosEstimados",
+      "minutos_espera",
+      "minutosEspera",
+    ]);
+
+    if (explicitMinutes !== "") {
+      const n = Number(explicitMinutes);
+      if (!Number.isNaN(n) && n >= 0) {
+        if (n === 0) return "Sin espera estimada";
+        if (n === 1) return "Aproximadamente 1 minuto";
+        return `Aproximadamente ${n} minutos`;
+      }
+    }
+
+    const status = normalizeStatus(getFirstDefined(data, ["estado"], "pendiente"));
+    const horaConsulta = getFirstDefined(data, ["hora_consulta", "horaConsulta"]);
+
+    if (status === "llamado_doctor") return "Pasa ahora a consulta";
+    if (status === "llamado_recepcion") return "Pasa ahora a recepción";
+    if (status === "atendido") return "Atención finalizada";
+
+    if (horaConsulta) {
+      const diff = minutesBetweenNowAndHour(horaConsulta);
+
+      if (diff !== null) {
+        if (diff <= 0) return "En curso";
+        if (diff <= 5) return "Menos de 5 minutos";
+        if (diff <= 15) return "Aproximadamente 15 minutos";
+        if (diff <= 30) return "Aproximadamente 30 minutos";
+        return `Cerca de ${diff} minutos`;
+      }
+    }
 
     return "Por confirmar";
-}
+  }
 
-async function obtenerDatosDoctor(doctorId) {
-    let nombreDoctorMostrar = "Doctor asignado";
-    let ubicacionMostrar = "Por confirmar";
+  function renderTimeline(statusKey) {
+    const currentIndex = STATUS_MAP[statusKey]?.stepIndex ?? 0;
+    refs.timelineSteps.innerHTML = "";
 
-    if (!doctorId) {
-        return { nombreDoctorMostrar, ubicacionMostrar };
-    }
+    STEP_ORDER.forEach((label, index) => {
+      const step = document.createElement("div");
+      step.className = "timeline-step";
 
-    const idBuscado = String(doctorId).trim();
+      if (index < currentIndex) step.classList.add("done");
+      if (index === currentIndex) step.classList.add("active");
 
-    try {
-        const docRefDirecto = doc(db, "doctores", idBuscado);
-        const docSnapDirecto = await getDoc(docRefDirecto);
+      const text = document.createElement("div");
+      text.className = "step-text";
+      text.textContent = label;
 
-        if (docSnapDirecto.exists()) {
-            const dData = docSnapDirecto.data();
+      step.appendChild(text);
+      refs.timelineSteps.appendChild(step);
+    });
+  }
 
-            nombreDoctorMostrar =
-                dData.nombre ||
-                dData.nombre_doctor ||
-                dData.displayName ||
-                "Doctor asignado";
+  function render(data) {
+    latestData = { ...(latestData || {}), ...(data || {}) };
 
-            ubicacionMostrar = construirUbicacionDoctor(dData.piso, dData.consulta);
+    const paciente = getFirstDefined(latestData, [
+      "nombre_paciente",
+      "nombrePaciente",
+      "paciente",
+      "nombre",
+      "paciente_nombre",
+    ]);
 
-            return { nombreDoctorMostrar, ubicacionMostrar };
-        }
+    const doctor = getFirstDefined(latestData, [
+      "doctor_nombre",
+      "doctorNombre",
+      "nombre_doctor",
+      "medico",
+      "doctor",
+    ]);
 
-        const qDoctores = query(collection(db, "doctores"));
-        const querySnapshot = await getDocs(qDoctores);
+    const ubicacion = getFirstDefined(latestData, [
+      "ubicacion",
+      "ubicacion_texto",
+      "consulta",
+      "destino",
+      "lugar",
+    ]);
 
-        let doctorEncontrado = null;
+    const rawStatus = getFirstDefined(latestData, ["estado"], "pendiente");
+    const statusKey = normalizeStatus(rawStatus);
+    const statusData = STATUS_MAP[statusKey];
 
-        querySnapshot.forEach((docSnap) => {
-            if (doctorEncontrado) return;
+    refs.pacienteNombre.textContent = safeText(titleCase(paciente), "Paciente no disponible");
+    refs.doctorNombre.textContent = safeText(titleCase(doctor), "Por asignar");
+    refs.ubicacionTexto.textContent = safeText(ubicacion, "Por confirmar");
+    refs.tiempoEstimado.textContent = resolveEstimatedTime(latestData);
 
-            const data = docSnap.data();
+    refs.estadoChip.textContent = statusData.label;
+    refs.estadoChip.className = `estado-chip ${statusData.chipClass}`;
+    refs.estadoMensaje.textContent = statusData.message;
 
-            const posiblesIds = [
-                docSnap.id,
-                data.uid,
-                data.doctor_id,
-                data.email
-            ]
-                .filter(Boolean)
-                .map((v) => String(v).trim().toLowerCase());
+    renderTimeline(statusKey);
 
-            if (posiblesIds.includes(idBuscado.toLowerCase())) {
-                doctorEncontrado = data;
-            }
-        });
+    refs.ultimaActualizacion.textContent = `Última actualización: ${getNowTimeString()}`;
+  }
 
-        if (doctorEncontrado) {
-            nombreDoctorMostrar =
-                doctorEncontrado.nombre ||
-                doctorEncontrado.nombre_doctor ||
-                doctorEncontrado.displayName ||
-                "Doctor asignado";
+  function readFromUrl() {
+    return {
+      id: urlParams.get("id") || urlParams.get("agendadoId") || "",
+      agendadoId: urlParams.get("agendadoId") || urlParams.get("id") || "",
+      nombre_paciente:
+        urlParams.get("paciente") ||
+        urlParams.get("nombre") ||
+        urlParams.get("nombre_paciente") ||
+        "",
+      doctor_nombre:
+        urlParams.get("doctor") ||
+        urlParams.get("doctor_nombre") ||
+        "",
+      ubicacion:
+        urlParams.get("ubicacion") ||
+        urlParams.get("destino") ||
+        "",
+      hora_consulta:
+        urlParams.get("hora") ||
+        urlParams.get("hora_consulta") ||
+        "",
+      estado: urlParams.get("estado") || "pendiente",
+      rut: urlParams.get("rut") || "",
+      fecha_turno: urlParams.get("fecha") || getChileDate(),
+      minutos_estimados:
+        urlParams.get("minutos") ||
+        urlParams.get("minutos_estimados") ||
+        "",
+    };
+  }
 
-            ubicacionMostrar = construirUbicacionDoctor(
-                doctorEncontrado.piso,
-                doctorEncontrado.consulta
-            );
-        }
-
-        return { nombreDoctorMostrar, ubicacionMostrar };
-    } catch (error) {
-        console.error("Error obteniendo datos del doctor:", error);
-        return { nombreDoctorMostrar, ubicacionMostrar };
-    }
-}
-
-function expiraAtYaPaso(expiraAt) {
-    if (!expiraAt) return false;
-
-    if (typeof expiraAt === "string") {
-        const d = new Date(expiraAt);
-        if (Number.isNaN(d.getTime())) return false;
-        return Date.now() > d.getTime();
-    }
-
-    if (typeof expiraAt?.toDate === "function") {
-        return Date.now() > expiraAt.toDate().getTime();
-    }
-
-    return false;
-}
-
-function mapearEstadoVisual(estado) {
-    const e = normalizarEstado(estado);
-
-    if (e === "llamado_recepcion") {
-        return { texto: "LLAMADO RECEPCIÓN", clase: "status-progress" };
-    }
-
-    if (["llamado_doctor", "llamando", "llamado", "atendiendo"].includes(e)) {
-        return { texto: "LLAMADO CONSULTA", clase: "status-success" };
-    }
-
-    if (e === "atendido") {
-        return { texto: "ATENDIDO", clase: "status-danger" };
-    }
-
-    return { texto: "EN ESPERA", clase: "status-pending" };
-}
-
-function actualizarEstadoVisual(estado) {
-    const info = mapearEstadoVisual(estado);
-    estadoVisual.textContent = info.texto;
-    estadoVisual.className = `status-badge ${info.clase}`;
-}
-
-function generarMensajePrincipal(estado, doctor, ubicacion) {
-    const e = normalizarEstado(estado);
-
-    if (e === "llamado_doctor") {
-        return `Ya es tu turno. Dirígete ahora con ${doctor || "tu doctor"} en ${ubicacion || "la consulta indicada"}.`;
-    }
-
-    if (e === "pagado") {
-        return "Tu pago ya fue registrado. Mantente atento, pronto serás llamado a consulta.";
-    }
-
-    if (e === "pago_manual") {
-        return "Tu atención está siendo gestionada en recepción. Espera la siguiente indicación.";
-    }
-
-    if (e === "llamado_recepcion") {
-        return "Recepción te está llamando. Acércate al mesón para continuar con tu atención.";
-    }
-
-    if (["pendiente", "agendado", "confirmado", "llegado", "en_recepcion"].includes(e)) {
-        return "Tu llegada ya fue registrada correctamente. Espera tu llamado.";
-    }
-
-    if (e === "atendido") {
-        return "Tu atención ya fue finalizada.";
-    }
-
-    return "Tu atención está avanzando. Mantente atento a esta pantalla.";
-}
-
-function generarIndicaciones(estado, ubicacion) {
-    const e = normalizarEstado(estado);
-
-    if (e === "llamado_doctor") {
-        return `Por favor, dirígete ahora a ${ubicacion || "la consulta indicada"}.`;
-    }
-
-    if (e === "pagado") {
-        return "Tu pago está listo. Espera en la sala o cerca de tu box hasta ser llamado por el doctor.";
-    }
-
-    if (e === "pago_manual") {
-        return "Recepción está procesando tu atención. Mantente atento a esta página.";
-    }
-
-    if (e === "llamado_recepcion") {
-        return "Acércate a recepción para continuar con el proceso de atención.";
-    }
-
-    if (["pendiente", "agendado", "confirmado", "llegado", "en_recepcion"].includes(e)) {
-        return "Espera atento a esta pantalla hasta tu próximo llamado.";
-    }
-
-    if (e === "atendido") {
-        return "Tu atención finalizó. Si tienes una nueva cita, escanea un nuevo código QR.";
-    }
-
-    return "Mantente atento a esta pantalla para nuevas indicaciones.";
-}
-
-function generarPasos(estado, ubicacion) {
-    const e = normalizarEstado(estado);
-
-    if (e === "llamado_doctor") {
-        return [
-            "Ya puedes avanzar hacia la consulta.",
-            `Dirígete a ${ubicacion || "la ubicación indicada"}.`,
-            "Si tienes documentos o exámenes, llévalos contigo."
-        ];
-    }
-
-    if (e === "pagado") {
-        return [
-            "Tu pago ya fue registrado.",
-            "Espera cerca de la sala o consulta asignada.",
-            "Mantente atento al llamado del doctor."
-        ];
-    }
-
-    if (e === "llamado_recepcion") {
-        return [
-            "Recepción te está llamando ahora.",
-            "Acércate al mesón de atención.",
-            "Luego espera la siguiente indicación."
-        ];
-    }
-
-    return [
-        "Mantente en espera.",
-        "Revisa esta pantalla con frecuencia.",
-        "Avanza cuando aparezca tu llamado."
+  function readFromStorage() {
+    const keys = [
+      "ticketDigitalData",
+      "ticketPacienteData",
+      "agendadoActual",
+      "ticketData",
+      "pacienteTicket",
     ];
-}
 
-function renderizarPasos(pasos) {
-    listaPasos.innerHTML = "";
-    pasos.forEach((paso) => {
-        const li = document.createElement("li");
-        li.textContent = paso;
-        listaPasos.appendChild(li);
+    for (const key of keys) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          return parsed;
+        }
+      } catch (error) {
+        console.warn(`No se pudo leer ${key}:`, error);
+      }
+    }
+
+    return {};
+  }
+
+  function mergeInitialData() {
+    const fromUrl = readFromUrl();
+    const fromStorage = readFromStorage();
+
+    return {
+      ...fromStorage,
+      ...fromUrl,
+    };
+  }
+
+  function setupStorageSync() {
+    window.addEventListener("storage", () => {
+      const storageData = readFromStorage();
+      render(storageData);
     });
-}
+  }
 
-function mostrarExpirado(titulo, mensaje) {
-    contenidoActivo.classList.add("hidden");
-    contenidoExpirado.classList.remove("hidden");
-    expiredTitle.textContent = titulo;
-    expiredMessage.textContent = mensaje;
-}
-
-function mostrarActivo() {
-    contenidoActivo.classList.remove("hidden");
-    contenidoExpirado.classList.add("hidden");
-}
-
-async function desactivarPase(passId) {
+  async function startRealtimeFirestore(baseData) {
     try {
-        const passRef = doc(db, "pases_paciente", passId);
-        await updateDoc(passRef, {
-            activo: false,
-            updated_at: serverTimestamp()
-        });
-    } catch (error) {
-        console.error("No se pudo desactivar el pase:", error);
-    }
-}
+      if (!window.firebase || !firebase.firestore) return;
 
-async function actualizarPushEnabled(passId, enabled) {
-    try {
-        const passRef = doc(db, "pases_paciente", passId);
-        await updateDoc(passRef, {
-            push_enabled: enabled,
-            updated_at: serverTimestamp()
-        });
-    } catch (error) {
-        console.error("No se pudo actualizar push_enabled:", error);
-    }
-}
+      const db = window.db || firebase.firestore();
+      const agendadoId =
+        baseData.agendadoId ||
+        baseData.id ||
+        urlParams.get("agendadoId") ||
+        urlParams.get("id") ||
+        "";
 
-async function calcularPacientesAntes(agendadoActualId, agendadoData) {
-    try {
-        const doctorId = agendadoData.doctor_id;
-        const fechaTurno = agendadoData.fecha_turno;
-        const horaActual = horaATotalMinutos(agendadoData.hora_consulta);
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+        unsubscribeFirestore = null;
+      }
 
-        if (!doctorId || !fechaTurno) return 0;
-
-        const q = query(
-            collection(db, "agendados"),
-            where("doctor_id", "==", doctorId),
-            where("fecha_turno", "==", fechaTurno)
-        );
-
-        const snap = await getDocs(q);
-        let totalAntes = 0;
-
-        snap.forEach((docSnap) => {
-            if (docSnap.id === agendadoActualId) return;
-
-            const data = docSnap.data();
-            const estado = normalizarEstado(data.estado);
-            const horaOtro = horaATotalMinutos(data.hora_consulta);
-
-            if (estado === "atendido") return;
-            if (horaOtro < horaActual) totalAntes++;
-        });
-
-        return totalAntes;
-    } catch (error) {
-        console.error("Error calculando pacientes antes:", error);
-        return 0;
-    }
-}
-
-function formatearEspera(minutos) {
-    if (minutos <= 0) return "0 min";
-    if (minutos < 60) return `${minutos} min`;
-
-    const horas = Math.floor(minutos / 60);
-    const mins = minutos % 60;
-
-    if (mins === 0) return `${horas} h`;
-    return `${horas} h ${mins} min`;
-}
-
-function actualizarUIAvisosSegunPermiso() {
-    if (!("Notification" in window)) {
-        btnAvisos.disabled = true;
-        avisosEstado.textContent = "Este navegador no soporta notificaciones.";
-        return;
-    }
-
-    const permission = Notification.permission;
-
-    if (permission === "granted") {
-        btnAvisos.disabled = true;
-        btnAvisos.textContent = "Avisos activados";
-        avisosEstado.textContent = "Este dispositivo ya tiene avisos habilitados.";
-        return;
-    }
-
-    if (permission === "denied") {
-        btnAvisos.disabled = true;
-        btnAvisos.textContent = "Avisos bloqueados";
-        avisosEstado.textContent = "Las notificaciones fueron bloqueadas en este navegador.";
-        return;
-    }
-
-    btnAvisos.disabled = false;
-    btnAvisos.textContent = "Activar avisos";
-    avisosEstado.textContent = "Puedes activar avisos desde este dispositivo.";
-}
-
-async function activarAvisos() {
-    if (!("Notification" in window)) {
-        avisosEstado.textContent = "Este navegador no soporta notificaciones.";
-        return;
-    }
-
-    try {
-        const permiso = await Notification.requestPermission();
-
-        if (permiso === "granted") {
-            await actualizarPushEnabled(passIdActual, true);
-            btnAvisos.disabled = true;
-            btnAvisos.textContent = "Avisos activados";
-            avisosEstado.textContent = "Avisos activados en este dispositivo.";
-
-            new Notification("Avisos activados", {
-                body: "Te avisaremos cuando cambie el estado de tu atención."
-            });
-            return;
-        }
-
-        if (permiso === "denied") {
-            btnAvisos.disabled = true;
-            btnAvisos.textContent = "Avisos bloqueados";
-            avisosEstado.textContent = "Las notificaciones fueron bloqueadas.";
-            return;
-        }
-
-        avisosEstado.textContent = "No se activaron las notificaciones.";
-    } catch (error) {
-        console.error("Error activando avisos:", error);
-        avisosEstado.textContent = "No fue posible activar avisos en este momento.";
-    }
-}
-
-function dispararNotificacionLocalSiCorresponde(estado, doctor, ubicacion) {
-    if (!("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
-
-    const estadoActual = normalizarEstado(estado);
-    const estadoPrevio = normalizarEstado(ultimoEstadoRenderizado);
-
-    if (estadoActual === estadoPrevio) return;
-
-    if (estadoActual === "llamado_recepcion") {
-        new Notification("Recepción te está llamando", {
-            body: "Acércate a recepción para continuar tu atención."
-        });
-    }
-
-    if (estadoActual === "pagado") {
-        new Notification("Pago registrado", {
-            body: "Tu pago fue confirmado. Espera el llamado del doctor."
-        });
-    }
-
-    if (estadoActual === "llamado_doctor") {
-        new Notification("Ya es tu turno", {
-            body: `Dirígete a ${ubicacion || "tu consulta"} con ${doctor || "tu doctor"}.`
-        });
-    }
-}
-
-async function renderizarAgendado(agendadoId, agendadoData, passId) {
-    const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(agendadoData.doctor_id);
-    const estado = normalizarEstado(agendadoData.estado);
-
-    const antes = await calcularPacientesAntes(agendadoId, agendadoData);
-    const minutosEstimados = antes * MINUTOS_POR_PACIENTE;
-
-    mostrarActivo();
-    actualizarEstadoVisual(estado);
-
-    pacienteNombre.textContent = agendadoData.nombre || "---";
-    doctorNombre.textContent = nombreDoctorMostrar;
-    ubicacionTexto.textContent = ubicacionMostrar;
-    pacientesAntes.textContent = String(antes);
-    esperaEstimada.textContent = formatearEspera(minutosEstimados);
-    mensajePrincipal.textContent = generarMensajePrincipal(estado, nombreDoctorMostrar, ubicacionMostrar);
-    indicacionesTexto.textContent = generarIndicaciones(estado, ubicacionMostrar);
-    renderizarPasos(generarPasos(estado, ubicacionMostrar));
-
-    ultimaActualizacion.textContent = new Date().toLocaleString("es-CL", {
-        timeZone: CL_TIMEZONE,
-        hour12: false
-    });
-
-    dispararNotificacionLocalSiCorresponde(estado, nombreDoctorMostrar, ubicacionMostrar);
-    ultimoEstadoRenderizado = estado;
-
-    if (estado === "atendido") {
-        await desactivarPase(passId);
-        mostrarExpirado(
-            "Atención finalizada",
-            "Tu atención ya fue realizada. Si tienes una nueva cita, escanea un nuevo código QR."
-        );
-    }
-}
-
-async function iniciar() {
-    const passId = getPassIdFromUrl();
-    passIdActual = passId;
-
-    if (!passId) {
-        mostrarExpirado(
-            "Pase no válido",
-            "No se encontró un identificador de pase en el enlace."
-        );
-        return;
-    }
-
-    actualizarUIAvisosSegunPermiso();
-
-    try {
-        const passRef = doc(db, "pases_paciente", passId);
-        const passSnap = await getDoc(passRef);
-
-        if (!passSnap.exists()) {
-            mostrarExpirado(
-                "Pase no encontrado",
-                "Este pase no existe o ya no está disponible."
-            );
-            return;
-        }
-
-        const passData = passSnap.data();
-
-        if (!passData.activo) {
-            mostrarExpirado(
-                "Pase expirado",
-                "Este pase ya no está activo. Si tienes una nueva atención, escanea un nuevo código QR."
-            );
-            return;
-        }
-
-        if (expiraAtYaPaso(passData.expira_at)) {
-            await desactivarPase(passId);
-            mostrarExpirado(
-                "Pase expirado",
-                "El tiempo de este pase ya terminó. Si tienes una nueva atención, escanea un nuevo código QR."
-            );
-            return;
-        }
-
-        if (passData.push_enabled === true && "Notification" in window && Notification.permission === "granted") {
-            btnAvisos.disabled = true;
-            btnAvisos.textContent = "Avisos activados";
-            avisosEstado.textContent = "Avisos activados en este dispositivo.";
-        }
-
-        const agendadoId = passData.agendado_id;
-        if (!agendadoId) {
-            mostrarExpirado(
-                "Pase incompleto",
-                "Este pase no tiene una cita asociada."
-            );
-            return;
-        }
-
-        const agendadoRef = doc(db, "agendados", agendadoId);
-
-        stopAgendadoListener = onSnapshot(
-            agendadoRef,
-            async (agendadoSnap) => {
-                if (!agendadoSnap.exists()) {
-                    mostrarExpirado(
-                        "Cita no encontrada",
-                        "La cita asociada a este pase ya no está disponible."
-                    );
-                    return;
-                }
-
-                const agendadoData = agendadoSnap.data();
-                await renderizarAgendado(agendadoSnap.id, agendadoData, passId);
+      if (agendadoId) {
+        unsubscribeFirestore = db
+          .collection("agendados")
+          .doc(agendadoId)
+          .onSnapshot(
+            (snap) => {
+              if (!snap.exists) return;
+              const docData = snap.data() || {};
+              render({
+                ...baseData,
+                ...docData,
+                agendadoId: snap.id,
+                id: snap.id,
+              });
             },
             (error) => {
-                console.error("Error escuchando agendado:", error);
-                mostrarExpirado(
-                    "Error de conexión",
-                    "No fue posible cargar la atención en tiempo real."
-                );
+              console.error("Error onSnapshot por id:", error);
             }
+          );
+        return;
+      }
+
+      const rut = getFirstDefined(baseData, ["rut"], "");
+      const fechaTurno = getFirstDefined(baseData, ["fecha_turno"], getChileDate());
+
+      if (!rut) return;
+
+      unsubscribeFirestore = db
+        .collection("agendados")
+        .where("rut", "==", rut)
+        .where("fecha_turno", "==", fechaTurno)
+        .limit(1)
+        .onSnapshot(
+          (snapshot) => {
+            if (snapshot.empty) return;
+            const doc = snapshot.docs[0];
+            const docData = doc.data() || {};
+            render({
+              ...baseData,
+              ...docData,
+              agendadoId: doc.id,
+              id: doc.id,
+            });
+          },
+          (error) => {
+            console.error("Error onSnapshot por rut/fecha:", error);
+          }
         );
     } catch (error) {
-        console.error(error);
-        mostrarExpirado(
-            "Error al cargar",
-            "Ocurrió un problema al abrir este pase."
-        );
+      console.error("No se pudo iniciar tiempo real con Firestore:", error);
     }
-}
+  }
 
-btnAvisos?.addEventListener("click", activarAvisos);
+  function refreshNow() {
+    const storageData = readFromStorage();
+    render(storageData);
 
-window.addEventListener("beforeunload", () => {
-    if (typeof stopAgendadoListener === "function") {
-        stopAgendadoListener();
+    if (latestData) {
+      startRealtimeFirestore(latestData);
     }
-});
+  }
 
-document.addEventListener("DOMContentLoaded", iniciar);
+  function bindEvents() {
+    refs.btnActualizar.addEventListener("click", refreshNow);
+  }
+
+  function init() {
+    const initialData = mergeInitialData();
+
+    render(initialData);
+    setupStorageSync();
+    bindEvents();
+    startRealtimeFirestore(initialData);
+
+    // Refresco visual de respaldo
+    setInterval(() => {
+      const storageData = readFromStorage();
+      if (Object.keys(storageData).length) {
+        render(storageData);
+      }
+    }, 5000);
+  }
+
+  init();
+})();
