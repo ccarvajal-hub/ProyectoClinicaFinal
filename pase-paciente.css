@@ -242,7 +242,7 @@ button {
 .current-status-card {
     width: 100%;
     max-width: 760px;
-    margin: 28px auto 0;
+    margin: 48px auto 0;
     padding: 0;
     background: transparent;
     border: none;
@@ -383,7 +383,7 @@ button {
 .timeline-card {
     width: 100%;
     max-width: 760px;
-    margin: 28px auto 0;
+    margin: 48px auto 0;
     padding: 0;
     background: transparent;
     border: none;
