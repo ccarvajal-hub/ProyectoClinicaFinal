@@ -10,12 +10,20 @@
     estadoMensaje: $("estado-mensaje"),
     timelineSteps: $("timeline-steps"),
     ultimaActualizacion: $("ultima-actualizacion"),
-    btnNotificacion: $("btn-notificacion"),
+
+    preTicketOverlay: $("pre-ticket-overlay"),
+    btnActivarNotificaciones: $("btn-activar-notificaciones"),
+    btnContinuarSinNotificaciones: $("btn-continuar-sin-notificaciones"),
+    preTicketStatus: $("pre-ticket-status"),
   };
 
   const urlParams = new URLSearchParams(window.location.search);
   let unsubscribeFirestore = null;
   let latestData = null;
+
+  let notificationsArmed = false;
+  let lastStatusKey = null;
+  let hasInitialStatus = false;
 
   const STEP_ORDER = [
     "EN ESPERA",
@@ -224,6 +232,65 @@
     });
   }
 
+  function fireTicketNotification(statusKey, data) {
+    if (!notificationsArmed) return;
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    try {
+      const doctor = safeText(
+        getFirstDefined(data, [
+          "doctor_nombre",
+          "doctorNombre",
+          "nombre_doctor",
+          "medico",
+          "doctor",
+        ]),
+        "Por asignar"
+      );
+
+      const ubicacion = safeText(
+        getFirstDefined(data, [
+          "ubicacion",
+          "ubicacion_texto",
+          "consulta",
+          "destino",
+          "lugar",
+        ]),
+        "Por confirmar"
+      );
+
+      if (statusKey === "llamado_recepcion") {
+        new Notification("Recepción te está llamando", {
+          body: `Dirígete a recepción. Ubicación: ${ubicacion}`,
+          tag: `ticket-llamado-recepcion-${getFirstDefined(data, ["id", "agendadoId"], "general")}`,
+        });
+      }
+
+      if (statusKey === "llamado_doctor") {
+        new Notification("Ya puedes entrar a consulta", {
+          body: `Doctor: ${doctor}. Ubicación: ${ubicacion}`,
+          tag: `ticket-llamado-doctor-${getFirstDefined(data, ["id", "agendadoId"], "general")}`,
+        });
+      }
+    } catch (error) {
+      console.error("No se pudo mostrar la notificación:", error);
+    }
+  }
+
+  function maybeNotifyStatusChange(statusKey, data) {
+    if (!hasInitialStatus) {
+      hasInitialStatus = true;
+      lastStatusKey = statusKey;
+      return;
+    }
+
+    if (statusKey === lastStatusKey) return;
+
+    fireTicketNotification(statusKey, data);
+    lastStatusKey = statusKey;
+  }
+
   function render(data) {
     latestData = { ...(latestData || {}), ...(data || {}) };
 
@@ -285,6 +352,8 @@
     if (refs.ultimaActualizacion) {
       refs.ultimaActualizacion.textContent = `Última actualización: ${getNowTimeString()}`;
     }
+
+    maybeNotifyStatusChange(statusKey, latestData);
   }
 
   function readFromUrl() {
@@ -444,30 +513,73 @@
     }
   }
 
-  async function enableNotifications() {
-    if (!refs.btnNotificacion) return;
+  function openTicket() {
+    document.body.classList.remove("pre-ticket-open");
+    if (refs.preTicketOverlay) {
+      refs.preTicketOverlay.classList.add("hidden");
+    }
+  }
+
+  async function handleActivateNotifications() {
+    if (!refs.preTicketStatus) {
+      openTicket();
+      return;
+    }
 
     if (!("Notification" in window)) {
-      refs.btnNotificacion.textContent = "NOTIFICACIONES NO DISPONIBLES";
+      notificationsArmed = false;
+      refs.preTicketStatus.textContent = "Este dispositivo no admite notificaciones.";
+      setTimeout(openTicket, 600);
       return;
     }
 
     try {
+      if (Notification.permission === "granted") {
+        notificationsArmed = true;
+        refs.preTicketStatus.textContent = "Notificaciones activadas.";
+        setTimeout(openTicket, 400);
+        return;
+      }
+
+      if (Notification.permission === "denied") {
+        notificationsArmed = false;
+        refs.preTicketStatus.textContent = "Las notificaciones están bloqueadas en este navegador.";
+        setTimeout(openTicket, 700);
+        return;
+      }
+
+      refs.preTicketStatus.textContent = "Solicitando permiso...";
       const result = await Notification.requestPermission();
 
       if (result === "granted") {
-        refs.btnNotificacion.textContent = "NOTIFICACIONES ACTIVADAS";
-      } else if (result === "denied") {
-        refs.btnNotificacion.textContent = "NOTIFICACIONES BLOQUEADAS";
+        notificationsArmed = true;
+        refs.preTicketStatus.textContent = "Notificaciones activadas.";
+      } else {
+        notificationsArmed = false;
+        refs.preTicketStatus.textContent = "Entrarás sin notificaciones.";
       }
+
+      setTimeout(openTicket, 500);
     } catch (error) {
-      console.error("No se pudo solicitar permiso de notificación:", error);
+      console.error("No se pudo solicitar permiso de notificaciones:", error);
+      notificationsArmed = false;
+      refs.preTicketStatus.textContent = "No se pudo activar. Entrando al ticket...";
+      setTimeout(openTicket, 700);
     }
   }
 
+  function handleContinueWithoutNotifications() {
+    notificationsArmed = false;
+    openTicket();
+  }
+
   function bindEvents() {
-    if (refs.btnNotificacion) {
-      refs.btnNotificacion.addEventListener("click", enableNotifications);
+    if (refs.btnActivarNotificaciones) {
+      refs.btnActivarNotificaciones.addEventListener("click", handleActivateNotifications);
+    }
+
+    if (refs.btnContinuarSinNotificaciones) {
+      refs.btnContinuarSinNotificaciones.addEventListener("click", handleContinueWithoutNotifications);
     }
   }
 
@@ -479,7 +591,6 @@
     bindEvents();
     startRealtimeFirestore(initialData);
 
-    // refresco visual automático cada 1 minuto
     setInterval(refreshFromCurrentSources, 60000);
   }
 

@@ -17,9 +17,40 @@
 
   <link rel="stylesheet" href="./pase-paciente.css" />
 </head>
-<body>
-  <div class="bg-orb orb-1"></div>
-  <div class="bg-orb orb-2"></div>
+<body class="pre-ticket-open">
+  <div id="pre-ticket-overlay" class="pre-ticket-overlay">
+    <div class="pre-ticket-card">
+      <div class="pre-ticket-badge">CLÍNICA CEMO</div>
+
+      <h2 class="pre-ticket-title">
+        ¿QUIERES ACTIVAR NOTIFICACIONES PARA TU LLAMADO?
+      </h2>
+
+      <p class="pre-ticket-text">
+        Si las activas, te avisaremos cuando recepción o consulta te llamen.
+      </p>
+
+      <div class="pre-ticket-actions">
+        <button
+          id="btn-activar-notificaciones"
+          class="pre-ticket-btn pre-ticket-btn-primary"
+          type="button"
+        >
+          SÍ, ACTIVAR
+        </button>
+
+        <button
+          id="btn-continuar-sin-notificaciones"
+          class="pre-ticket-btn pre-ticket-btn-secondary"
+          type="button"
+        >
+          NO, CONTINUAR
+        </button>
+      </div>
+
+      <p id="pre-ticket-status" class="pre-ticket-status"></p>
+    </div>
+  </div>
 
   <main class="ticket-shell">
     <section class="ticket-card">
@@ -29,12 +60,6 @@
         <h1 class="ticket-title">TICKET DIGITAL</h1>
         <p class="ticket-subtitle">Revisa tu estado actual en tiempo real</p>
       </header>
-
-      <section class="notification-card">
-        <button id="btn-notificacion" class="btn-notify" type="button">
-          ACTIVAR NOTIFICACION DE LLAMADO
-        </button>
-      </section>
 
       <section class="summary-grid">
         <article class="info-box info-box-combined">

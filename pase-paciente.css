@@ -27,10 +27,6 @@
     box-sizing: border-box;
 }
 
-html {
-    font-size: 140%;
-}
-
 html,
 body {
     width: 100%;
@@ -38,6 +34,12 @@ body {
     margin: 0;
     padding: 0;
 }
+
+html {
+    font-size: 150%;
+}
+
+html,
 
 body {
     font-family: "Urbanist", sans-serif;
@@ -60,6 +62,137 @@ button {
 .orb-2 {
     display: none !important;
 }
+
+/* PREGUNTA PREVIA */
+
+body.pre-ticket-open {
+    overflow: hidden;
+}
+
+body.pre-ticket-open .ticket-shell {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+}
+
+.ticket-shell {
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.pre-ticket-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(20, 20, 20, 0.72);
+    backdrop-filter: blur(10px);
+}
+
+.pre-ticket-overlay.hidden {
+    display: none;
+}
+
+.pre-ticket-card {
+    width: min(100%, 620px);
+    padding: 26px 22px;
+    border-radius: 18px;
+    border: 1px solid var(--border-blue-fine);
+    background: linear-gradient(180deg, rgba(62, 62, 62, 0.98) 0%, rgba(49, 49, 49, 0.98) 100%);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+    text-align: center;
+}
+
+.pre-ticket-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--border-blue-fine);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.04) 100%);
+    color: var(--text-main);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.pre-ticket-title {
+    margin: 18px 0 12px;
+    color: var(--blue-accent-2);
+    font-size: clamp(1.45rem, 2.8vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+}
+
+.pre-ticket-text {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 1rem;
+    line-height: 1.35;
+}
+
+.pre-ticket-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 22px;
+    flex-wrap: wrap;
+}
+
+.pre-ticket-btn {
+    min-width: 220px;
+    min-height: 58px;
+    padding: 0 18px;
+    border-radius: 10px;
+    font-size: 0.96rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.08s ease, background 0.15s ease, opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.pre-ticket-btn:active {
+    transform: scale(0.99);
+}
+
+.pre-ticket-btn-primary {
+    border: 1px solid var(--blue-accent);
+    background: var(--blue-accent);
+    color: var(--text-main);
+}
+
+.pre-ticket-btn-primary:hover {
+    background: var(--blue-accent-2);
+}
+
+.pre-ticket-btn-secondary {
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-main);
+}
+
+.pre-ticket-btn-secondary:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+.pre-ticket-status {
+    min-height: 20px;
+    margin: 14px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+/* CONTENIDO TICKET */
 
 .ticket-shell {
     min-height: calc(100vh - 36px);
@@ -127,50 +260,6 @@ button {
     line-height: 1.14;
 }
 
-/* BOTÓN NOTIFICACIÓN */
-
-.notification-card {
-    width: 100%;
-    margin: 10px auto 2px;
-    padding: 0;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    display: flex;
-    justify-content: center;
-}
-
-.btn-notify,
-#btn-notificacion {
-    width: min(100%, 620px);
-    min-height: 68px;
-    border: 1px solid var(--blue-accent);
-    border-radius: 10px;
-    background: var(--blue-accent);
-    color: var(--text-main);
-    font-size: clamp(1rem, 1.1vw, 1.05rem);
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.08s ease, background 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
-
-.btn-notify:hover,
-#btn-notificacion:hover {
-    background: var(--blue-accent-2);
-}
-
-.btn-notify:active,
-#btn-notificacion:active {
-    transform: scale(0.99);
-}
-
 /* RECUADRO ÚNICO PACIENTE / DOCTOR / UBICACIÓN */
 
 .summary-grid {
@@ -217,8 +306,8 @@ button {
 
 .info-label {
     margin: 0;
-    font-size: 1.0rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 800;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     color: var(--text-muted);
@@ -227,8 +316,8 @@ button {
 .info-combined-row .info-value {
     margin: 0;
     color: var(--text-main);
-    font-size: 1.0rem;
-    font-weight: 600;
+    font-size: 1.08rem;
+    font-weight: 700;
     line-height: 1.2;
     text-align: left;
     word-break: break-word;
@@ -237,20 +326,21 @@ button {
 .info-value,
 .info-value-patient,
 #paciente-nombre {
-    font-size: 1.00rem;
-    font-weight: 600;
+    font-size: 1.08rem;
+    font-weight: 700;
 }
 
 /* ESTADO ACTUAL SIN RECUADRO */
 
 .current-status-card {
     width: 100%;
-    max-width: 960px;
-    margin: 100px auto 0;
-    padding: 0;
+    max-width: 760px;
+    margin: 12px auto 0;
+    padding: 22px 0 0;
     background: transparent;
     border: none;
     box-shadow: none;
+    border-top: none;
 }
 
 .status-card-header {
@@ -291,7 +381,6 @@ button {
     text-transform: uppercase;
 }
 
-/* texto + borde del mismo color */
 .estado-espera {
     color: var(--badge-espera);
     border: 1px solid var(--badge-espera);
@@ -316,7 +405,6 @@ button {
     box-shadow: inset 0 0 0 1px rgba(72, 187, 120, 0.18);
 }
 
-/* ocultar texto largo bajo el estado */
 .estado-mensaje,
 #estado-mensaje {
     display: none !important;
@@ -332,8 +420,6 @@ button {
     padding-top: 0;
     border-top: none;
 }
-
-/* TIEMPO APROXIMADO EN UNA SOLA LÍNEA */
 
 .approx-time-box {
     width: auto;
@@ -386,9 +472,9 @@ button {
 
 .timeline-card {
     width: 100%;
-    max-width: 960px;
-    margin: 100px auto 0;
-    padding: 0;
+    max-width: 760px;
+    margin: 8px auto 0;
+    padding: 8px 0 0;
     background: transparent;
     border: none;
     box-shadow: none;
@@ -410,7 +496,6 @@ button {
     gap: 8px;
 }
 
-/* BASE APAGADA */
 .timeline-step {
     min-height: 74px;
     padding: 10px 6px;
@@ -444,7 +529,6 @@ button {
     text-transform: uppercase;
 }
 
-/* PASOS YA PASADOS = APAGADOS TAMBIÉN */
 .timeline-step.done {
     opacity: 0.55;
     border-color: rgba(255,255,255,0.10);
@@ -459,13 +543,11 @@ button {
     color: rgba(255,255,255,0.46);
 }
 
-/* SOLO EL PASO ACTUAL SE ACTIVA */
 .timeline-step.active {
     opacity: 1;
     background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
 }
 
-/* PASO 1 = EN ESPERA */
 .timeline-step.active:nth-child(1) {
     border: 1px solid var(--badge-espera);
     box-shadow: inset 0 0 0 1px rgba(216, 189, 106, 0.16);
@@ -477,7 +559,6 @@ button {
     color: var(--badge-espera);
 }
 
-/* PASO 2 = LLAMADO RECEPCION */
 .timeline-step.active:nth-child(2) {
     border: 1px solid var(--badge-recepcion);
     box-shadow: inset 0 0 0 1px rgba(255, 179, 71, 0.16);
@@ -489,7 +570,6 @@ button {
     color: var(--badge-recepcion);
 }
 
-/* PASO 3 = LLAMADO CONSULTA */
 .timeline-step.active:nth-child(3) {
     border: 1px solid var(--badge-consulta);
     box-shadow: inset 0 0 0 1px rgba(102, 149, 196, 0.16);
@@ -501,7 +581,6 @@ button {
     color: var(--badge-consulta);
 }
 
-/* PASO 4 = ATENDIDO */
 .timeline-step.active:nth-child(4) {
     border: 1px solid var(--badge-atendido);
     box-shadow: inset 0 0 0 1px rgba(72, 187, 120, 0.16);
@@ -512,8 +591,6 @@ button {
 .timeline-step.active:nth-child(4) .step-text {
     color: var(--badge-atendido);
 }
-
-/* RESPONSIVE */
 
 @media (max-width: 900px) {
     .ticket-card {
@@ -562,6 +639,20 @@ button {
         margin-bottom: 18px;
     }
 
+    .pre-ticket-card {
+        padding: 20px 16px;
+        border-radius: 14px;
+    }
+
+    .pre-ticket-actions {
+        flex-direction: column;
+    }
+
+    .pre-ticket-btn {
+        width: 100%;
+        min-width: 0;
+    }
+
     .info-box {
         border-radius: 8px;
     }
@@ -593,13 +684,10 @@ button {
         font-size: 1rem;
     }
 
-    .current-status-card {
-    margin: 35px auto 0;
-}
-
-.timeline-card {
-    margin: 35px auto 0;
-}
+    .current-status-card,
+    .timeline-card {
+        max-width: 100%;
+    }
 
     .status-card-label,
     .timeline-label {
@@ -611,11 +699,6 @@ button {
         min-height: 88px;
         font-size: 1.18rem;
         border-radius: 8px;
-    }
-
-    .btn-notify,
-    #btn-notificacion {
-        width: 100%;
     }
 
     .approx-time-box {
