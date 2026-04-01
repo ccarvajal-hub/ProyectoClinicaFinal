@@ -593,10 +593,13 @@ button {
         font-size: 1rem;
     }
 
-    .current-status-card,
-    .timeline-card {
-        max-width: 100%;
-    }
+    .current-status-card {
+    margin: 44px auto 0;
+}
+
+.timeline-card {
+    margin: 44px auto 0;
+}
 
     .status-card-label,
     .timeline-label {
