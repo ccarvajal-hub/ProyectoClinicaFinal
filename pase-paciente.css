@@ -684,9 +684,12 @@ body.pre-ticket-open .ticket-shell {
         font-size: 1rem;
     }
 
-    .current-status-card,
+    .current-status-card {
+        margin: 52px auto 0;
+    }
+
     .timeline-card {
-        max-width: 100%;
+        margin: 52px auto 0;
     }
 
     .status-card-label,
