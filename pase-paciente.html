@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
 
@@ -30,16 +30,6 @@
         <p class="ticket-subtitle">Revisa tu estado actual en tiempo real</p>
       </header>
 
-      <section class="status-hero-card">
-        <div class="status-hero-copy">
-          <span class="status-hero-label">SEGUIMIENTO DE ATENCIÓN</span>
-          <h2>Tu atención avanza paso a paso</h2>
-          <p>
-            Verás aquí cada cambio importante de tu proceso apenas ocurra.
-          </p>
-        </div>
-      </section>
-
       <section class="notification-card">
         <button id="btn-notificacion" class="btn-notify" type="button">
           ACTIVAR NOTIFICACION DE LLAMADO
@@ -47,27 +37,22 @@
       </section>
 
       <section class="summary-grid">
-        <article class="info-box info-box-featured">
-          <span class="info-label">Paciente</span>
-          <div id="paciente-nombre" class="info-value info-value-patient">
-            Cargando...
+        <article class="info-box info-box-combined">
+          <div class="info-combined-row paciente-row">
+            <span class="info-label">Paciente</span>
+            <div id="paciente-nombre" class="info-value info-value-patient">
+              Cargando...
+            </div>
           </div>
-        </article>
 
-        <article class="info-box">
-          <span class="info-label">Doctor</span>
-          <div id="doctor-nombre" class="info-value">--</div>
-        </article>
+          <div class="info-combined-row">
+            <span class="info-label">Doctor</span>
+            <div id="doctor-nombre" class="info-value">--</div>
+          </div>
 
-        <article class="info-box">
-          <span class="info-label">Ubicación</span>
-          <div id="ubicacion-texto" class="info-value">--</div>
-        </article>
-
-        <article class="info-box">
-          <span class="info-label">Tiempo estimado</span>
-          <div id="tiempo-estimado" class="info-value info-value-time">
-            Calculando...
+          <div class="info-combined-row">
+            <span class="info-label">Ubicación</span>
+            <div id="ubicacion-texto" class="info-value">--</div>
           </div>
         </article>
       </section>
@@ -85,9 +70,10 @@
         </div>
 
         <div class="status-actions">
-          <button id="btn-actualizar" class="btn-refresh btn-refresh-inline" type="button">
-            ACTUALIZAR ESTADO
-          </button>
+          <div class="approx-time-box">
+            <span class="approx-time-label">TIEMPO APROXIMADO</span>
+            <span id="tiempo-estimado" class="approx-time-value">Calculando...</span>
+          </div>
 
           <span id="ultima-actualizacion" class="last-update">
             Última actualización: --
@@ -98,7 +84,6 @@
       <section class="timeline-card">
         <div class="timeline-header">
           <span class="timeline-label">PROGRESO</span>
-          <span class="timeline-note">Seguimiento en tiempo real</span>
         </div>
 
         <div id="timeline-steps" class="timeline-steps"></div>

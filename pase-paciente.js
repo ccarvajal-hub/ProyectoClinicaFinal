@@ -9,8 +9,8 @@
     estadoChip: $("estado-chip"),
     estadoMensaje: $("estado-mensaje"),
     timelineSteps: $("timeline-steps"),
-    btnActualizar: $("btn-actualizar"),
     ultimaActualizacion: $("ultima-actualizacion"),
+    btnNotificacion: $("btn-notificacion"),
   };
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -28,64 +28,55 @@
     pendiente: {
       label: "EN ESPERA",
       chipClass: "estado-espera",
-      message:
-        "Estamos preparando tu atención. Mantente atento a los próximos llamados.",
+      message: "",
       stepIndex: 0,
     },
     agendado: {
       label: "EN ESPERA",
       chipClass: "estado-espera",
-      message:
-        "Tu atención está registrada. Te avisaremos cuando avance al siguiente paso.",
+      message: "",
       stepIndex: 0,
     },
     confirmado: {
       label: "EN ESPERA",
       chipClass: "estado-espera",
-      message:
-        "Tu llegada fue registrada correctamente. Ahora solo debes esperar el siguiente llamado.",
+      message: "",
       stepIndex: 0,
     },
     llegado: {
       label: "EN ESPERA",
       chipClass: "estado-espera",
-      message:
-        "Tu llegada ya fue confirmada. Estamos preparando el siguiente paso de tu atención.",
+      message: "",
       stepIndex: 0,
     },
     llamado_recepcion: {
       label: "LLAMADO RECEPCION",
       chipClass: "estado-recepcion",
-      message:
-        "Ya puedes dirigirte a recepción. Tu atención sigue avanzando.",
+      message: "",
       stepIndex: 1,
     },
     pago_manual: {
       label: "LLAMADO RECEPCION",
       chipClass: "estado-recepcion",
-      message:
-        "Recepción está gestionando tu atención. Avanzarás pronto al siguiente paso.",
+      message: "",
       stepIndex: 1,
     },
     pagado: {
       label: "EN ESPERA",
       chipClass: "estado-espera",
-      message:
-        "Tu atención administrativa ya está lista. Falta el llamado a consulta.",
+      message: "",
       stepIndex: 0,
     },
     llamado_doctor: {
       label: "LLAMADO CONSULTA",
       chipClass: "estado-consulta",
-      message:
-        "Ya puedes dirigirte a tu consulta. El doctor te está esperando.",
+      message: "",
       stepIndex: 2,
     },
     atendido: {
       label: "ATENDIDO",
       chipClass: "estado-atendido",
-      message:
-        "Tu atención fue finalizada correctamente. Gracias por preferirnos.",
+      message: "",
       stepIndex: 3,
     },
   };
@@ -102,14 +93,6 @@
     }
   }
 
-  function cleanRut(value) {
-    return String(value || "")
-      .replace(/\./g, "")
-      .replace(/-/g, "")
-      .trim()
-      .toUpperCase();
-  }
-
   function titleCase(text) {
     return String(text || "")
       .toLowerCase()
@@ -124,7 +107,12 @@
 
   function getFirstDefined(obj, keys, fallback = "") {
     for (const key of keys) {
-      if (obj && obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== "") {
+      if (
+        obj &&
+        obj[key] !== undefined &&
+        obj[key] !== null &&
+        String(obj[key]).trim() !== ""
+      ) {
         return obj[key];
       }
     }
@@ -143,8 +131,7 @@
         timeZone: "America/Santiago",
       });
     } catch {
-      const d = new Date();
-      return d.toISOString().slice(0, 10);
+      return new Date().toISOString().slice(0, 10);
     }
   }
 
@@ -187,28 +174,28 @@
     if (explicitMinutes !== "") {
       const n = Number(explicitMinutes);
       if (!Number.isNaN(n) && n >= 0) {
-        if (n === 0) return "Sin espera estimada";
-        if (n === 1) return "Aproximadamente 1 minuto";
-        return `Aproximadamente ${n} minutos`;
+        if (n === 0) return "Sin espera";
+        if (n === 1) return "1 minuto";
+        return `${n} minutos`;
       }
     }
 
     const status = normalizeStatus(getFirstDefined(data, ["estado"], "pendiente"));
     const horaConsulta = getFirstDefined(data, ["hora_consulta", "horaConsulta"]);
 
-    if (status === "llamado_doctor") return "Pasa ahora a consulta";
-    if (status === "llamado_recepcion") return "Pasa ahora a recepción";
-    if (status === "atendido") return "Atención finalizada";
+    if (status === "llamado_doctor") return "Pasa ahora";
+    if (status === "llamado_recepcion") return "Pasa ahora";
+    if (status === "atendido") return "Finalizado";
 
     if (horaConsulta) {
       const diff = minutesBetweenNowAndHour(horaConsulta);
 
       if (diff !== null) {
         if (diff <= 0) return "En curso";
-        if (diff <= 5) return "Menos de 5 minutos";
-        if (diff <= 15) return "Aproximadamente 15 minutos";
-        if (diff <= 30) return "Aproximadamente 30 minutos";
-        return `Cerca de ${diff} minutos`;
+        if (diff <= 5) return "< 5 min";
+        if (diff <= 15) return "15 min";
+        if (diff <= 30) return "30 min";
+        return `${diff} min`;
       }
     }
 
@@ -216,6 +203,8 @@
   }
 
   function renderTimeline(statusKey) {
+    if (!refs.timelineSteps) return;
+
     const currentIndex = STATUS_MAP[statusKey]?.stepIndex ?? 0;
     refs.timelineSteps.innerHTML = "";
 
@@ -266,18 +255,36 @@
     const statusKey = normalizeStatus(rawStatus);
     const statusData = STATUS_MAP[statusKey];
 
-    refs.pacienteNombre.textContent = safeText(titleCase(paciente), "Paciente no disponible");
-    refs.doctorNombre.textContent = safeText(titleCase(doctor), "Por asignar");
-    refs.ubicacionTexto.textContent = safeText(ubicacion, "Por confirmar");
-    refs.tiempoEstimado.textContent = resolveEstimatedTime(latestData);
+    if (refs.pacienteNombre) {
+      refs.pacienteNombre.textContent = safeText(titleCase(paciente), "Paciente no disponible");
+    }
 
-    refs.estadoChip.textContent = statusData.label;
-    refs.estadoChip.className = `estado-chip ${statusData.chipClass}`;
-    refs.estadoMensaje.textContent = statusData.message;
+    if (refs.doctorNombre) {
+      refs.doctorNombre.textContent = safeText(titleCase(doctor), "Por asignar");
+    }
+
+    if (refs.ubicacionTexto) {
+      refs.ubicacionTexto.textContent = safeText(ubicacion, "Por confirmar");
+    }
+
+    if (refs.tiempoEstimado) {
+      refs.tiempoEstimado.textContent = resolveEstimatedTime(latestData);
+    }
+
+    if (refs.estadoChip) {
+      refs.estadoChip.textContent = statusData.label;
+      refs.estadoChip.className = `estado-chip ${statusData.chipClass}`;
+    }
+
+    if (refs.estadoMensaje) {
+      refs.estadoMensaje.textContent = statusData.message;
+    }
 
     renderTimeline(statusKey);
 
-    refs.ultimaActualizacion.textContent = `Última actualización: ${getNowTimeString()}`;
+    if (refs.ultimaActualizacion) {
+      refs.ultimaActualizacion.textContent = `Última actualización: ${getNowTimeString()}`;
+    }
   }
 
   function readFromUrl() {
@@ -424,17 +431,44 @@
     }
   }
 
-  function refreshNow() {
+  function refreshFromCurrentSources() {
     const storageData = readFromStorage();
-    render(storageData);
+
+    if (Object.keys(storageData).length) {
+      render(storageData);
+      return;
+    }
 
     if (latestData) {
-      startRealtimeFirestore(latestData);
+      render(latestData);
+    }
+  }
+
+  async function enableNotifications() {
+    if (!refs.btnNotificacion) return;
+
+    if (!("Notification" in window)) {
+      refs.btnNotificacion.textContent = "NOTIFICACIONES NO DISPONIBLES";
+      return;
+    }
+
+    try {
+      const result = await Notification.requestPermission();
+
+      if (result === "granted") {
+        refs.btnNotificacion.textContent = "NOTIFICACIONES ACTIVADAS";
+      } else if (result === "denied") {
+        refs.btnNotificacion.textContent = "NOTIFICACIONES BLOQUEADAS";
+      }
+    } catch (error) {
+      console.error("No se pudo solicitar permiso de notificación:", error);
     }
   }
 
   function bindEvents() {
-    refs.btnActualizar.addEventListener("click", refreshNow);
+    if (refs.btnNotificacion) {
+      refs.btnNotificacion.addEventListener("click", enableNotifications);
+    }
   }
 
   function init() {
@@ -445,13 +479,8 @@
     bindEvents();
     startRealtimeFirestore(initialData);
 
-    // Refresco visual de respaldo
-    setInterval(() => {
-      const storageData = readFromStorage();
-      if (Object.keys(storageData).length) {
-        render(storageData);
-      }
-    }, 5000);
+    // refresco visual automático cada 1 minuto
+    setInterval(refreshFromCurrentSources, 60000);
   }
 
   init();
