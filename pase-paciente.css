@@ -211,6 +211,7 @@ body.pre-ticket-open .ticket-shell {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    transform: translateY(40px);
 }
 
 /* CABECERA */
