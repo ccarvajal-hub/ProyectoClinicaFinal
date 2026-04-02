@@ -1,6 +1,5 @@
 import {
   doc,
-  getDoc,
   collection,
   query,
   where,
@@ -29,7 +28,9 @@ import { db } from "./firebase-config.js";
   };
 
   const urlParams = new URLSearchParams(window.location.search);
+
   let unsubscribeFirestore = null;
+  let unsubscribePassLookup = null;
   let latestData = null;
 
   let notificationsArmed = false;
@@ -431,6 +432,7 @@ import { db } from "./firebase-config.js";
 
   function readFromUrl() {
     return {
+      pass: urlParams.get("pass") || "",
       id: urlParams.get("id") || urlParams.get("agendadoId") || "",
       agendadoId: urlParams.get("agendadoId") || urlParams.get("id") || "",
       nombre_paciente:
@@ -520,8 +522,133 @@ import { db } from "./firebase-config.js";
     });
   }
 
-  async function startRealtimeFirestore(baseData) {
+  function cleanupListeners() {
+    if (typeof unsubscribePassLookup === "function") {
+      unsubscribePassLookup();
+      unsubscribePassLookup = null;
+    }
+
+    if (typeof unsubscribeFirestore === "function") {
+      unsubscribeFirestore();
+      unsubscribeFirestore = null;
+    }
+  }
+
+  function listenAgendadoById(agendadoId, baseData = {}) {
+    if (!agendadoId) {
+      debugLog("listenAgendadoById", "agendadoId vacío");
+      return;
+    }
+
+    if (typeof unsubscribeFirestore === "function") {
+      unsubscribeFirestore();
+      unsubscribeFirestore = null;
+    }
+
+    debugLog("Consulta Firestore por ID", agendadoId);
+
+    const docRef = doc(db, "agendados", agendadoId);
+
+    unsubscribeFirestore = onSnapshot(
+      docRef,
+      (snap) => {
+        debugLog("Snapshot por ID exists", snap.exists());
+
+        if (!snap.exists()) {
+          debugLog("Documento por ID", "no existe");
+          return;
+        }
+
+        const docData = snap.data() || {};
+        debugLog("Doc data por ID", docData);
+
+        render({
+          ...baseData,
+          ...docData,
+          agendadoId: snap.id,
+          id: snap.id,
+        });
+      },
+      (error) => {
+        console.error("[ticket] Error onSnapshot por ID:", error);
+        debugLog("Error onSnapshot por ID", error?.message || error);
+      }
+    );
+  }
+
+  function startPassLookup(pass) {
+    if (!pass) return false;
+
+    debugLog("Modo PASS", pass);
+
+    if (typeof unsubscribePassLookup === "function") {
+      unsubscribePassLookup();
+      unsubscribePassLookup = null;
+    }
+
+    const passQuery = query(
+      collection(db, "pases_paciente"),
+      where("pass_id", "==", pass),
+      where("activo", "==", true),
+      limit(1)
+    );
+
+    unsubscribePassLookup = onSnapshot(
+      passQuery,
+      (snapshot) => {
+        debugLog("Snapshot pases_paciente empty", snapshot.empty);
+        debugLog("Snapshot pases_paciente size", snapshot.size);
+
+        if (snapshot.empty) {
+          debugLog("PASS", "no encontrado");
+          return;
+        }
+
+        const paseDoc = snapshot.docs[0];
+        const paseData = paseDoc.data() || {};
+        debugLog("PASE encontrado", paseData);
+
+        const agendadoId = getFirstDefined(paseData, [
+          "agendado_id",
+          "agendadoId",
+          "id_agendado",
+        ]);
+
+        if (!agendadoId) {
+          debugLog("Error", "pase sin agendado_id");
+          return;
+        }
+
+        debugLog("AgendadoId desde pase", agendadoId);
+
+        listenAgendadoById(agendadoId, {
+          pass,
+          paseId: paseDoc.id,
+        });
+      },
+      (error) => {
+        console.error("[ticket] Error onSnapshot pases_paciente:", error);
+        debugLog("Error onSnapshot pases_paciente", error?.message || error);
+      }
+    );
+
+    return true;
+  }
+
+  function startRealtimeFirestore(baseData) {
     try {
+      cleanupListeners();
+
+      const pass = getFirstDefined(baseData, ["pass"], urlParams.get("pass") || "");
+      debugLog("Firestore", "modular OK");
+      debugLog("baseData", baseData);
+      debugLog("pass", pass || "(vacío)");
+
+      if (pass) {
+        const startedPassFlow = startPassLookup(pass);
+        if (startedPassFlow) return;
+      }
+
       let agendadoId =
         baseData.agendadoId ||
         baseData.id ||
@@ -531,45 +658,10 @@ import { db } from "./firebase-config.js";
 
       agendadoId = String(agendadoId || "").trim();
 
-      if (unsubscribeFirestore) {
-        unsubscribeFirestore();
-        unsubscribeFirestore = null;
-      }
-
-      debugLog("Firestore", "modular OK");
-      debugLog("baseData", baseData);
       debugLog("agendadoId", agendadoId || "(vacío)");
 
       if (agendadoId) {
-        debugLog("Consulta Firestore por ID", agendadoId);
-
-        const docRef = doc(db, "agendados", agendadoId);
-
-        unsubscribeFirestore = onSnapshot(
-          docRef,
-          (snap) => {
-            debugLog("Snapshot por ID exists", snap.exists());
-
-            if (!snap.exists()) {
-              debugLog("Documento por ID", "no existe");
-              return;
-            }
-
-            const docData = snap.data() || {};
-            debugLog("Doc data por ID", docData);
-
-            render({
-              ...baseData,
-              ...docData,
-              agendadoId: snap.id,
-              id: snap.id,
-            });
-          },
-          (error) => {
-            console.error("[ticket] Error onSnapshot por ID:", error);
-            debugLog("Error onSnapshot por ID", error?.message || error);
-          }
-        );
+        listenAgendadoById(agendadoId, baseData);
         return;
       }
 
@@ -583,7 +675,7 @@ import { db } from "./firebase-config.js";
       debugLog("fechaTurno", fechaTurno || "(vacío)");
 
       if (!rut) {
-        debugLog("Firestore", "no hay rut ni agendadoId");
+        debugLog("Firestore", "no hay pass, rut ni agendadoId");
         return;
       }
 
