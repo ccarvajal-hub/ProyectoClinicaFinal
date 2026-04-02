@@ -25,6 +25,9 @@
   let lastStatusKey = null;
   let hasInitialStatus = false;
 
+  const DEFAULT_STATUS_MESSAGE =
+    "Estamos preparando tu atención. Mantente atento a los próximos llamados.";
+
   const STEP_ORDER = [
     "EN ESPERA",
     "LLAMADO RECEPCION",
@@ -36,71 +39,114 @@
     pendiente: {
       label: "EN ESPERA",
       chipClass: "estado-espera",
-      message: "",
+      message: DEFAULT_STATUS_MESSAGE,
       stepIndex: 0,
     },
     agendado: {
       label: "EN ESPERA",
       chipClass: "estado-espera",
-      message: "",
+      message: DEFAULT_STATUS_MESSAGE,
       stepIndex: 0,
     },
     confirmado: {
       label: "EN ESPERA",
       chipClass: "estado-espera",
-      message: "",
+      message: DEFAULT_STATUS_MESSAGE,
       stepIndex: 0,
     },
     llegado: {
       label: "EN ESPERA",
       chipClass: "estado-espera",
-      message: "",
+      message: "Tu llegada ya fue registrada. Espera el llamado de recepción.",
       stepIndex: 0,
     },
     llamado_recepcion: {
       label: "LLAMADO RECEPCION",
       chipClass: "estado-recepcion",
-      message: "",
+      message: "Acércate a recepción. Ya es tu turno.",
       stepIndex: 1,
     },
     pago_manual: {
       label: "LLAMADO RECEPCION",
       chipClass: "estado-recepcion",
-      message: "",
+      message: "Acércate a recepción para continuar con tu atención.",
       stepIndex: 1,
     },
     pagado: {
       label: "EN ESPERA",
       chipClass: "estado-espera",
-      message: "",
-      stepIndex: 0,
+      message: "Recepción completada. Espera el llamado a consulta.",
+      stepIndex: 1,
     },
     llamado_doctor: {
       label: "LLAMADO CONSULTA",
       chipClass: "estado-consulta",
-      message: "",
+      message: "Ya puedes dirigirte a tu consulta.",
       stepIndex: 2,
     },
     atendido: {
       label: "ATENDIDO",
       chipClass: "estado-atendido",
-      message: "",
+      message: "Tu atención fue finalizada.",
       stepIndex: 3,
     },
   };
 
-  function getNowTimeString() {
-  try {
-    return new Date().toLocaleTimeString("es-CL", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-  } catch {
-    return "--:--:--";
+  function debugLog(label, value) {
+    let box = document.getElementById("debug-box");
+
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "debug-box";
+      box.style.position = "fixed";
+      box.style.left = "10px";
+      box.style.right = "10px";
+      box.style.bottom = "10px";
+      box.style.zIndex = "99999";
+      box.style.background = "rgba(0,0,0,0.88)";
+      box.style.color = "#00ff88";
+      box.style.fontSize = "11px";
+      box.style.lineHeight = "1.35";
+      box.style.padding = "10px";
+      box.style.borderRadius = "12px";
+      box.style.maxHeight = "40vh";
+      box.style.overflow = "auto";
+      box.style.whiteSpace = "pre-wrap";
+      box.style.wordBreak = "break-word";
+      box.style.fontFamily = "monospace";
+      document.body.appendChild(box);
+    }
+
+    let textValue = "";
+    try {
+      textValue =
+        typeof value === "object"
+          ? JSON.stringify(value, null, 2)
+          : String(value);
+    } catch {
+      textValue = String(value);
+    }
+
+    box.textContent += `${label}: ${textValue}\n\n`;
   }
-}
+
+  function clearDebugBox() {
+    const box = document.getElementById("debug-box");
+    if (box) box.textContent = "";
+  }
+
+  function getNowTimeString() {
+    try {
+      return new Date().toLocaleTimeString("es-CL", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+    } catch {
+      return "--:--:--";
+    }
+  }
 
   function titleCase(text) {
     return String(text || "")
@@ -142,6 +188,14 @@
     } catch {
       return new Date().toISOString().slice(0, 10);
     }
+  }
+
+  function normalizeRut(value) {
+    return String(value || "")
+      .replace(/\./g, "")
+      .replace(/-/g, "")
+      .trim()
+      .toUpperCase();
   }
 
   function minutesBetweenNowAndHour(hora) {
@@ -261,21 +315,24 @@
         "Por confirmar"
       );
 
+      const tagId = getFirstDefined(data, ["id", "agendadoId"], "general");
+
       if (statusKey === "llamado_recepcion") {
         new Notification("Recepción te está llamando", {
           body: `Dirígete a recepción. Ubicación: ${ubicacion}`,
-          tag: `ticket-llamado-recepcion-${getFirstDefined(data, ["id", "agendadoId"], "general")}`,
+          tag: `ticket-llamado-recepcion-${tagId}`,
         });
       }
 
       if (statusKey === "llamado_doctor") {
         new Notification("Ya puedes entrar a consulta", {
           body: `Doctor: ${doctor}. Ubicación: ${ubicacion}`,
-          tag: `ticket-llamado-doctor-${getFirstDefined(data, ["id", "agendadoId"], "general")}`,
+          tag: `ticket-llamado-doctor-${tagId}`,
         });
       }
     } catch (error) {
       console.error("No se pudo mostrar la notificación:", error);
+      debugLog("Error notificación", error?.message || error);
     }
   }
 
@@ -321,10 +378,13 @@
 
     const rawStatus = getFirstDefined(latestData, ["estado"], "pendiente");
     const statusKey = normalizeStatus(rawStatus);
-    const statusData = STATUS_MAP[statusKey];
+    const statusData = STATUS_MAP[statusKey] || STATUS_MAP.pendiente;
 
     if (refs.pacienteNombre) {
-      refs.pacienteNombre.textContent = safeText(titleCase(paciente), "Paciente no disponible");
+      refs.pacienteNombre.textContent = safeText(
+        titleCase(paciente),
+        "Paciente no disponible"
+      );
     }
 
     if (refs.doctorNombre) {
@@ -345,7 +405,8 @@
     }
 
     if (refs.estadoMensaje) {
-      refs.estadoMensaje.textContent = statusData.message;
+      refs.estadoMensaje.textContent =
+        safeText(statusData.message, DEFAULT_STATUS_MESSAGE);
     }
 
     renderTimeline(statusKey);
@@ -378,9 +439,9 @@
         urlParams.get("hora") ||
         urlParams.get("hora_consulta") ||
         "",
-      estado: urlParams.get("estado") || "pendiente",
+      estado: urlParams.get("estado") || "",
       rut: urlParams.get("rut") || "",
-      fecha_turno: urlParams.get("fecha") || getChileDate(),
+      fecha_turno: urlParams.get("fecha") || "",
       minutos_estimados:
         urlParams.get("minutos") ||
         urlParams.get("minutos_estimados") ||
@@ -408,15 +469,31 @@
         }
       } catch (error) {
         console.warn(`No se pudo leer ${key}:`, error);
+        debugLog(`Error leyendo storage ${key}`, error?.message || error);
       }
     }
 
     return {};
   }
 
+  function removeEmptyFields(obj) {
+    const clean = {};
+
+    Object.keys(obj || {}).forEach((key) => {
+      const value = obj[key];
+
+      if (value === null || value === undefined) return;
+      if (typeof value === "string" && value.trim() === "") return;
+
+      clean[key] = value;
+    });
+
+    return clean;
+  }
+
   function mergeInitialData() {
-    const fromUrl = readFromUrl();
-    const fromStorage = readFromStorage();
+    const fromStorage = removeEmptyFields(readFromStorage());
+    const fromUrl = removeEmptyFields(readFromUrl());
 
     return {
       ...fromStorage,
@@ -426,6 +503,7 @@
 
   function setupStorageSync() {
     window.addEventListener("storage", () => {
+      debugLog("Evento storage", "detectado");
       const storageData = readFromStorage();
       render(storageData);
     });
@@ -433,29 +511,49 @@
 
   async function startRealtimeFirestore(baseData) {
     try {
-      if (!window.firebase || !firebase.firestore) return;
+      if (!window.firebase || !firebase.firestore) {
+        console.warn("[ticket] Firebase no está disponible.");
+        debugLog("Firebase", "no disponible");
+        return;
+      }
 
       const db = window.db || firebase.firestore();
-      const agendadoId =
+
+      let agendadoId =
         baseData.agendadoId ||
         baseData.id ||
         urlParams.get("agendadoId") ||
         urlParams.get("id") ||
         "";
 
+      agendadoId = String(agendadoId || "").trim();
+
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
         unsubscribeFirestore = null;
       }
 
+      debugLog("baseData", baseData);
+      debugLog("agendadoId", agendadoId || "(vacío)");
+
       if (agendadoId) {
+        debugLog("Consulta Firestore por ID", agendadoId);
+
         unsubscribeFirestore = db
           .collection("agendados")
           .doc(agendadoId)
           .onSnapshot(
             (snap) => {
-              if (!snap.exists) return;
+              debugLog("Snapshot por ID exists", snap.exists);
+
+              if (!snap.exists) {
+                debugLog("Documento por ID", "no existe");
+                return;
+              }
+
               const docData = snap.data() || {};
+              debugLog("Doc data por ID", docData);
+
               render({
                 ...baseData,
                 ...docData,
@@ -464,16 +562,26 @@
               });
             },
             (error) => {
-              console.error("Error onSnapshot por id:", error);
+              console.error("[ticket] Error onSnapshot por id:", error);
+              debugLog("Error onSnapshot por ID", error?.message || error);
             }
           );
         return;
       }
 
-      const rut = getFirstDefined(baseData, ["rut"], "");
+      const rawRut = getFirstDefined(baseData, ["rut"], "");
+      const rut = normalizeRut(rawRut);
       const fechaTurno = getFirstDefined(baseData, ["fecha_turno"], getChileDate());
 
-      if (!rut) return;
+      debugLog("Sin agendadoId", "buscando por rut/fecha");
+      debugLog("rut original", rawRut || "(vacío)");
+      debugLog("rut normalizado", rut || "(vacío)");
+      debugLog("fechaTurno", fechaTurno || "(vacío)");
+
+      if (!rut) {
+        debugLog("Firestore", "no hay rut ni agendadoId");
+        return;
+      }
 
       unsubscribeFirestore = db
         .collection("agendados")
@@ -482,9 +590,18 @@
         .limit(1)
         .onSnapshot(
           (snapshot) => {
-            if (snapshot.empty) return;
+            debugLog("Snapshot por rut/fecha empty", snapshot.empty);
+            debugLog("Snapshot por rut/fecha size", snapshot.size);
+
+            if (snapshot.empty) {
+              debugLog("Resultado rut/fecha", "sin documentos");
+              return;
+            }
+
             const doc = snapshot.docs[0];
             const docData = doc.data() || {};
+            debugLog("Doc data por rut/fecha", docData);
+
             render({
               ...baseData,
               ...docData,
@@ -493,11 +610,13 @@
             });
           },
           (error) => {
-            console.error("Error onSnapshot por rut/fecha:", error);
+            console.error("[ticket] Error onSnapshot por rut/fecha:", error);
+            debugLog("Error onSnapshot rut/fecha", error?.message || error);
           }
         );
     } catch (error) {
-      console.error("No se pudo iniciar tiempo real con Firestore:", error);
+      console.error("[ticket] No se pudo iniciar tiempo real con Firestore:", error);
+      debugLog("Error startRealtimeFirestore", error?.message || error);
     }
   }
 
@@ -529,7 +648,8 @@
 
     if (!("Notification" in window)) {
       notificationsArmed = false;
-      refs.preTicketStatus.textContent = "Este dispositivo no admite notificaciones.";
+      refs.preTicketStatus.textContent =
+        "Este dispositivo no admite notificaciones.";
       setTimeout(openTicket, 600);
       return;
     }
@@ -544,7 +664,8 @@
 
       if (Notification.permission === "denied") {
         notificationsArmed = false;
-        refs.preTicketStatus.textContent = "Las notificaciones están bloqueadas en este navegador.";
+        refs.preTicketStatus.textContent =
+          "Las notificaciones están bloqueadas en este navegador.";
         setTimeout(openTicket, 700);
         return;
       }
@@ -562,9 +683,14 @@
 
       setTimeout(openTicket, 500);
     } catch (error) {
-      console.error("No se pudo solicitar permiso de notificaciones:", error);
+      console.error(
+        "[ticket] No se pudo solicitar permiso de notificaciones:",
+        error
+      );
+      debugLog("Error permiso notificaciones", error?.message || error);
       notificationsArmed = false;
-      refs.preTicketStatus.textContent = "No se pudo activar. Entrando al ticket...";
+      refs.preTicketStatus.textContent =
+        "No se pudo activar. Entrando al ticket...";
       setTimeout(openTicket, 700);
     }
   }
@@ -576,16 +702,28 @@
 
   function bindEvents() {
     if (refs.btnActivarNotificaciones) {
-      refs.btnActivarNotificaciones.addEventListener("click", handleActivateNotifications);
+      refs.btnActivarNotificaciones.addEventListener(
+        "click",
+        handleActivateNotifications
+      );
     }
 
     if (refs.btnContinuarSinNotificaciones) {
-      refs.btnContinuarSinNotificaciones.addEventListener("click", handleContinueWithoutNotifications);
+      refs.btnContinuarSinNotificaciones.addEventListener(
+        "click",
+        handleContinueWithoutNotifications
+      );
     }
   }
 
   function init() {
+    clearDebugBox();
+
     const initialData = mergeInitialData();
+
+    debugLog("init", "ok");
+    debugLog("URL params", Object.fromEntries(urlParams.entries()));
+    debugLog("initialData", initialData);
 
     render(initialData);
     setupStorageSync();
