@@ -167,9 +167,16 @@ import { db } from "./firebase-config.js";
   }
 
   function titleCase(text) {
-    return String(text || "")
-      .toLowerCase()
-      .replace(/\b\w/g, (c) => c.toUpperCase());
+    const source = String(text || "").trim();
+    if (!source) return "";
+
+    return source
+      .toLocaleLowerCase("es-CL")
+      .replace(/\p{L}+/gu, (word) => {
+        const first = word.charAt(0).toLocaleUpperCase("es-CL");
+        const rest = word.slice(1);
+        return `${first}${rest}`;
+      });
   }
 
   function safeText(value, fallback = "--") {
@@ -326,9 +333,17 @@ import { db } from "./firebase-config.js";
         getFirstDefined(data, [
           "ubicacion",
           "ubicacion_texto",
+          "ubicacion_consulta",
+          "ubicacion_box",
+          "box",
+          "box_nombre",
           "consulta",
+          "consulta_nombre",
           "destino",
           "lugar",
+          "sala",
+          "oficina",
+          "piso_box",
         ]),
         "Por confirmar"
       );
@@ -389,9 +404,17 @@ import { db } from "./firebase-config.js";
     const ubicacion = getFirstDefined(latestData, [
       "ubicacion",
       "ubicacion_texto",
+      "ubicacion_consulta",
+      "ubicacion_box",
+      "box",
+      "box_nombre",
       "consulta",
+      "consulta_nombre",
       "destino",
       "lugar",
+      "sala",
+      "oficina",
+      "piso_box",
     ]);
 
     const rawStatus = getFirstDefined(latestData, ["estado"], "pendiente");
