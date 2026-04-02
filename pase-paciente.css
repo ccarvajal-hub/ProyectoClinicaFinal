@@ -36,7 +36,7 @@ body {
 }
 
 html {
-    font-size: 150%;
+    font-size: 175%;
 }
 
 html,
@@ -265,7 +265,7 @@ body.pre-ticket-open .ticket-shell {
 .summary-grid {
     width: 100%;
     max-width: 760px;
-    margin: 2px auto 0;
+    margin: 26px auto 0;
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
@@ -306,9 +306,9 @@ body.pre-ticket-open .ticket-shell {
 
 .info-label {
     margin: 0;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.07em;
+    font-size: 1.0rem;
+    font-weight: 650;
+    letter-spacing: none;
     text-transform: uppercase;
     color: var(--text-muted);
 }
@@ -316,8 +316,8 @@ body.pre-ticket-open .ticket-shell {
 .info-combined-row .info-value {
     margin: 0;
     color: var(--text-main);
-    font-size: 1.08rem;
-    font-weight: 700;
+    font-size: 1.0rem;
+    font-weight: 450;
     line-height: 1.2;
     text-align: left;
     word-break: break-word;
@@ -326,8 +326,8 @@ body.pre-ticket-open .ticket-shell {
 .info-value,
 .info-value-patient,
 #paciente-nombre {
-    font-size: 1.08rem;
-    font-weight: 700;
+    font-size: 1.0rem;
+    font-weight: 450;
 }
 
 /* ESTADO ACTUAL SIN RECUADRO */
@@ -335,12 +335,11 @@ body.pre-ticket-open .ticket-shell {
 .current-status-card {
     width: 100%;
     max-width: 760px;
-    margin: 12px auto 0;
+    margin: 64px auto 0;
     padding: 22px 0 0;
     background: transparent;
     border: none;
     box-shadow: none;
-    border-top: none;
 }
 
 .status-card-header {
@@ -473,7 +472,7 @@ body.pre-ticket-open .ticket-shell {
 .timeline-card {
     width: 100%;
     max-width: 760px;
-    margin: 8px auto 0;
+    margin: 64px auto 0;
     padding: 8px 0 0;
     background: transparent;
     border: none;
@@ -486,34 +485,40 @@ body.pre-ticket-open .ticket-shell {
     justify-content: center;
     gap: 10px;
     flex-wrap: wrap;
-    margin-bottom: 14px;
+    margin-bottom: 18px;
 }
 
 .timeline-steps,
 #timeline-steps {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    max-width: 700px;
+    margin: 0 auto;
+    gap: 14px;
+}
+
+.timeline-step:nth-child(4) {
+    display: none !important;
 }
 
 .timeline-step {
-    min-height: 74px;
-    padding: 10px 6px;
-    border-radius: 8px;
+    min-height: 88px;
+    padding: 14px 10px;
+    border-radius: 10px;
     border: 1px solid rgba(255,255,255,0.10);
     background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
     text-align: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     opacity: 0.55;
 }
 
 .timeline-step::before {
     content: "";
-    width: 10px;
-    height: 10px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
     margin: 0 auto;
     display: block;
@@ -522,7 +527,7 @@ body.pre-ticket-open .ticket-shell {
 
 .timeline-step .step-text {
     color: rgba(255,255,255,0.46);
-    font-size: 0.67rem;
+    font-size: 0.78rem;
     font-weight: 800;
     line-height: 1.08;
     letter-spacing: 0.015em;
@@ -715,19 +720,20 @@ body.pre-ticket-open .ticket-shell {
         font-size: 0.92rem;
     }
 
-    .timeline-steps,
+   .timeline-steps,
     #timeline-steps {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-        gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    max-width: 100%;
+    gap: 10px;
     }
 
     .timeline-step {
-        min-height: 68px;
-        padding: 8px 4px;
+    min-height: 82px;
+    padding: 10px 6px;
     }
 
     .timeline-step .step-text {
-        font-size: 0.6rem;
-        line-height: 1.05;
+    font-size: 0.66rem;
+    line-height: 1.05;
     }
 }
