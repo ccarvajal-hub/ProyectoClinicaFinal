@@ -9,6 +9,8 @@ import {
 import { db } from "./firebase-config.js";
 
 (() => {
+  const DEBUG_MODE = false;
+
   const $ = (id) => document.getElementById(id);
 
   const refs = {
@@ -105,6 +107,8 @@ import { db } from "./firebase-config.js";
   };
 
   function debugLog(label, value) {
+    if (!DEBUG_MODE) return;
+
     let box = document.getElementById("debug-box");
 
     if (!box) {
@@ -113,7 +117,8 @@ import { db } from "./firebase-config.js";
       box.style.position = "fixed";
       box.style.left = "10px";
       box.style.right = "10px";
-      box.style.bottom = "10px";
+      box.style.top = "10px";
+      box.style.bottom = "auto";
       box.style.zIndex = "99999";
       box.style.background = "rgba(0,0,0,0.88)";
       box.style.color = "#00ff88";
@@ -121,7 +126,7 @@ import { db } from "./firebase-config.js";
       box.style.lineHeight = "1.35";
       box.style.padding = "10px";
       box.style.borderRadius = "12px";
-      box.style.maxHeight = "40vh";
+      box.style.maxHeight = "30vh";
       box.style.overflow = "auto";
       box.style.whiteSpace = "pre-wrap";
       box.style.wordBreak = "break-word";
@@ -143,6 +148,7 @@ import { db } from "./firebase-config.js";
   }
 
   function clearDebugBox() {
+    if (!DEBUG_MODE) return;
     const box = document.getElementById("debug-box");
     if (box) box.textContent = "";
   }
