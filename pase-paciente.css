@@ -211,7 +211,7 @@ body.pre-ticket-open .ticket-shell {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    transform: translateY(40px);
+    transform: translateY(60px);
 }
 
 /* CABECERA */
@@ -620,7 +620,7 @@ body.pre-ticket-open .ticket-shell {
 
     .ticket-card {
         padding: 10px 0 16px;
-        gap: 14px;
+        gap: 40px;
     }
 
     .top-badge {
