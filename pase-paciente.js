@@ -1,3 +1,14 @@
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  limit,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db } from "./firebase-config.js";
+
 (() => {
   const $ = (id) => document.getElementById(id);
 
@@ -511,14 +522,6 @@
 
   async function startRealtimeFirestore(baseData) {
     try {
-      if (!window.firebase || !firebase.firestore) {
-        console.warn("[ticket] Firebase no está disponible.");
-        debugLog("Firebase", "no disponible");
-        return;
-      }
-
-      const db = window.db || firebase.firestore();
-
       let agendadoId =
         baseData.agendadoId ||
         baseData.id ||
@@ -533,39 +536,40 @@
         unsubscribeFirestore = null;
       }
 
+      debugLog("Firestore", "modular OK");
       debugLog("baseData", baseData);
       debugLog("agendadoId", agendadoId || "(vacío)");
 
       if (agendadoId) {
         debugLog("Consulta Firestore por ID", agendadoId);
 
-        unsubscribeFirestore = db
-          .collection("agendados")
-          .doc(agendadoId)
-          .onSnapshot(
-            (snap) => {
-              debugLog("Snapshot por ID exists", snap.exists);
+        const docRef = doc(db, "agendados", agendadoId);
 
-              if (!snap.exists) {
-                debugLog("Documento por ID", "no existe");
-                return;
-              }
+        unsubscribeFirestore = onSnapshot(
+          docRef,
+          (snap) => {
+            debugLog("Snapshot por ID exists", snap.exists());
 
-              const docData = snap.data() || {};
-              debugLog("Doc data por ID", docData);
-
-              render({
-                ...baseData,
-                ...docData,
-                agendadoId: snap.id,
-                id: snap.id,
-              });
-            },
-            (error) => {
-              console.error("[ticket] Error onSnapshot por id:", error);
-              debugLog("Error onSnapshot por ID", error?.message || error);
+            if (!snap.exists()) {
+              debugLog("Documento por ID", "no existe");
+              return;
             }
-          );
+
+            const docData = snap.data() || {};
+            debugLog("Doc data por ID", docData);
+
+            render({
+              ...baseData,
+              ...docData,
+              agendadoId: snap.id,
+              id: snap.id,
+            });
+          },
+          (error) => {
+            console.error("[ticket] Error onSnapshot por ID:", error);
+            debugLog("Error onSnapshot por ID", error?.message || error);
+          }
+        );
         return;
       }
 
@@ -583,37 +587,40 @@
         return;
       }
 
-      unsubscribeFirestore = db
-        .collection("agendados")
-        .where("rut", "==", rut)
-        .where("fecha_turno", "==", fechaTurno)
-        .limit(1)
-        .onSnapshot(
-          (snapshot) => {
-            debugLog("Snapshot por rut/fecha empty", snapshot.empty);
-            debugLog("Snapshot por rut/fecha size", snapshot.size);
+      const q = query(
+        collection(db, "agendados"),
+        where("rut", "==", rut),
+        where("fecha_turno", "==", fechaTurno),
+        limit(1)
+      );
 
-            if (snapshot.empty) {
-              debugLog("Resultado rut/fecha", "sin documentos");
-              return;
-            }
+      unsubscribeFirestore = onSnapshot(
+        q,
+        (snapshot) => {
+          debugLog("Snapshot por rut/fecha empty", snapshot.empty);
+          debugLog("Snapshot por rut/fecha size", snapshot.size);
 
-            const doc = snapshot.docs[0];
-            const docData = doc.data() || {};
-            debugLog("Doc data por rut/fecha", docData);
-
-            render({
-              ...baseData,
-              ...docData,
-              agendadoId: doc.id,
-              id: doc.id,
-            });
-          },
-          (error) => {
-            console.error("[ticket] Error onSnapshot por rut/fecha:", error);
-            debugLog("Error onSnapshot rut/fecha", error?.message || error);
+          if (snapshot.empty) {
+            debugLog("Resultado rut/fecha", "sin documentos");
+            return;
           }
-        );
+
+          const foundDoc = snapshot.docs[0];
+          const docData = foundDoc.data() || {};
+          debugLog("Doc data por rut/fecha", docData);
+
+          render({
+            ...baseData,
+            ...docData,
+            agendadoId: foundDoc.id,
+            id: foundDoc.id,
+          });
+        },
+        (error) => {
+          console.error("[ticket] Error onSnapshot rut/fecha:", error);
+          debugLog("Error onSnapshot rut/fecha", error?.message || error);
+        }
+      );
     } catch (error) {
       console.error("[ticket] No se pudo iniciar tiempo real con Firestore:", error);
       debugLog("Error startRealtimeFirestore", error?.message || error);
@@ -683,10 +690,7 @@
 
       setTimeout(openTicket, 500);
     } catch (error) {
-      console.error(
-        "[ticket] No se pudo solicitar permiso de notificaciones:",
-        error
-      );
+      console.error("[ticket] No se pudo solicitar permiso de notificaciones:", error);
       debugLog("Error permiso notificaciones", error?.message || error);
       notificationsArmed = false;
       refs.preTicketStatus.textContent =
