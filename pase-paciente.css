@@ -15,9 +15,9 @@
 
     --border-blue-fine: rgba(77, 128, 178, 0.55);
 
-    --badge-espera: #d8bd6a;
+    --badge-espera: #f0ebd2;
     --badge-recepcion: #ffb347;
-    --badge-consulta: #6695c4;
+    --badge-consulta: #2a7ffd;
     --badge-atendido: #48bb78;
 
     --content-max-width: 900px;
@@ -379,6 +379,7 @@ body.pre-ticket-open .ticket-shell {
     letter-spacing: 0.03em;
     text-align: center;
     text-transform: uppercase;
+    white-space: normal;
 }
 
 .estado-espera {
@@ -396,7 +397,8 @@ body.pre-ticket-open .ticket-shell {
 .estado-consulta {
     color: var(--badge-consulta);
     border: 1px solid var(--badge-consulta);
-    box-shadow: inset 0 0 0 1px rgba(102, 149, 196, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(31, 111, 229, 0.18);
+    line-height: 0.95;
 }
 
 .estado-atendido {
@@ -530,9 +532,10 @@ body.pre-ticket-open .ticket-shell {
     color: rgba(255,255,255,0.46);
     font-size: 0.78rem;
     font-weight: 800;
-    line-height: 1.08;
+    line-height: 1.02;
     letter-spacing: 0.015em;
     text-transform: uppercase;
+    white-space: normal;
 }
 
 .timeline-step.done {
@@ -578,7 +581,7 @@ body.pre-ticket-open .ticket-shell {
 
 .timeline-step.active:nth-child(3) {
     border: 1px solid var(--badge-consulta);
-    box-shadow: inset 0 0 0 1px rgba(102, 149, 196, 0.16);
+    box-shadow: inset 0 0 0 1px rgba(31, 111, 229, 0.16);
 }
 .timeline-step.active:nth-child(3)::before {
     background: var(--badge-consulta);
