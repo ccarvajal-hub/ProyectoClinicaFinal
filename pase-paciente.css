@@ -688,7 +688,7 @@ body.pre-ticket-open .ticket-shell {
     .info-value,
     .info-value-patient,
     #paciente-nombre {
-        font-size: 1rem;
+        font-size: 0.64rem;
     }
 
     .current-status-card {
