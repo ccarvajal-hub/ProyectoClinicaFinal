@@ -307,8 +307,8 @@ body.pre-ticket-open .ticket-shell {
 
 .info-label {
     margin: 0;
-    font-size: 1.0rem;
-    font-weight: 650;
+    font-size: 1rem;
+    font-weight: 500;
     letter-spacing: none;
     text-transform: uppercase;
     color: var(--text-muted);
@@ -681,7 +681,7 @@ body.pre-ticket-open .ticket-shell {
     }
 
     .info-combined-row .info-label {
-        font-size: 0.74rem;
+        font-size: 0.64rem;
     }
 
     .info-combined-row .info-value,
