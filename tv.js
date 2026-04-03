@@ -50,6 +50,7 @@ const refTvConfig = doc(db, "tv_config", "pantalla_principal");
    ESTADO
 ========================= */
 let agendadosCache = [];
+let doctoresMap = {};
 
 let resetDesdeDoctorMs = 0;
 let resetDesdeRecepcionMs = 0;
@@ -137,6 +138,44 @@ function obtenerNombrePaciente(item) {
 }
 
 /* =========================
+   DOCTORES CACHE
+========================= */
+function construirUbicacionDoctor(piso, consulta) {
+    const pisoTexto = String(piso ?? "").trim();
+    const consultaTexto = String(consulta ?? "").trim();
+
+    if (pisoTexto && consultaTexto) return `Piso ${pisoTexto} - Consulta ${consultaTexto}`;
+    if (pisoTexto) return `Piso ${pisoTexto}`;
+    if (consultaTexto) return `Consulta ${consultaTexto}`;
+
+    return "CONSULTA";
+}
+
+function obtenerDoctorDesdeCache(doctorId) {
+    const doctor = doctoresMap[String(doctorId || "").trim()];
+
+    if (!doctor) {
+        return {
+            nombre: "Doctor asignado",
+            ubicacion: "CONSULTA"
+        };
+    }
+
+    const nombre =
+        doctor.nombre ||
+        doctor.nombre_doctor ||
+        doctor.displayName ||
+        "Doctor asignado";
+
+    const ubicacion = construirUbicacionDoctor(
+        doctor.piso,
+        doctor.consulta
+    );
+
+    return { nombre, ubicacion };
+}
+
+/* =========================
    RECEPCIÓN
 ========================= */
 function obtenerHoraRecepcion(item) {
@@ -188,7 +227,10 @@ function obtenerOrdenDoctorMs(item) {
 }
 
 function obtenerNombreDoctor(item) {
+    const { ubicacion } = obtenerDoctorDesdeCache(item.doctor_id);
+
     return (
+        ubicacion ||
         item.tv_destino ||
         item.tv_doctor ||
         item.doctor_nombre ||
@@ -196,10 +238,6 @@ function obtenerNombreDoctor(item) {
         item.medico_nombre ||
         item.medico ||
         item.doctor ||
-        item.box_nombre ||
-        item.box ||
-        item.consulta_nombre ||
-        item.consulta ||
         "CONSULTA"
     );
 }
@@ -524,6 +562,34 @@ onSnapshot(
     },
     (error) => {
         console.error("Error leyendo tv_config:", error);
+    }
+);
+
+/* =========================
+   SNAPSHOT DOCTORES
+========================= */
+onSnapshot(
+    collection(db, "doctores"),
+    (snapshot) => {
+        doctoresMap = {};
+
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const uid = String(data.uid || "").trim();
+
+            if (uid) {
+                doctoresMap[uid] = {
+                    id: docSnap.id,
+                    ...data
+                };
+            }
+        });
+
+        console.log("DOCTORES TV:", doctoresMap);
+        refrescarPantallaCompleta();
+    },
+    (error) => {
+        console.error("Error escuchando doctores:", error);
     }
 );
 

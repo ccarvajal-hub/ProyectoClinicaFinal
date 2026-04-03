@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.02.08";
+const APP_VERSION = "Totem v2026.04.03.01";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -393,62 +393,32 @@ async function obtenerDatosDoctor(doctorId) {
         return { nombreDoctorMostrar, ubicacionMostrar };
     }
 
-    const idBuscado = String(doctorId).trim();
+    const uidBuscado = String(doctorId).trim();
 
     try {
-        const docRefDirecto = doc(db, "doctores", idBuscado);
-        const docSnapDirecto = await getDoc(docRefDirecto);
+        const qDoctores = query(
+            collection(db, "doctores"),
+            where("uid", "==", uidBuscado)
+        );
 
-        if (docSnapDirecto.exists()) {
-            const dData = docSnapDirecto.data();
+        const querySnapshot = await getDocs(qDoctores);
 
-            nombreDoctorMostrar =
-                dData.nombre ||
-                dData.nombre_doctor ||
-                dData.displayName ||
-                "Doctor asignado";
-
-            ubicacionMostrar = construirUbicacionDoctor(dData.piso, dData.consulta);
-
+        if (querySnapshot.empty) {
             return { nombreDoctorMostrar, ubicacionMostrar };
         }
 
-        const qDoctores = query(collection(db, "doctores"));
-        const querySnapshot = await getDocs(qDoctores);
+        const doctorData = querySnapshot.docs[0].data();
 
-        let doctorEncontrado = null;
+        nombreDoctorMostrar =
+            doctorData.nombre ||
+            doctorData.nombre_doctor ||
+            doctorData.displayName ||
+            "Doctor asignado";
 
-        querySnapshot.forEach((docSnap) => {
-            if (doctorEncontrado) return;
-
-            const data = docSnap.data();
-
-            const posiblesIds = [
-                docSnap.id,
-                data.uid,
-                data.doctor_id,
-                data.email
-            ]
-                .filter(Boolean)
-                .map((v) => String(v).trim().toLowerCase());
-
-            if (posiblesIds.includes(idBuscado.toLowerCase())) {
-                doctorEncontrado = data;
-            }
-        });
-
-        if (doctorEncontrado) {
-            nombreDoctorMostrar =
-                doctorEncontrado.nombre ||
-                doctorEncontrado.nombre_doctor ||
-                doctorEncontrado.displayName ||
-                "Doctor asignado";
-
-            ubicacionMostrar = construirUbicacionDoctor(
-                doctorEncontrado.piso,
-                doctorEncontrado.consulta
-            );
-        }
+        ubicacionMostrar = construirUbicacionDoctor(
+            doctorData.piso,
+            doctorData.consulta
+        );
 
         return { nombreDoctorMostrar, ubicacionMostrar };
     } catch (error) {

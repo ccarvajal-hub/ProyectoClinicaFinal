@@ -33,11 +33,14 @@ import { db } from "./firebase-config.js";
 
   let unsubscribeFirestore = null;
   let unsubscribePassLookup = null;
+  let unsubscribeDoctores = null;
   let latestData = null;
 
   let notificationsArmed = false;
   let lastStatusKey = null;
   let hasInitialStatus = false;
+
+  let doctoresMap = {};
 
   const DEFAULT_STATUS_MESSAGE =
     "Estamos preparando tu atención. Mantente atento a los próximos llamados.";
@@ -312,41 +315,48 @@ import { db } from "./firebase-config.js";
     });
   }
 
+  function construirUbicacionDoctor(piso, consulta) {
+    const pisoTexto = String(piso ?? "").trim();
+    const consultaTexto = String(consulta ?? "").trim();
+
+    if (pisoTexto && consultaTexto) return `Piso ${pisoTexto} - Consulta ${consultaTexto}`;
+    if (pisoTexto) return `Piso ${pisoTexto}`;
+    if (consultaTexto) return `Consulta ${consultaTexto}`;
+
+    return "Por confirmar";
+  }
+
+  function obtenerDoctorDesdeCache(doctorId) {
+    const doctor = doctoresMap[String(doctorId || "").trim()];
+
+    if (!doctor) {
+      return {
+        nombre: "Por asignar",
+        ubicacion: "Por confirmar"
+      };
+    }
+
+    const nombre =
+      doctor.nombre ||
+      doctor.nombre_doctor ||
+      doctor.displayName ||
+      "Por asignar";
+
+    const ubicacion = construirUbicacionDoctor(
+      doctor.piso,
+      doctor.consulta
+    );
+
+    return { nombre, ubicacion };
+  }
+
   function fireTicketNotification(statusKey, data) {
     if (!notificationsArmed) return;
     if (!("Notification" in window)) return;
     if (Notification.permission !== "granted") return;
 
     try {
-      const doctor = safeText(
-        getFirstDefined(data, [
-          "doctor_nombre",
-          "doctorNombre",
-          "nombre_doctor",
-          "medico",
-          "doctor",
-        ]),
-        "Por asignar"
-      );
-
-      const ubicacion = safeText(
-        getFirstDefined(data, [
-          "ubicacion",
-          "ubicacion_texto",
-          "ubicacion_consulta",
-          "ubicacion_box",
-          "box",
-          "box_nombre",
-          "consulta",
-          "consulta_nombre",
-          "destino",
-          "lugar",
-          "sala",
-          "oficina",
-          "piso_box",
-        ]),
-        "Por confirmar"
-      );
+      const { nombre: doctor, ubicacion } = obtenerDoctorDesdeCache(data.doctor_id);
 
       const tagId = getFirstDefined(data, ["id", "agendadoId"], "general");
 
@@ -393,29 +403,9 @@ import { db } from "./firebase-config.js";
       "paciente_nombre",
     ]);
 
-    const doctor = getFirstDefined(latestData, [
-      "doctor_nombre",
-      "doctorNombre",
-      "nombre_doctor",
-      "medico",
-      "doctor",
-    ]);
-
-    const ubicacion = getFirstDefined(latestData, [
-      "ubicacion",
-      "ubicacion_texto",
-      "ubicacion_consulta",
-      "ubicacion_box",
-      "box",
-      "box_nombre",
-      "consulta",
-      "consulta_nombre",
-      "destino",
-      "lugar",
-      "sala",
-      "oficina",
-      "piso_box",
-    ]);
+    const { nombre: doctor, ubicacion } = obtenerDoctorDesdeCache(
+      latestData.doctor_id
+    );
 
     const rawStatus = getFirstDefined(latestData, ["estado"], "pendiente");
     const statusKey = normalizeStatus(rawStatus);
@@ -561,6 +551,47 @@ import { db } from "./firebase-config.js";
       unsubscribeFirestore();
       unsubscribeFirestore = null;
     }
+
+    if (typeof unsubscribeDoctores === "function") {
+      unsubscribeDoctores();
+      unsubscribeDoctores = null;
+    }
+  }
+
+  function listenDoctores() {
+    if (typeof unsubscribeDoctores === "function") {
+      unsubscribeDoctores();
+      unsubscribeDoctores = null;
+    }
+
+    unsubscribeDoctores = onSnapshot(
+      collection(db, "doctores"),
+      (snapshot) => {
+        doctoresMap = {};
+
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() || {};
+          const uid = String(data.uid || "").trim();
+
+          if (uid) {
+            doctoresMap[uid] = {
+              id: docSnap.id,
+              ...data
+            };
+          }
+        });
+
+        debugLog("DOCTORES CACHE", doctoresMap);
+
+        if (latestData) {
+          render(latestData);
+        }
+      },
+      (error) => {
+        console.error("[ticket] Error onSnapshot doctores:", error);
+        debugLog("Error onSnapshot doctores", error?.message || error);
+      }
+    );
   }
 
   function listenAgendadoById(agendadoId, baseData = {}) {
@@ -667,6 +698,7 @@ import { db } from "./firebase-config.js";
   function startRealtimeFirestore(baseData) {
     try {
       cleanupListeners();
+      listenDoctores();
 
       const pass = getFirstDefined(baseData, ["pass"], urlParams.get("pass") || "");
       debugLog("Firestore", "modular OK");
