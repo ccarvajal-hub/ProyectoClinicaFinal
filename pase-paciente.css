@@ -15,9 +15,9 @@
 
     --border-blue-fine: rgba(77, 128, 178, 0.55);
 
-    --badge-espera: #f3e7ac;
+    --badge-espera: #ecde94;
     --badge-recepcion: #f7b65b;
-    --badge-consulta: #3b6cb6;
+    --badge-consulta: #3862a1;
     --badge-atendido: #48bb78;
 
     --content-max-width: 900px;
@@ -380,6 +380,7 @@ body.pre-ticket-open .ticket-shell {
     text-align: center;
     text-transform: uppercase;
     white-space: normal;
+    flex-direction: column;
 }
 
 .estado-espera {

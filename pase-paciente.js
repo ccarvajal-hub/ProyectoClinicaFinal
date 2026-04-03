@@ -96,7 +96,7 @@ import { db } from "./firebase-config.js";
       stepIndex: 1,
     },
     llamado_doctor: {
-      label: "LLAMADO CONSULTA",
+      label: "LLAMADO<br>CONSULTA",
       chipClass: "estado-consulta",
       message: "Ya puedes dirigirte a tu consulta.",
       stepIndex: 2,
@@ -431,7 +431,7 @@ import { db } from "./firebase-config.js";
     }
 
     if (refs.estadoChip) {
-      refs.estadoChip.textContent = statusData.label;
+      refs.estadoChip.innerHTML = statusData.label;
       refs.estadoChip.className = `estado-chip ${statusData.chipClass}`;
     }
 
