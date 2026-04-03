@@ -593,7 +593,7 @@ input {
 }
 
 #resUbicacion {
-    text-transform: uppercase;
+    text-transform: none;
 }
 
 .btn-close {
