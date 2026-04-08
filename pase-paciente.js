@@ -345,21 +345,32 @@ import { db } from "./firebase-config.js";
   }
 
   function getDoctorDestino(data) {
-    const ubicacion = getFirstDefined(data, [
-      "tv_destino",
-      "ubicacion_consulta",
-      "consulta_destino",
-      "destino_consulta",
-      "ubicacion",
-    ], "");
+  const consultaDirecta = getFirstDefined(data, [
+    "consulta",
+    "consulta_destino",
+    "destino_consulta",
+    "ubicacion_consulta",
+  ], "");
 
-    if (String(ubicacion || "").trim()) {
-      return safeText(ubicacion, "Consulta");
+  if (String(consultaDirecta || "").trim()) {
+    const texto = String(consultaDirecta).trim();
+
+    if (/^consulta\s+/i.test(texto)) {
+      return texto;
     }
 
-    const { ubicacion: ubicacionDesdeCache } = obtenerDoctorDesdeCache(data.doctor_id);
-    return safeText(ubicacionDesdeCache, "Consulta");
+    return `Consulta ${texto}`;
   }
+
+  const doctor = doctoresMap[String(data?.doctor_id || "").trim()] || {};
+  const consultaCache = String(doctor.consulta || "").trim();
+
+  if (consultaCache) {
+    return `Consulta ${consultaCache}`;
+  }
+
+  return "Consulta";
+}
 
   function hideRecepcionModal() {
     if (recepcionModalTimer) {
