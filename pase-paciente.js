@@ -328,63 +328,71 @@ import { db } from "./firebase-config.js";
   }
 
   function calcularTiempoAproxPorColaDoctor(data, queueDocs) {
-    const status = normalizeStatus(getFirstDefined(data, ["estado"], "pendiente"));
+  const status = normalizeStatus(getFirstDefined(data, ["estado"], "pendiente"));
 
-    if (status === "atendido") return "Finalizado";
+  if (status === "atendido") return "Finalizado";
+  if (status === "llamado_doctor") return "Pasa ahora";
 
-    const miId = String(getFirstDefined(data, ["id", "agendadoId"], "")).trim();
-    const miDoctorId = String(getFirstDefined(data, ["doctor_id"], "")).trim();
-    const miFechaTurno = String(
-      getFirstDefined(data, ["fecha_turno"], getChileDate())
-    ).trim();
-    const miHoraMin = toMinutesFromHour(
-      getFirstDefined(data, ["hora_consulta", "horaConsulta"], "")
+  const miId = String(getFirstDefined(data, ["id", "agendadoId"], "")).trim();
+  const miDoctorId = String(getFirstDefined(data, ["doctor_id"], "")).trim();
+  const miFechaTurno = String(
+    getFirstDefined(data, ["fecha_turno"], getChileDate())
+  ).trim();
+  const miHoraMin = toMinutesFromHour(
+    getFirstDefined(data, ["hora_consulta", "horaConsulta"], "")
+  );
+
+  if (!miDoctorId || !miFechaTurno || miHoraMin === null) {
+    return "Por confirmar";
+  }
+
+  const colaValida = (Array.isArray(queueDocs) ? queueDocs : []).filter((item) => {
+    const doctorId = String(item?.doctor_id || "").trim();
+    const fechaTurno = String(item?.fecha_turno || "").trim();
+    const statusItem = normalizeStatus(item?.estado || "pendiente");
+    const horaItemMin = toMinutesFromHour(
+      getFirstDefined(item, ["hora_consulta", "horaConsulta"], "")
     );
 
-    if (!miDoctorId || !miFechaTurno || miHoraMin === null) {
-      return "Por confirmar";
-    }
+    if (doctorId !== miDoctorId) return false;
+    if (fechaTurno !== miFechaTurno) return false;
+    if (!ESTADOS_QUE_CUENTAN_PARA_DOCTOR.has(statusItem)) return false;
+    if (horaItemMin === null) return false;
 
-    if (!Array.isArray(queueDocs) || queueDocs.length === 0) {
-      return formatEstimatedMinutes(MINIMO_SIN_PACIENTES_ANTES);
-    }
+    return true;
+  });
 
-    const miLlegadaRank = getArrivalRank(data);
-
-    const pacientesAntes = queueDocs.filter((item) => {
-      const itemId = String(item?.id || "").trim();
-      if (miId && itemId === miId) return false;
-
-      const doctorId = String(item?.doctor_id || "").trim();
-      const fechaTurno = String(item?.fecha_turno || "").trim();
-      const statusItem = normalizeStatus(item?.estado || "pendiente");
-      const horaItemMin = toMinutesFromHour(
-        getFirstDefined(item, ["hora_consulta", "horaConsulta"], "")
-      );
-
-      if (doctorId !== miDoctorId) return false;
-      if (fechaTurno !== miFechaTurno) return false;
-      if (!ESTADOS_QUE_CUENTAN_PARA_DOCTOR.has(statusItem)) return false;
-      if (horaItemMin === null) return false;
-
-      if (horaItemMin < miHoraMin) return true;
-
-      if (horaItemMin === miHoraMin) {
-        const itemLlegadaRank = getArrivalRank(item);
-        return itemLlegadaRank < miLlegadaRank;
-      }
-
-      return false;
-    });
-
-    const cantidadAntes = pacientesAntes.length;
-
-    if (cantidadAntes === 0) {
-      return formatEstimatedMinutes(MINIMO_SIN_PACIENTES_ANTES);
-    }
-
-    return formatEstimatedMinutes(cantidadAntes * MINUTOS_POR_PACIENTE);
+  if (colaValida.length === 0) {
+    return formatEstimatedMinutes(MINIMO_SIN_PACIENTES_ANTES);
   }
+
+  const miLlegadaRank = getArrivalRank(data);
+
+  const pacientesAntes = colaValida.filter((item) => {
+    const itemId = String(item?.id || "").trim();
+    if (miId && itemId === miId) return false;
+
+    const horaItemMin = toMinutesFromHour(
+      getFirstDefined(item, ["hora_consulta", "horaConsulta"], "")
+    );
+
+    if (horaItemMin < miHoraMin) return true;
+
+    if (horaItemMin === miHoraMin) {
+      const itemLlegadaRank = getArrivalRank(item);
+      return itemLlegadaRank < miLlegadaRank;
+    }
+
+    return false;
+  });
+
+  const cantidadAntes = pacientesAntes.length;
+  const minutos = cantidadAntes === 0
+    ? MINIMO_SIN_PACIENTES_ANTES
+    : cantidadAntes * MINUTOS_POR_PACIENTE;
+
+  return formatEstimatedMinutes(minutos);
+}
 
   function ensureQueueListener(data) {
     const doctorId = String(getFirstDefined(data, ["doctor_id"], "")).trim();
