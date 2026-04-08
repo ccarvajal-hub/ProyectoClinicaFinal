@@ -97,7 +97,7 @@ body {
 #app {
     width: 1920px;
     height: 1080px;
-    padding: 20px 24px;
+    padding: 10px 12px;
     position: relative;
 }
 
@@ -107,8 +107,8 @@ body {
 
 .reset-tv-btn {
     position: absolute;
-    right: 20px;
-    bottom: 20px;
+    right: 10px;
+    bottom: 10px;
     z-index: 30;
     border: none;
     border-radius: 999px;
@@ -132,15 +132,16 @@ body {
 .tv-split {
     display: grid;
     grid-template-rows: 1fr 1fr;
-    gap: 18px;
+    gap: 12px;
     height: 100%;
-    padding-bottom: 60px;
+    padding-bottom: 22px;
 }
 
 .call-section {
     display: grid;
     grid-template-rows: auto 1fr;
     gap: 10px;
+    min-height: 0;
 }
 
 /* =========================
@@ -157,6 +158,7 @@ body {
     font-size: 32px;
     font-weight: 900;
     text-transform: uppercase;
+    line-height: 1;
 }
 
 .doctor-header {
@@ -183,8 +185,10 @@ body {
 
 .section-layout {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 20px;
+    grid-template-columns: 2fr 0.83fr;
+    gap: 16px;
+    min-height: 0;
+    height: 100%;
 }
 
 /* =========================
@@ -198,8 +202,10 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 14px 18px;
     text-align: center;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .doctor-call {
@@ -211,17 +217,22 @@ body {
 }
 
 .main-call h2 {
-    font-size: 42px;
+    font-size: 40px;
     margin: 0;
     font-weight: 900;
     text-transform: uppercase;
+    line-height: 1.05;
 }
 
 .main-call .paciente {
     font-size: 72px;
     font-weight: 900;
-    margin: 10px 0;
+    margin: 8px 0;
     text-transform: uppercase;
+    line-height: 0.98;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .main-call .staff-info {
@@ -229,12 +240,17 @@ body {
     font-weight: 900;
     color: var(--warning);
     text-transform: uppercase;
+    line-height: 1.05;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .main-call .box-info {
     font-size: 22px;
     color: var(--muted);
     margin-top: 6px;
+    line-height: 1.05;
 }
 
 /* =========================
@@ -244,15 +260,18 @@ body {
 .history {
     background: var(--card-soft);
     border-radius: var(--radius);
-    padding: 14px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .history h3 {
     font-size: 22px;
     margin: 0 0 10px 0;
     text-transform: uppercase;
+    line-height: 1.05;
 }
 
 .doctor-history h3 {
@@ -267,15 +286,18 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .hist-row {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
     background: rgba(0, 0, 0, 0.22);
     padding: 10px;
     border-radius: 8px;
+    min-width: 0;
 }
 
 .hist-row.doctor-row {
@@ -289,15 +311,25 @@ body {
 .hist-name {
     font-size: 20px;
     font-weight: 900;
+    line-height: 1.05;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .hist-doc {
     font-size: 14px;
     color: var(--warning);
+    line-height: 1.05;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .hist-meta {
     font-size: 16px;
     color: var(--success);
     font-weight: 900;
+    white-space: nowrap;
+    align-self: start;
 }

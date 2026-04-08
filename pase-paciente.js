@@ -34,7 +34,11 @@ import { db } from "./firebase-config.js";
   let unsubscribeFirestore = null;
   let unsubscribePassLookup = null;
   let unsubscribeDoctores = null;
+  let unsubscribeQueue = null;
   let latestData = null;
+  let latestQueue = [];
+  let queueDoctorId = "";
+  let queueFechaTurno = "";
 
   let notificationsArmed = false;
   let lastStatusKey = null;
@@ -51,6 +55,15 @@ import { db } from "./firebase-config.js";
     "LLAMADO CONSULTA",
     "ATENDIDO",
   ];
+
+  const MINUTOS_POR_PACIENTE = 15;
+
+  const ESTADOS_QUE_CUENTAN_PARA_DOCTOR = new Set([
+    "llamado_recepcion",
+    "pago_manual",
+    "pagado",
+    "llamado_doctor",
+  ]);
 
   const STATUS_MAP = {
     pendiente: {
@@ -242,6 +255,188 @@ import { db } from "./firebase-config.js";
     return Math.round(diffMs / 60000);
   }
 
+  function toMinutesFromHour(hora) {
+    const raw = String(hora || "").trim();
+    if (!/^\d{1,2}:\d{2}$/.test(raw)) return null;
+
+    const [hh, mm] = raw.split(":").map(Number);
+    if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+
+    return hh * 60 + mm;
+  }
+
+  function getComparableTimestamp(value) {
+    if (!value) return null;
+
+    try {
+      if (typeof value?.toDate === "function") {
+        const d = value.toDate();
+        return d instanceof Date && !Number.isNaN(d.getTime()) ? d.getTime() : null;
+      }
+
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        typeof value.seconds === "number"
+      ) {
+        const nanos = typeof value.nanoseconds === "number" ? value.nanoseconds : 0;
+        return value.seconds * 1000 + Math.floor(nanos / 1000000);
+      }
+
+      if (value instanceof Date) {
+        return !Number.isNaN(value.getTime()) ? value.getTime() : null;
+      }
+
+      if (typeof value === "number") {
+        return Number.isFinite(value) ? value : null;
+      }
+
+      if (typeof value === "string") {
+        const parsed = Date.parse(value);
+        if (!Number.isNaN(parsed)) return parsed;
+
+        if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(value.trim())) {
+          const parts = value.trim().split(":").map(Number);
+          const hh = parts[0] || 0;
+          const mm = parts[1] || 0;
+          const ss = parts[2] || 0;
+          return hh * 3600000 + mm * 60000 + ss * 1000;
+        }
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  }
+
+  function getArrivalRank(item) {
+    const candidates = [
+      item?.hora_llegada_ts,
+      item?.horaLlegadaTs,
+      item?.timestamp_llegada,
+      item?.timestampLlegada,
+      item?.llegada_ts,
+      item?.llegadaTs,
+      item?.hora_llegada,
+      item?.horaLlegada,
+      item?.createdAt,
+      item?.created_at,
+      item?.fecha_creacion,
+      item?.fechaCreacion,
+    ];
+
+    for (const candidate of candidates) {
+      const ts = getComparableTimestamp(candidate);
+      if (ts !== null) return ts;
+    }
+
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  function formatEstimatedMinutes(totalMinutes) {
+    const n = Math.max(0, Math.round(Number(totalMinutes) || 0));
+    if (n === 0) return "Pasa ahora";
+    if (n === 1) return "1 minuto";
+    return `${n} minutos`;
+  }
+
+  function calcularTiempoAproxPorColaDoctor(data, queueDocs) {
+    const status = normalizeStatus(getFirstDefined(data, ["estado"], "pendiente"));
+
+    if (status === "llamado_doctor") return "Pasa ahora";
+    if (status === "atendido") return "Finalizado";
+
+    const miId = String(getFirstDefined(data, ["id", "agendadoId"], "")).trim();
+    const miDoctorId = String(getFirstDefined(data, ["doctor_id"], "")).trim();
+    const miFechaTurno = String(
+      getFirstDefined(data, ["fecha_turno"], getChileDate())
+    ).trim();
+    const miHoraMin = toMinutesFromHour(
+      getFirstDefined(data, ["hora_consulta", "horaConsulta"], "")
+    );
+
+    if (!miDoctorId || !miFechaTurno || miHoraMin === null) {
+      return "Por confirmar";
+    }
+
+    const miLlegadaRank = getArrivalRank(data);
+
+    const pacientesAntes = (queueDocs || []).filter((item) => {
+      const itemId = String(item?.id || "").trim();
+      if (miId && itemId === miId) return false;
+
+      const doctorId = String(item?.doctor_id || "").trim();
+      const fechaTurno = String(item?.fecha_turno || "").trim();
+      const statusItem = normalizeStatus(item?.estado || "pendiente");
+      const horaItemMin = toMinutesFromHour(
+        getFirstDefined(item, ["hora_consulta", "horaConsulta"], "")
+      );
+
+      if (doctorId !== miDoctorId) return false;
+      if (fechaTurno !== miFechaTurno) return false;
+      if (!ESTADOS_QUE_CUENTAN_PARA_DOCTOR.has(statusItem)) return false;
+      if (horaItemMin === null) return false;
+
+      if (horaItemMin < miHoraMin) return true;
+
+      if (horaItemMin === miHoraMin) {
+        const itemLlegadaRank = getArrivalRank(item);
+        return itemLlegadaRank < miLlegadaRank;
+      }
+
+      return false;
+    });
+
+    return formatEstimatedMinutes(pacientesAntes.length * MINUTOS_POR_PACIENTE);
+  }
+
+  function ensureQueueListener(data) {
+    const doctorId = String(getFirstDefined(data, ["doctor_id"], "")).trim();
+    const fechaTurno = String(
+      getFirstDefined(data, ["fecha_turno"], getChileDate())
+    ).trim();
+
+    if (!doctorId || !fechaTurno) return;
+
+    if (doctorId === queueDoctorId && fechaTurno === queueFechaTurno) return;
+
+    if (typeof unsubscribeQueue === "function") {
+      unsubscribeQueue();
+      unsubscribeQueue = null;
+    }
+
+    latestQueue = [];
+    queueDoctorId = doctorId;
+    queueFechaTurno = fechaTurno;
+
+    const q = query(
+      collection(db, "agendados"),
+      where("doctor_id", "==", doctorId),
+      where("fecha_turno", "==", fechaTurno)
+    );
+
+    unsubscribeQueue = onSnapshot(
+      q,
+      (snapshot) => {
+        latestQueue = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
+
+        debugLog("COLA DOCTOR", latestQueue);
+
+        if (latestData) {
+          render(latestData);
+        }
+      },
+      (error) => {
+        console.error("[ticket] Error onSnapshot cola doctor:", error);
+        debugLog("Error onSnapshot cola doctor", error?.message || error);
+      }
+    );
+  }
+
   function resolveEstimatedTime(data) {
     const explicitText = getFirstDefined(data, [
       "tiempo_estimado",
@@ -265,32 +460,11 @@ import { db } from "./firebase-config.js";
     if (explicitMinutes !== "") {
       const n = Number(explicitMinutes);
       if (!Number.isNaN(n) && n >= 0) {
-        if (n === 0) return "Sin espera";
-        if (n === 1) return "1 minuto";
-        return `${n} minutos`;
+        return formatEstimatedMinutes(n);
       }
     }
 
-    const status = normalizeStatus(getFirstDefined(data, ["estado"], "pendiente"));
-    const horaConsulta = getFirstDefined(data, ["hora_consulta", "horaConsulta"]);
-
-    if (status === "llamado_doctor") return "Pasa ahora";
-    if (status === "llamado_recepcion") return "Pasa ahora";
-    if (status === "atendido") return "Finalizado";
-
-    if (horaConsulta) {
-      const diff = minutesBetweenNowAndHour(horaConsulta);
-
-      if (diff !== null) {
-        if (diff <= 0) return "En curso";
-        if (diff <= 5) return "< 5 min";
-        if (diff <= 15) return "15 min";
-        if (diff <= 30) return "30 min";
-        return `${diff} min`;
-      }
-    }
-
-    return "Por confirmar";
+    return calcularTiempoAproxPorColaDoctor(data, latestQueue);
   }
 
   function renderTimeline(statusKey) {
@@ -394,6 +568,8 @@ import { db } from "./firebase-config.js";
 
   function render(data) {
     latestData = { ...(latestData || {}), ...(data || {}) };
+
+    ensureQueueListener(latestData);
 
     const paciente = getFirstDefined(latestData, [
       "nombre_paciente",
@@ -556,6 +732,15 @@ import { db } from "./firebase-config.js";
       unsubscribeDoctores();
       unsubscribeDoctores = null;
     }
+
+    if (typeof unsubscribeQueue === "function") {
+      unsubscribeQueue();
+      unsubscribeQueue = null;
+    }
+
+    latestQueue = [];
+    queueDoctorId = "";
+    queueFechaTurno = "";
   }
 
   function listenDoctores() {

@@ -27,16 +27,23 @@ function scaleTV() {
     const baseWidth = 1920;
     const baseHeight = 1080;
 
-    const scaleX = window.innerWidth / baseWidth;
-    const scaleY = window.innerHeight / baseHeight;
-    const scale = Math.min(scaleX, scaleY);
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
+
+    const scaleX = viewportWidth / baseWidth;
+    const scaleY = viewportHeight / baseHeight;
+
+    const scale = Math.max(scaleX, scaleY);
 
     const tv = document.getElementById("tv-scale");
     if (!tv) return;
 
+    const scaledWidth = baseWidth * scale;
+    const scaledHeight = baseHeight * scale;
+
     tv.style.transform = `scale(${scale})`;
-    tv.style.left = `${(window.innerWidth - baseWidth * scale) / 2}px`;
-    tv.style.top = `${(window.innerHeight - baseHeight * scale) / 2}px`;
+    tv.style.left = `${(viewportWidth - scaledWidth) / 2}px`;
+    tv.style.top = `${(viewportHeight - scaledHeight) / 2}px`;
 }
 
 window.addEventListener("resize", scaleTV);
