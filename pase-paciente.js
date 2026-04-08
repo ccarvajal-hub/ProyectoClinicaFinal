@@ -10,6 +10,7 @@ import { db } from "./firebase-config.js";
 
 (() => {
   const DEBUG_MODE = false;
+  const RECEPCION_MODAL_MS = 10000;
 
   const $ = (id) => document.getElementById(id);
 
@@ -27,6 +28,9 @@ import { db } from "./firebase-config.js";
     btnActivarNotificaciones: $("btn-activar-notificaciones"),
     btnContinuarSinNotificaciones: $("btn-continuar-sin-notificaciones"),
     preTicketStatus: $("pre-ticket-status"),
+
+    recepcionModalOverlay: $("recepcion-modal-overlay"),
+    recepcionModalDestino: $("recepcion-modal-destino"),
   };
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -45,6 +49,8 @@ import { db } from "./firebase-config.js";
   let hasInitialStatus = false;
 
   let doctoresMap = {};
+  let recepcionModalTimer = null;
+  let lastRecepcionModalKey = "";
 
   const DEFAULT_STATUS_MESSAGE =
     "Estamos preparando tu atención. Mantente atento a los próximos llamados.";
@@ -319,6 +325,59 @@ import { db } from "./firebase-config.js";
     return Number.MAX_SAFE_INTEGER;
   }
 
+  function getRecepcionDestino(data) {
+    const raw = getFirstDefined(data, [
+      "recepcion_destino",
+      "recepcion",
+      "modulo_recepcion",
+      "recepcion_nombre",
+      "tv_destino",
+      "destino_recepcion",
+    ], "");
+
+    return safeText(raw, "Recepción");
+  }
+
+  function hideRecepcionModal() {
+    if (recepcionModalTimer) {
+      clearTimeout(recepcionModalTimer);
+      recepcionModalTimer = null;
+    }
+
+    if (refs.recepcionModalOverlay) {
+      refs.recepcionModalOverlay.classList.add("hidden");
+    }
+  }
+
+  function showRecepcionModal(destino) {
+    if (!refs.recepcionModalOverlay || !refs.recepcionModalDestino) return;
+
+    if (recepcionModalTimer) {
+      clearTimeout(recepcionModalTimer);
+      recepcionModalTimer = null;
+    }
+
+    refs.recepcionModalDestino.textContent = safeText(destino, "Recepción");
+    refs.recepcionModalOverlay.classList.remove("hidden");
+
+    recepcionModalTimer = setTimeout(() => {
+      hideRecepcionModal();
+    }, RECEPCION_MODAL_MS);
+  }
+
+  function maybeShowRecepcionModal(statusKey, data) {
+    if (statusKey !== "llamado_recepcion") return;
+
+    const destino = getRecepcionDestino(data);
+    const itemId = String(getFirstDefined(data, ["id", "agendadoId"], "general")).trim();
+    const modalKey = `${itemId}__${statusKey}__${destino}`;
+
+    if (modalKey === lastRecepcionModalKey) return;
+
+    lastRecepcionModalKey = modalKey;
+    showRecepcionModal(destino);
+  }
+
   function formatEstimatedMinutes(totalMinutes) {
     const n = Math.max(0, Math.round(Number(totalMinutes) || 0));
 
@@ -328,71 +387,71 @@ import { db } from "./firebase-config.js";
   }
 
   function calcularTiempoAproxPorColaDoctor(data, queueDocs) {
-  const status = normalizeStatus(getFirstDefined(data, ["estado"], "pendiente"));
+    const status = normalizeStatus(getFirstDefined(data, ["estado"], "pendiente"));
 
-  if (status === "atendido") return "Finalizado";
-  if (status === "llamado_doctor") return "Pasa ahora";
+    if (status === "atendido") return "Finalizado";
+    if (status === "llamado_doctor") return "Pasa ahora";
 
-  const miId = String(getFirstDefined(data, ["id", "agendadoId"], "")).trim();
-  const miDoctorId = String(getFirstDefined(data, ["doctor_id"], "")).trim();
-  const miFechaTurno = String(
-    getFirstDefined(data, ["fecha_turno"], getChileDate())
-  ).trim();
-  const miHoraMin = toMinutesFromHour(
-    getFirstDefined(data, ["hora_consulta", "horaConsulta"], "")
-  );
-
-  if (!miDoctorId || !miFechaTurno || miHoraMin === null) {
-    return "Por confirmar";
-  }
-
-  const colaValida = (Array.isArray(queueDocs) ? queueDocs : []).filter((item) => {
-    const doctorId = String(item?.doctor_id || "").trim();
-    const fechaTurno = String(item?.fecha_turno || "").trim();
-    const statusItem = normalizeStatus(item?.estado || "pendiente");
-    const horaItemMin = toMinutesFromHour(
-      getFirstDefined(item, ["hora_consulta", "horaConsulta"], "")
+    const miId = String(getFirstDefined(data, ["id", "agendadoId"], "")).trim();
+    const miDoctorId = String(getFirstDefined(data, ["doctor_id"], "")).trim();
+    const miFechaTurno = String(
+      getFirstDefined(data, ["fecha_turno"], getChileDate())
+    ).trim();
+    const miHoraMin = toMinutesFromHour(
+      getFirstDefined(data, ["hora_consulta", "horaConsulta"], "")
     );
 
-    if (doctorId !== miDoctorId) return false;
-    if (fechaTurno !== miFechaTurno) return false;
-    if (!ESTADOS_QUE_CUENTAN_PARA_DOCTOR.has(statusItem)) return false;
-    if (horaItemMin === null) return false;
-
-    return true;
-  });
-
-  if (colaValida.length === 0) {
-    return formatEstimatedMinutes(MINIMO_SIN_PACIENTES_ANTES);
-  }
-
-  const miLlegadaRank = getArrivalRank(data);
-
-  const pacientesAntes = colaValida.filter((item) => {
-    const itemId = String(item?.id || "").trim();
-    if (miId && itemId === miId) return false;
-
-    const horaItemMin = toMinutesFromHour(
-      getFirstDefined(item, ["hora_consulta", "horaConsulta"], "")
-    );
-
-    if (horaItemMin < miHoraMin) return true;
-
-    if (horaItemMin === miHoraMin) {
-      const itemLlegadaRank = getArrivalRank(item);
-      return itemLlegadaRank < miLlegadaRank;
+    if (!miDoctorId || !miFechaTurno || miHoraMin === null) {
+      return "Por confirmar";
     }
 
-    return false;
-  });
+    const colaValida = (Array.isArray(queueDocs) ? queueDocs : []).filter((item) => {
+      const doctorId = String(item?.doctor_id || "").trim();
+      const fechaTurno = String(item?.fecha_turno || "").trim();
+      const statusItem = normalizeStatus(item?.estado || "pendiente");
+      const horaItemMin = toMinutesFromHour(
+        getFirstDefined(item, ["hora_consulta", "horaConsulta"], "")
+      );
 
-  const cantidadAntes = pacientesAntes.length;
-  const minutos = cantidadAntes === 0
-    ? MINIMO_SIN_PACIENTES_ANTES
-    : cantidadAntes * MINUTOS_POR_PACIENTE;
+      if (doctorId !== miDoctorId) return false;
+      if (fechaTurno !== miFechaTurno) return false;
+      if (!ESTADOS_QUE_CUENTAN_PARA_DOCTOR.has(statusItem)) return false;
+      if (horaItemMin === null) return false;
 
-  return formatEstimatedMinutes(minutos);
-}
+      return true;
+    });
+
+    if (colaValida.length === 0) {
+      return formatEstimatedMinutes(MINIMO_SIN_PACIENTES_ANTES);
+    }
+
+    const miLlegadaRank = getArrivalRank(data);
+
+    const pacientesAntes = colaValida.filter((item) => {
+      const itemId = String(item?.id || "").trim();
+      if (miId && itemId === miId) return false;
+
+      const horaItemMin = toMinutesFromHour(
+        getFirstDefined(item, ["hora_consulta", "horaConsulta"], "")
+      );
+
+      if (horaItemMin < miHoraMin) return true;
+
+      if (horaItemMin === miHoraMin) {
+        const itemLlegadaRank = getArrivalRank(item);
+        return itemLlegadaRank < miLlegadaRank;
+      }
+
+      return false;
+    });
+
+    const cantidadAntes = pacientesAntes.length;
+    const minutos = cantidadAntes === 0
+      ? MINIMO_SIN_PACIENTES_ANTES
+      : cantidadAntes * MINUTOS_POR_PACIENTE;
+
+    return formatEstimatedMinutes(minutos);
+  }
 
   function ensureQueueListener(data) {
     const doctorId = String(getFirstDefined(data, ["doctor_id"], "")).trim();
@@ -534,12 +593,12 @@ import { db } from "./firebase-config.js";
 
     try {
       const { nombre: doctor, ubicacion } = obtenerDoctorDesdeCache(data.doctor_id);
-
+      const destinoRecepcion = getRecepcionDestino(data);
       const tagId = getFirstDefined(data, ["id", "agendadoId"], "general");
 
       if (statusKey === "llamado_recepcion") {
         new Notification("Recepción te está llamando", {
-          body: `Dirígete a recepción. Ubicación: ${ubicacion}`,
+          body: `Dirígete a ${destinoRecepcion}`,
           tag: `ticket-llamado-recepcion-${tagId}`,
         });
       }
@@ -625,6 +684,7 @@ import { db } from "./firebase-config.js";
       refs.ultimaActualizacion.textContent = `Última actualización: ${getNowTimeString()}`;
     }
 
+    maybeShowRecepcionModal(statusKey, latestData);
     maybeNotifyStatusChange(statusKey, latestData);
   }
 
@@ -656,6 +716,11 @@ import { db } from "./firebase-config.js";
       minutos_estimados:
         urlParams.get("minutos") ||
         urlParams.get("minutos_estimados") ||
+        "",
+      recepcion_destino:
+        urlParams.get("recepcion_destino") ||
+        urlParams.get("recepcion") ||
+        urlParams.get("modulo_recepcion") ||
         "",
     };
   }
@@ -744,6 +809,7 @@ import { db } from "./firebase-config.js";
     latestQueue = [];
     queueDoctorId = "";
     queueFechaTurno = "";
+    hideRecepcionModal();
   }
 
   function listenDoctores() {
