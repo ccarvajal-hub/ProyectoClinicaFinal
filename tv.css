@@ -1,3 +1,34 @@
+/* =========================
+   BASE ESCALABLE TV
+========================= */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+}
+
+#tv-root {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+#tv-scale {
+    width: 1920px;
+    height: 1080px;
+    transform-origin: top left;
+    position: absolute;
+}
+
+/* =========================
+   VARIABLES
+========================= */
+
 :root {
     --bg: #151515;
     --card: #222222;
@@ -13,18 +44,12 @@
     --danger: #e53e3e;
     --danger-hover: #c53030;
 
-    --safe-x: 1.2vw;
-    --safe-y: 1.4vh;
     --radius: 14px;
 }
 
-html,
-body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
+/* =========================
+   GENERAL
+========================= */
 
 * {
     box-sizing: border-box;
@@ -34,8 +59,11 @@ body {
     font-family: 'Inter', sans-serif;
     background: radial-gradient(circle at center, rgba(255,255,255,0.03), transparent 45%), var(--bg);
     color: var(--text);
-    overflow: hidden;
 }
+
+/* =========================
+   AUDIO UNLOCK
+========================= */
 
 #audio-unlock {
     position: fixed;
@@ -48,98 +76,92 @@ body {
     align-items: center;
     cursor: pointer;
     text-align: center;
-    padding: 4vh 4vw;
 }
 
 #audio-unlock h2 {
     color: var(--accent-doctor);
-    font-size: clamp(2rem, 4vw, 4.5rem);
-    margin: 0 0 1rem 0;
+    font-size: 64px;
+    margin: 0 0 20px 0;
     text-transform: uppercase;
 }
 
 #audio-unlock p {
-    font-size: clamp(1rem, 2vw, 2rem);
+    font-size: 28px;
     margin: 0;
-    color: #fff;
 }
 
+/* =========================
+   APP BASE
+========================= */
+
 #app {
+    width: 1920px;
+    height: 1080px;
+    padding: 20px 24px;
     position: relative;
-    width: 100vw;
-    height: 100vh;
-    padding: var(--safe-y) var(--safe-x);
-    overflow: hidden;
 }
+
+/* =========================
+   BOTÓN RESET
+========================= */
 
 .reset-tv-btn {
     position: absolute;
-    right: 1.2vw;
-    bottom: 1.3vh;
+    right: 20px;
+    bottom: 20px;
     z-index: 30;
     border: none;
     border-radius: 999px;
     background: var(--danger);
     color: #fff;
-    font-family: inherit;
-    font-size: clamp(0.8rem, 0.95vw, 1rem);
+    font-size: 18px;
     font-weight: 800;
     text-transform: uppercase;
-    padding: 0.75rem 1.1rem;
+    padding: 12px 18px;
     cursor: pointer;
-    box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.35);
-    transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
 }
 
 .reset-tv-btn:hover {
     background: var(--danger-hover);
-    transform: scale(1.03);
 }
 
-.reset-tv-btn:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-    transform: none;
-}
+/* =========================
+   LAYOUT GENERAL
+========================= */
 
 .tv-split {
     display: grid;
     grid-template-rows: 1fr 1fr;
-    gap: 1.1vh;
-    width: 100%;
+    gap: 18px;
     height: 100%;
-    min-height: 0;
-    padding-bottom: 4.5vh;
+    padding-bottom: 60px;
 }
 
 .call-section {
-    min-height: 0;
     display: grid;
     grid-template-rows: auto 1fr;
-    gap: 0.8vh;
-    overflow: hidden;
+    gap: 10px;
 }
 
+/* =========================
+   HEADER
+========================= */
+
 .section-header {
+    padding: 8px 14px;
     border-radius: var(--radius);
-    padding: 0.55vh 1vw;
-    display: flex;
-    align-items: center;
 }
 
 .section-header h1 {
     margin: 0;
-    font-size: clamp(1.15rem, 1.5vw, 1.8rem);
-    line-height: 1;
-    text-transform: uppercase;
+    font-size: 32px;
     font-weight: 900;
-    letter-spacing: 0.01em;
+    text-transform: uppercase;
 }
 
 .doctor-header {
     background: rgba(46, 160, 255, 0.08);
     border: 2px solid rgba(46, 160, 255, 0.45);
-    box-shadow: inset 0 0 0 1px rgba(46, 160, 255, 0.08);
 }
 
 .doctor-header h1 {
@@ -149,153 +171,111 @@ body {
 .recepcion-header {
     background: rgba(75, 227, 154, 0.08);
     border: 2px solid rgba(75, 227, 154, 0.45);
-    box-shadow: inset 0 0 0 1px rgba(75, 227, 154, 0.08);
 }
 
 .recepcion-header h1 {
     color: var(--accent-recepcion);
 }
 
+/* =========================
+   CONTENIDO
+========================= */
+
 .section-layout {
     display: grid;
-    grid-template-columns: 2.1fr 0.95fr;
-    gap: 1vw;
-    min-height: 0;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
 }
 
+/* =========================
+   MAIN CALL
+========================= */
+
 .main-call {
-    background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+    background: var(--card);
     border-radius: var(--radius);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 1.2vh 1.6vw;
-    min-width: 0;
-    min-height: 0;
-    overflow: hidden;
+    padding: 20px;
     text-align: center;
 }
 
 .doctor-call {
-    border: 3px solid rgba(46, 160, 255, 0.82);
-    box-shadow: 0 0 18px rgba(46, 160, 255, 0.08);
+    border: 3px solid var(--accent-doctor);
 }
 
 .recepcion-call {
-    border: 3px solid rgba(75, 227, 154, 0.82);
-    box-shadow: 0 0 18px rgba(75, 227, 154, 0.08);
+    border: 3px solid var(--accent-recepcion);
 }
 
 .main-call h2 {
-    font-size: clamp(1.8rem, 2.4vw, 3rem);
+    font-size: 42px;
     margin: 0;
-    text-transform: uppercase;
-    line-height: 1.05;
     font-weight: 900;
-}
-
-.doctor-call h2 {
-    color: var(--accent-doctor);
-}
-
-.recepcion-call h2 {
-    color: var(--accent-recepcion);
+    text-transform: uppercase;
 }
 
 .main-call .paciente {
-    font-size: clamp(2.8rem, 4.5vw, 5.5rem);
+    font-size: 72px;
     font-weight: 900;
-    margin: 0.9vh 0 0.65vh 0;
-    line-height: 0.95;
+    margin: 10px 0;
     text-transform: uppercase;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-    word-break: break-word;
 }
 
 .main-call .staff-info {
-    font-size: clamp(2rem, 3vw, 3.6rem);
+    font-size: 48px;
     font-weight: 900;
     color: var(--warning);
     text-transform: uppercase;
-    line-height: 1.05;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    text-align: center;
-    margin-top: 0.2vh;
 }
 
 .main-call .box-info {
-    font-size: clamp(1rem, 1.35vw, 1.5rem);
+    font-size: 22px;
     color: var(--muted);
-    margin-top: 0.5vh;
-    text-transform: uppercase;
-    font-weight: 800;
-    line-height: 1.1;
-    max-width: 100%;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    text-align: center;
+    margin-top: 6px;
 }
+
+/* =========================
+   HISTORIAL
+========================= */
 
 .history {
-    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+    background: var(--card-soft);
     border-radius: var(--radius);
-    padding: 0.9vh 0.8vw;
+    padding: 14px;
     display: flex;
     flex-direction: column;
-    min-width: 0;
-    min-height: 0;
-    overflow: hidden;
-}
-
-.doctor-history {
-    border: 2px solid rgba(46, 160, 255, 0.16);
-}
-
-.recepcion-history {
-    border: 2px solid rgba(75, 227, 154, 0.16);
 }
 
 .history h3 {
-    font-size: clamp(1rem, 1.15vw, 1.3rem);
-    padding-bottom: 0.55vh;
-    margin: 0 0 0.75vh 0;
+    font-size: 22px;
+    margin: 0 0 10px 0;
     text-transform: uppercase;
-    flex: 0 0 auto;
-    font-weight: 900;
 }
 
 .doctor-history h3 {
     color: var(--accent-doctor);
-    border-bottom: 2px solid rgba(46, 160, 255, 0.22);
 }
 
 .recepcion-history h3 {
     color: var(--accent-recepcion);
-    border-bottom: 2px solid rgba(75, 227, 154, 0.22);
 }
 
 .historial-lista {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 0.55vh;
+    gap: 8px;
 }
 
 .hist-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.7vw;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
     background: rgba(0, 0, 0, 0.22);
-    padding: 0.72vh 0.7vw;
-    border-radius: 10px;
-    animation: slideIn 0.5s ease-out;
-    min-width: 0;
+    padding: 10px;
+    border-radius: 8px;
 }
 
 .hist-row.doctor-row {
@@ -306,93 +286,18 @@ body {
     border-left: 4px solid var(--accent-recepcion);
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 .hist-name {
+    font-size: 20px;
     font-weight: 900;
-    font-size: clamp(1rem, 1.1vw, 1.2rem);
-    text-transform: uppercase;
-    line-height: 1.08;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .hist-doc {
-    font-size: clamp(0.8rem, 0.82vw, 0.92rem);
+    font-size: 14px;
     color: var(--warning);
-    font-weight: 800;
-    text-transform: uppercase;
-    margin-top: 0.22vh;
-    line-height: 1.1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .hist-meta {
-    font-size: clamp(0.82rem, 0.95vw, 1.05rem);
+    font-size: 16px;
     color: var(--success);
     font-weight: 900;
-    text-align: right;
-    align-self: center;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.flash {
-    animation: pulse 1.2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.012); }
-    100% { transform: scale(1); }
-}
-
-@media (max-width: 1366px) {
-    .section-layout {
-        grid-template-columns: 1.8fr 0.95fr;
-    }
-
-    .main-call h2 {
-        font-size: clamp(1.5rem, 2vw, 2.3rem);
-    }
-
-    .main-call .paciente {
-        font-size: clamp(2.2rem, 3.8vw, 4.4rem);
-    }
-
-    .main-call .staff-info {
-        font-size: clamp(1.6rem, 2.5vw, 2.8rem);
-    }
-}
-
-@media (max-width: 1100px), (orientation: portrait) {
-    .section-layout {
-        grid-template-columns: 1fr;
-        gap: 0.8vh;
-    }
-
-    .history {
-        padding: 0.9vh 1vw;
-    }
-
-    .main-call {
-        padding: 1.4vh 2vw;
-    }
-
-    .reset-tv-btn {
-        right: 2vw;
-        bottom: 1.2vh;
-    }
 }

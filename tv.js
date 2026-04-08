@@ -21,6 +21,29 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 /* =========================
+   ESCALADO TV 1920x1080
+========================= */
+function scaleTV() {
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+
+    const scaleX = window.innerWidth / baseWidth;
+    const scaleY = window.innerHeight / baseHeight;
+    const scale = Math.min(scaleX, scaleY);
+
+    const tv = document.getElementById("tv-scale");
+    if (!tv) return;
+
+    tv.style.transform = `scale(${scale})`;
+    tv.style.left = `${(window.innerWidth - baseWidth * scale) / 2}px`;
+    tv.style.top = `${(window.innerHeight - baseHeight * scale) / 2}px`;
+}
+
+window.addEventListener("resize", scaleTV);
+window.addEventListener("orientationchange", scaleTV);
+window.addEventListener("load", scaleTV);
+
+/* =========================
    ELEMENTOS DOM
 ========================= */
 const elUnlock = document.getElementById("audio-unlock");
@@ -112,6 +135,8 @@ function formatearHora(valor) {
 }
 
 function reproducirSonido() {
+    if (!elAudio) return;
+
     elAudio.currentTime = 0;
     elAudio.volume = 1;
     elAudio.play().catch(() => {
@@ -494,6 +519,7 @@ function refrescarPantallaRecepcion() {
 function refrescarPantallaCompleta() {
     refrescarPantallaDoctor();
     refrescarPantallaRecepcion();
+    scaleTV();
 }
 
 /* =========================
@@ -533,18 +559,22 @@ async function resetearTv() {
 /* =========================
    EVENTOS
 ========================= */
-elUnlock.addEventListener("click", async () => {
-    try {
-        await elAudio.play();
-        elAudio.pause();
-        elAudio.currentTime = 0;
-        elUnlock.style.display = "none";
-    } catch (error) {
-        console.warn("No se pudo desbloquear el audio.", error);
-    }
-});
+if (elUnlock) {
+    elUnlock.addEventListener("click", async () => {
+        try {
+            await elAudio.play();
+            elAudio.pause();
+            elAudio.currentTime = 0;
+            elUnlock.style.display = "none";
+        } catch (error) {
+            console.warn("No se pudo desbloquear el audio.", error);
+        }
+    });
+}
 
-elBtnResetTv.addEventListener("click", resetearTv);
+if (elBtnResetTv) {
+    elBtnResetTv.addEventListener("click", resetearTv);
+}
 
 /* =========================
    SNAPSHOT CONFIG TV
@@ -618,5 +648,11 @@ onSnapshot(
         renderHistorialDoctor([]);
         renderVacioRecepcion();
         renderHistorialRecepcion([]);
+        scaleTV();
     }
 );
+
+/* =========================
+   PRIMER AJUSTE
+========================= */
+scaleTV();
