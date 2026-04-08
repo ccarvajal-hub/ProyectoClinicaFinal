@@ -57,6 +57,7 @@ import { db } from "./firebase-config.js";
   ];
 
   const MINUTOS_POR_PACIENTE = 15;
+  const MINIMO_SIN_PACIENTES_ANTES = 10;
 
   const ESTADOS_QUE_CUENTAN_PARA_DOCTOR = new Set([
     "llamado_recepcion",
@@ -239,22 +240,6 @@ import { db } from "./firebase-config.js";
       .toUpperCase();
   }
 
-  function minutesBetweenNowAndHour(hora) {
-    if (!hora || !/^\d{1,2}:\d{2}$/.test(hora)) return null;
-
-    const [hh, mm] = hora.split(":").map(Number);
-    const now = new Date();
-    const chile = new Date(
-      now.toLocaleString("en-US", { timeZone: "America/Santiago" })
-    );
-
-    const target = new Date(chile);
-    target.setHours(hh, mm, 0, 0);
-
-    const diffMs = target.getTime() - chile.getTime();
-    return Math.round(diffMs / 60000);
-  }
-
   function toMinutesFromHour(hora) {
     const raw = String(hora || "").trim();
     if (!/^\d{1,2}:\d{2}$/.test(raw)) return null;
@@ -336,15 +321,15 @@ import { db } from "./firebase-config.js";
 
   function formatEstimatedMinutes(totalMinutes) {
     const n = Math.max(0, Math.round(Number(totalMinutes) || 0));
-    if (n === 0) return "Pasa ahora";
-    if (n === 1) return "1 minuto";
-    return `${n} minutos`;
+
+    if (n <= 0) return "10 min";
+    if (n > 90) return "> 90 min";
+    return `${n} min`;
   }
 
   function calcularTiempoAproxPorColaDoctor(data, queueDocs) {
     const status = normalizeStatus(getFirstDefined(data, ["estado"], "pendiente"));
 
-    if (status === "llamado_doctor") return "Pasa ahora";
     if (status === "atendido") return "Finalizado";
 
     const miId = String(getFirstDefined(data, ["id", "agendadoId"], "")).trim();
@@ -360,9 +345,13 @@ import { db } from "./firebase-config.js";
       return "Por confirmar";
     }
 
+    if (!Array.isArray(queueDocs) || queueDocs.length === 0) {
+      return formatEstimatedMinutes(MINIMO_SIN_PACIENTES_ANTES);
+    }
+
     const miLlegadaRank = getArrivalRank(data);
 
-    const pacientesAntes = (queueDocs || []).filter((item) => {
+    const pacientesAntes = queueDocs.filter((item) => {
       const itemId = String(item?.id || "").trim();
       if (miId && itemId === miId) return false;
 
@@ -388,7 +377,13 @@ import { db } from "./firebase-config.js";
       return false;
     });
 
-    return formatEstimatedMinutes(pacientesAntes.length * MINUTOS_POR_PACIENTE);
+    const cantidadAntes = pacientesAntes.length;
+
+    if (cantidadAntes === 0) {
+      return formatEstimatedMinutes(MINIMO_SIN_PACIENTES_ANTES);
+    }
+
+    return formatEstimatedMinutes(cantidadAntes * MINUTOS_POR_PACIENTE);
   }
 
   function ensureQueueListener(data) {
