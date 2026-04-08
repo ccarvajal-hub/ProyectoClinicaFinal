@@ -11,6 +11,7 @@ import { db } from "./firebase-config.js";
 (() => {
   const DEBUG_MODE = false;
   const RECEPCION_MODAL_MS = 10000;
+  const DOCTOR_MODAL_MS = 10000;
 
   const $ = (id) => document.getElementById(id);
 
@@ -31,6 +32,9 @@ import { db } from "./firebase-config.js";
 
     recepcionModalOverlay: $("recepcion-modal-overlay"),
     recepcionModalDestino: $("recepcion-modal-destino"),
+
+    doctorModalOverlay: $("doctor-modal-overlay"),
+    doctorModalDestino: $("doctor-modal-destino"),
   };
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -50,7 +54,9 @@ import { db } from "./firebase-config.js";
 
   let doctoresMap = {};
   let recepcionModalTimer = null;
+  let doctorModalTimer = null;
   let lastRecepcionModalKey = "";
+  let lastDoctorModalKey = "";
 
   const DEFAULT_STATUS_MESSAGE =
     "Estamos preparando tu atención. Mantente atento a los próximos llamados.";
@@ -338,6 +344,23 @@ import { db } from "./firebase-config.js";
     return safeText(raw, "Recepción");
   }
 
+  function getDoctorDestino(data) {
+    const ubicacion = getFirstDefined(data, [
+      "tv_destino",
+      "ubicacion_consulta",
+      "consulta_destino",
+      "destino_consulta",
+      "ubicacion",
+    ], "");
+
+    if (String(ubicacion || "").trim()) {
+      return safeText(ubicacion, "Consulta");
+    }
+
+    const { ubicacion: ubicacionDesdeCache } = obtenerDoctorDesdeCache(data.doctor_id);
+    return safeText(ubicacionDesdeCache, "Consulta");
+  }
+
   function hideRecepcionModal() {
     if (recepcionModalTimer) {
       clearTimeout(recepcionModalTimer);
@@ -376,6 +399,46 @@ import { db } from "./firebase-config.js";
 
     lastRecepcionModalKey = modalKey;
     showRecepcionModal(destino);
+  }
+
+  function hideDoctorModal() {
+    if (doctorModalTimer) {
+      clearTimeout(doctorModalTimer);
+      doctorModalTimer = null;
+    }
+
+    if (refs.doctorModalOverlay) {
+      refs.doctorModalOverlay.classList.add("hidden");
+    }
+  }
+
+  function showDoctorModal(destino) {
+    if (!refs.doctorModalOverlay || !refs.doctorModalDestino) return;
+
+    if (doctorModalTimer) {
+      clearTimeout(doctorModalTimer);
+      doctorModalTimer = null;
+    }
+
+    refs.doctorModalDestino.textContent = safeText(destino, "Consulta");
+    refs.doctorModalOverlay.classList.remove("hidden");
+
+    doctorModalTimer = setTimeout(() => {
+      hideDoctorModal();
+    }, DOCTOR_MODAL_MS);
+  }
+
+  function maybeShowDoctorModal(statusKey, data) {
+    if (statusKey !== "llamado_doctor") return;
+
+    const destino = getDoctorDestino(data);
+    const itemId = String(getFirstDefined(data, ["id", "agendadoId"], "general")).trim();
+    const modalKey = `${itemId}__${statusKey}__${destino}`;
+
+    if (modalKey === lastDoctorModalKey) return;
+
+    lastDoctorModalKey = modalKey;
+    showDoctorModal(destino);
   }
 
   function formatEstimatedMinutes(totalMinutes) {
@@ -594,6 +657,7 @@ import { db } from "./firebase-config.js";
     try {
       const { nombre: doctor, ubicacion } = obtenerDoctorDesdeCache(data.doctor_id);
       const destinoRecepcion = getRecepcionDestino(data);
+      const destinoDoctor = getDoctorDestino(data);
       const tagId = getFirstDefined(data, ["id", "agendadoId"], "general");
 
       if (statusKey === "llamado_recepcion") {
@@ -605,7 +669,7 @@ import { db } from "./firebase-config.js";
 
       if (statusKey === "llamado_doctor") {
         new Notification("Ya puedes entrar a consulta", {
-          body: `Doctor: ${doctor}. Ubicación: ${ubicacion}`,
+          body: `Doctor: ${doctor}. Dirígete a ${destinoDoctor || ubicacion}`,
           tag: `ticket-llamado-doctor-${tagId}`,
         });
       }
@@ -685,6 +749,7 @@ import { db } from "./firebase-config.js";
     }
 
     maybeShowRecepcionModal(statusKey, latestData);
+    maybeShowDoctorModal(statusKey, latestData);
     maybeNotifyStatusChange(statusKey, latestData);
   }
 
@@ -810,6 +875,7 @@ import { db } from "./firebase-config.js";
     queueDoctorId = "";
     queueFechaTurno = "";
     hideRecepcionModal();
+    hideDoctorModal();
   }
 
   function listenDoctores() {
