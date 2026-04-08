@@ -14,7 +14,7 @@
     --danger-hover: #c53030;
 
     --safe-x: 1.2vw;
-    --safe-y: 1.4vh;
+    --safe-y: 1.2vh;
     --radius: 1.3vh;
 }
 
@@ -32,11 +32,14 @@ body {
 
 body {
     font-family: 'Inter', sans-serif;
-    background: var(--bg);
+    background:
+        radial-gradient(circle at center, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 28%, rgba(0,0,0,0) 55%),
+        var(--bg);
     color: var(--text);
     overflow: hidden;
 }
 
+/* BLOQUEO INICIAL */
 #audio-unlock {
     position: fixed;
     inset: 0;
@@ -64,28 +67,58 @@ body {
     color: #fff;
 }
 
-#app {
-    position: relative;
+/* MARCO GENERAL PARA TV HORIZONTAL */
+.tv-viewport {
     width: 100vw;
     height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    padding: 1.2vh 1.2vw;
+}
+
+.tv-portrait-frame {
+    position: relative;
+    width: min(56.25vh, 42vw);
+    height: min(96vh, 96vh);
+    max-width: 760px;
+    max-height: 1360px;
+    min-width: 520px;
+    min-height: 920px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+    border: 0.18vw solid rgba(255,255,255,0.08);
+    border-radius: 2.2vh;
+    box-shadow:
+        0 1.2vh 4vh rgba(0, 0, 0, 0.45),
+        inset 0 0 0 0.12vw rgba(255,255,255,0.04);
+    overflow: hidden;
+}
+
+#app,
+.tv-app {
+    position: relative;
+    width: 100%;
+    height: 100%;
     padding: var(--safe-y) var(--safe-x);
     overflow: hidden;
 }
 
+/* BOTÓN RESET */
 .reset-tv-btn {
     position: absolute;
-    right: 1.2vw;
-    bottom: 1.4vh;
+    right: 1vw;
+    bottom: 1vh;
     z-index: 30;
     border: none;
     border-radius: 999px;
     background: var(--danger);
     color: #fff;
     font-family: inherit;
-    font-size: clamp(0.82rem, 0.95vw, 1rem);
+    font-size: clamp(0.72rem, 0.8vw, 0.95rem);
     font-weight: 800;
     text-transform: uppercase;
-    padding: 0.78rem 1.1rem;
+    padding: 0.68rem 0.95rem;
     cursor: pointer;
     box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.35);
     transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
@@ -102,34 +135,38 @@ body {
     transform: none;
 }
 
+/* DOS BLOQUES APILADOS */
 .tv-split {
     display: grid;
     grid-template-rows: 1fr 1fr;
-    gap: 1.2vh;
+    gap: 1vh;
     width: 100%;
     height: 100%;
     min-height: 0;
+    padding-bottom: 4.2vh;
 }
 
 .call-section {
     min-height: 0;
     display: grid;
     grid-template-rows: auto 1fr;
-    gap: 0.9vh;
+    gap: 0.8vh;
     border-radius: var(--radius);
     overflow: hidden;
 }
 
 .section-header {
     border-radius: var(--radius);
-    padding: 0.75vh 1vw;
+    padding: 0.75vh 0.9vw;
     display: flex;
     align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .section-header h1 {
     margin: 0;
-    font-size: clamp(1.2rem, 1.95vw, 2.2rem);
+    font-size: clamp(1rem, 1.25vw, 1.55rem);
     line-height: 1;
     text-transform: uppercase;
     font-weight: 900;
@@ -154,10 +191,12 @@ body {
     color: var(--accent-recepcion);
 }
 
+/* AHORA EN VERTICAL: PRINCIPAL ARRIBA, HISTORIAL ABAJO */
 .section-layout {
     display: grid;
-    grid-template-columns: 1.7fr 0.9fr;
-    gap: 1vw;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1.45fr 0.95fr;
+    gap: 0.8vh;
     min-height: 0;
 }
 
@@ -169,7 +208,7 @@ body {
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 1.6vh 1.5vw;
+    padding: 1.4vh 1.2vw;
     min-width: 0;
     min-height: 0;
     overflow: hidden;
@@ -186,7 +225,7 @@ body {
 }
 
 .main-call h2 {
-    font-size: clamp(1.3rem, 2vw, 2.5rem);
+    font-size: clamp(1rem, 1.35vw, 1.7rem);
     margin: 0;
     text-transform: uppercase;
     line-height: 1.05;
@@ -202,9 +241,9 @@ body {
 }
 
 .main-call .paciente {
-    font-size: clamp(2.3rem, 4.3vw, 5rem);
+    font-size: clamp(2rem, 2.9vw, 3.7rem);
     font-weight: 900;
-    margin: 1.1vh 0 0.8vh 0;
+    margin: 1vh 0 0.75vh 0;
     line-height: 0.95;
     text-transform: uppercase;
     max-width: 100%;
@@ -213,7 +252,7 @@ body {
 }
 
 .main-call .staff-info {
-    font-size: clamp(1.4rem, 2.5vw, 3rem);
+    font-size: clamp(1.15rem, 1.7vw, 2.1rem);
     font-weight: 900;
     color: var(--warning);
     text-transform: uppercase;
@@ -222,13 +261,13 @@ body {
     overflow-wrap: anywhere;
     word-break: break-word;
     text-align: center;
-    margin-top: 0.2vh;
+    margin-top: 0.15vh;
 }
 
 .main-call .box-info {
-    font-size: clamp(0.95rem, 1.35vw, 1.55rem);
+    font-size: clamp(0.82rem, 1vw, 1.15rem);
     color: var(--muted);
-    margin-top: 0.75vh;
+    margin-top: 0.65vh;
     text-transform: uppercase;
     font-weight: 800;
     line-height: 1.1;
@@ -238,10 +277,11 @@ body {
     text-align: center;
 }
 
+/* HISTORIAL */
 .history {
     background: var(--card-soft);
     border-radius: var(--radius);
-    padding: 1.1vh 0.9vw;
+    padding: 0.9vh 0.8vw;
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -258,12 +298,13 @@ body {
 }
 
 .history h3 {
-    font-size: clamp(0.95rem, 1.25vw, 1.45rem);
-    padding-bottom: 0.65vh;
-    margin: 0 0 0.9vh 0;
+    font-size: clamp(0.82rem, 0.95vw, 1.05rem);
+    padding-bottom: 0.55vh;
+    margin: 0 0 0.75vh 0;
     text-transform: uppercase;
     flex: 0 0 auto;
     font-weight: 900;
+    text-align: center;
 }
 
 .doctor-history h3 {
@@ -282,16 +323,16 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 0.6vh;
+    gap: 0.55vh;
 }
 
 .hist-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.7vw;
+    gap: 0.55vw;
     background: rgba(0, 0, 0, 0.22);
-    padding: 0.8vh 0.75vw;
-    border-radius: 0.9vh;
+    padding: 0.65vh 0.65vw;
+    border-radius: 0.85vh;
     animation: slideIn 0.5s ease-out;
     min-width: 0;
 }
@@ -317,7 +358,7 @@ body {
 
 .hist-name {
     font-weight: 800;
-    font-size: clamp(0.9rem, 1.15vw, 1.2rem);
+    font-size: clamp(0.78rem, 0.92vw, 1rem);
     text-transform: uppercase;
     line-height: 1.08;
     overflow: hidden;
@@ -326,11 +367,11 @@ body {
 }
 
 .hist-doc {
-    font-size: clamp(0.7rem, 0.82vw, 0.9rem);
+    font-size: clamp(0.62rem, 0.72vw, 0.8rem);
     color: var(--warning);
     font-weight: 700;
     text-transform: uppercase;
-    margin-top: 0.25vh;
+    margin-top: 0.2vh;
     line-height: 1.1;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -338,7 +379,7 @@ body {
 }
 
 .hist-meta {
-    font-size: clamp(0.82rem, 0.98vw, 1.05rem);
+    font-size: clamp(0.7rem, 0.82vw, 0.9rem);
     color: var(--success);
     font-weight: 900;
     text-align: right;
@@ -363,28 +404,47 @@ body {
     }
 }
 
-@media (max-width: 1100px), (orientation: portrait) {
-    .tv-split {
-        grid-template-rows: 1fr 1fr;
-        gap: 1vh;
+/* AJUSTES PARA TVS MÁS CHICAS */
+@media (max-width: 1366px), (max-height: 768px) {
+    .tv-portrait-frame {
+        width: min(58vh, 44vw);
+        height: 95vh;
+        min-width: 470px;
+        min-height: 860px;
+    }
+
+    .main-call .paciente {
+        font-size: clamp(1.7rem, 2.5vw, 3rem);
+    }
+
+    .main-call .staff-info {
+        font-size: clamp(1rem, 1.45vw, 1.7rem);
+    }
+
+    .history h3 {
+        font-size: clamp(0.75rem, 0.9vw, 0.95rem);
+    }
+}
+
+/* SI LA PANTALLA YA ES VERTICAL REAL, SE USA CASI COMPLETA */
+@media (orientation: portrait) {
+    .tv-viewport {
+        padding: 0;
+    }
+
+    .tv-portrait-frame {
+        width: 100vw;
+        height: 100vh;
+        max-width: none;
+        max-height: none;
+        min-width: 0;
+        min-height: 0;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
     }
 
     .section-layout {
-        grid-template-columns: 1fr;
-        gap: 0.9vh;
-    }
-
-    .history {
-        padding: 1vh 1vw;
-    }
-
-    .main-call {
-        padding: 1.6vh 2vw;
-    }
-
-    .reset-tv-btn {
-        right: 2vw;
-        bottom: 1.2vh;
-        padding: 0.7rem 1rem;
+        grid-template-rows: 1.35fr 1fr;
     }
 }
