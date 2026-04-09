@@ -12,6 +12,7 @@ import { db } from "./firebase-config.js";
   const DEBUG_MODE = false;
   const RECEPCION_MODAL_MS = 10000;
   const DOCTOR_MODAL_MS = 10000;
+  const PRE_TICKET_STATUS_MS = 700;
 
   const $ = (id) => document.getElementById(id);
 
@@ -29,6 +30,9 @@ import { db } from "./firebase-config.js";
     btnActivarNotificaciones: $("btn-activar-notificaciones"),
     btnContinuarSinNotificaciones: $("btn-continuar-sin-notificaciones"),
     preTicketStatus: $("pre-ticket-status"),
+
+    iosInstallGuide: $("ios-install-guide"),
+    btnEntendidoIOS: $("btn-entendido-ios"),
 
     recepcionModalOverlay: $("recepcion-modal-overlay"),
     recepcionModalDestino: $("recepcion-modal-destino"),
@@ -57,6 +61,7 @@ import { db } from "./firebase-config.js";
   let doctorModalTimer = null;
   let lastRecepcionModalKey = "";
   let lastDoctorModalKey = "";
+  let pushServiceWorkerRegistration = null;
 
   const DEFAULT_STATUS_MESSAGE =
     "Estamos preparando tu atención. Mantente atento a los próximos llamados.";
@@ -345,32 +350,32 @@ import { db } from "./firebase-config.js";
   }
 
   function getDoctorDestino(data) {
-  const consultaDirecta = getFirstDefined(data, [
-    "consulta",
-    "consulta_destino",
-    "destino_consulta",
-    "ubicacion_consulta",
-  ], "");
+    const consultaDirecta = getFirstDefined(data, [
+      "consulta",
+      "consulta_destino",
+      "destino_consulta",
+      "ubicacion_consulta",
+    ], "");
 
-  if (String(consultaDirecta || "").trim()) {
-    const texto = String(consultaDirecta).trim();
+    if (String(consultaDirecta || "").trim()) {
+      const texto = String(consultaDirecta).trim();
 
-    if (/^consulta\s+/i.test(texto)) {
-      return texto;
+      if (/^consulta\s+/i.test(texto)) {
+        return texto;
+      }
+
+      return `Consulta ${texto}`;
     }
 
-    return `Consulta ${texto}`;
+    const doctor = doctoresMap[String(data?.doctor_id || "").trim()] || {};
+    const consultaCache = String(doctor.consulta || "").trim();
+
+    if (consultaCache) {
+      return `Consulta ${consultaCache}`;
+    }
+
+    return "Consulta";
   }
-
-  const doctor = doctoresMap[String(data?.doctor_id || "").trim()] || {};
-  const consultaCache = String(doctor.consulta || "").trim();
-
-  if (consultaCache) {
-    return `Consulta ${consultaCache}`;
-  }
-
-  return "Consulta";
-}
 
   function hideRecepcionModal() {
     if (recepcionModalTimer) {
@@ -1124,16 +1129,89 @@ import { db } from "./firebase-config.js";
     }
   }
 
+  function esIOS() {
+    return /iPhone|iPad|iPod/i.test(window.navigator.userAgent);
+  }
+
+  function estaEnStandaloneIOS() {
+    return window.navigator.standalone === true;
+  }
+
+  function estaEnModoApp() {
+    try {
+      return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        estaEnStandaloneIOS()
+      );
+    } catch {
+      return estaEnStandaloneIOS();
+    }
+  }
+
+  function soportaServiceWorker() {
+    return "serviceWorker" in navigator;
+  }
+
+  async function registrarPushServiceWorker() {
+    if (!soportaServiceWorker()) {
+      debugLog("SW", "service worker no soportado");
+      return null;
+    }
+
+    if (pushServiceWorkerRegistration) {
+      return pushServiceWorkerRegistration;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
+      pushServiceWorkerRegistration = registration;
+      debugLog("SW registrado", registration?.scope || "ok");
+      return registration;
+    } catch (error) {
+      console.error("[ticket] Error registrando service worker:", error);
+      debugLog("Error SW", error?.message || error);
+      return null;
+    }
+  }
+
+  function mostrarGuiaInstalacionIOS() {
+    if (refs.iosInstallGuide) {
+      refs.iosInstallGuide.classList.remove("hidden");
+      refs.iosInstallGuide.classList.add("show");
+    }
+
+    if (refs.preTicketStatus) {
+      refs.preTicketStatus.textContent =
+        "En iPhone, agrega este pase a la pantalla de inicio para poder recibir avisos.";
+    }
+  }
+
+  function ocultarGuiaInstalacionIOS() {
+    if (refs.iosInstallGuide) {
+      refs.iosInstallGuide.classList.add("hidden");
+      refs.iosInstallGuide.classList.remove("show");
+    }
+  }
+
   function openTicket() {
     document.body.classList.remove("pre-ticket-open");
+
     if (refs.preTicketOverlay) {
       refs.preTicketOverlay.classList.add("hidden");
     }
+
+    ocultarGuiaInstalacionIOS();
   }
 
   async function handleActivateNotifications() {
     if (!refs.preTicketStatus) {
       openTicket();
+      return;
+    }
+
+    if (esIOS() && !estaEnModoApp()) {
+      notificationsArmed = false;
+      mostrarGuiaInstalacionIOS();
       return;
     }
 
@@ -1147,6 +1225,7 @@ import { db } from "./firebase-config.js";
 
     try {
       if (Notification.permission === "granted") {
+        await registrarPushServiceWorker();
         notificationsArmed = true;
         refs.preTicketStatus.textContent = "Notificaciones activadas.";
         setTimeout(openTicket, 400);
@@ -1157,7 +1236,7 @@ import { db } from "./firebase-config.js";
         notificationsArmed = false;
         refs.preTicketStatus.textContent =
           "Las notificaciones están bloqueadas en este navegador.";
-        setTimeout(openTicket, 700);
+        setTimeout(openTicket, PRE_TICKET_STATUS_MS);
         return;
       }
 
@@ -1165,6 +1244,7 @@ import { db } from "./firebase-config.js";
       const result = await Notification.requestPermission();
 
       if (result === "granted") {
+        await registrarPushServiceWorker();
         notificationsArmed = true;
         refs.preTicketStatus.textContent = "Notificaciones activadas.";
       } else {
@@ -1179,7 +1259,7 @@ import { db } from "./firebase-config.js";
       notificationsArmed = false;
       refs.preTicketStatus.textContent =
         "No se pudo activar. Entrando al ticket...";
-      setTimeout(openTicket, 700);
+      setTimeout(openTicket, PRE_TICKET_STATUS_MS);
     }
   }
 
@@ -1201,6 +1281,12 @@ import { db } from "./firebase-config.js";
         "click",
         handleContinueWithoutNotifications
       );
+    }
+
+    if (refs.btnEntendidoIOS) {
+      refs.btnEntendidoIOS.addEventListener("click", () => {
+        ocultarGuiaInstalacionIOS();
+      });
     }
   }
 

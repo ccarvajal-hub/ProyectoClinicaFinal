@@ -191,6 +191,105 @@ body.pre-ticket-open .ticket-shell {
     font-weight: 700;
 }
 
+/* GUIA IPHONE */
+
+.ios-install-guide {
+    position: fixed;
+    inset: 0;
+    z-index: 2300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(20, 20, 20, 0.82);
+    backdrop-filter: blur(10px);
+}
+
+.ios-install-guide.hidden {
+    display: none;
+}
+
+.ios-install-card {
+    width: min(100%, 620px);
+    padding: 26px 22px;
+    border-radius: 18px;
+    border: 1px solid var(--border-blue-fine);
+    background: linear-gradient(180deg, rgba(62, 62, 62, 0.98) 0%, rgba(49, 49, 49, 0.98) 100%);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+    text-align: left;
+}
+
+.ios-install-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--border-blue-fine);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.04) 100%);
+    color: var(--text-main);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.ios-install-title {
+    margin: 18px 0 12px;
+    color: var(--blue-accent-2);
+    font-size: clamp(1.35rem, 2.7vw, 1.95rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+}
+
+.ios-install-text {
+    margin: 0 0 14px;
+    color: var(--text-soft);
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.ios-install-steps {
+    margin: 0 0 18px 18px;
+    padding: 0;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+.ios-install-steps li + li {
+    margin-top: 6px;
+}
+
+.ios-install-btn {
+    width: 100%;
+    min-height: 58px;
+    padding: 0 18px;
+    border: 1px solid var(--blue-accent);
+    border-radius: 10px;
+    background: var(--blue-accent);
+    color: var(--text-main);
+    font-size: 0.96rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.08s ease, background 0.15s ease, opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.ios-install-btn:active {
+    transform: scale(0.99);
+}
+
+.ios-install-btn:hover {
+    background: var(--blue-accent-2);
+}
+
 /* MODAL RECEPCION */
 
 .recepcion-modal-overlay {
@@ -802,6 +901,7 @@ body.pre-ticket-open .ticket-shell {
     }
 
     .pre-ticket-card,
+    .ios-install-card,
     .recepcion-modal-card,
     .doctor-modal-card {
         padding: 20px 16px;
@@ -812,9 +912,23 @@ body.pre-ticket-open .ticket-shell {
         flex-direction: column;
     }
 
-    .pre-ticket-btn {
+    .pre-ticket-btn,
+    .ios-install-btn {
         width: 100%;
         min-width: 0;
+    }
+
+    .ios-install-title {
+        font-size: 1.35rem;
+    }
+
+    .ios-install-text {
+        font-size: 0.92rem;
+    }
+
+    .ios-install-steps {
+        font-size: 0.9rem;
+        line-height: 1.5;
     }
 
     .info-box {
