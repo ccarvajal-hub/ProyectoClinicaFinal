@@ -343,7 +343,7 @@ button {
 .info-combined-row .info-value {
     margin: 0;
     color: var(--text-main);
-    font-size: 1.0rem;
+    font-size: 1rem;
     font-weight: 450;
     line-height: 1.2;
     text-align: left;
@@ -353,7 +353,7 @@ button {
 .info-value,
 .info-value-patient,
 #paciente-nombre {
-    font-size: 1.0rem;
+    font-size: 1rem;
     font-weight: 450;
 }
 
@@ -584,9 +584,11 @@ button {
     border: 1px solid var(--badge-espera);
     box-shadow: inset 0 0 0 1px rgba(216, 189, 106, 0.16);
 }
+
 .timeline-step.active:nth-child(1)::before {
     background: var(--badge-espera);
 }
+
 .timeline-step.active:nth-child(1) .step-text {
     color: var(--badge-espera);
 }
@@ -595,9 +597,11 @@ button {
     border: 1px solid var(--badge-recepcion);
     box-shadow: inset 0 0 0 1px rgba(255, 179, 71, 0.16);
 }
+
 .timeline-step.active:nth-child(2)::before {
     background: var(--badge-recepcion);
 }
+
 .timeline-step.active:nth-child(2) .step-text {
     color: var(--badge-recepcion);
 }
@@ -606,9 +610,11 @@ button {
     border: 1px solid var(--badge-consulta);
     box-shadow: inset 0 0 0 1px rgba(31, 111, 229, 0.16);
 }
+
 .timeline-step.active:nth-child(3)::before {
     background: var(--badge-consulta);
 }
+
 .timeline-step.active:nth-child(3) .step-text {
     color: var(--badge-consulta);
 }
@@ -617,11 +623,56 @@ button {
     border: 1px solid var(--badge-atendido);
     box-shadow: inset 0 0 0 1px rgba(72, 187, 120, 0.16);
 }
+
 .timeline-step.active:nth-child(4)::before {
     background: var(--badge-atendido);
 }
+
 .timeline-step.active:nth-child(4) .step-text {
     color: var(--badge-atendido);
+}
+
+.browser-notify-btn {
+    min-height: 46px;
+    padding: 0 16px;
+    border: 1px solid var(--blue-accent);
+    border-radius: 10px;
+    background: rgba(77, 128, 178, 0.14);
+    color: var(--text-main);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.08s ease, background 0.15s ease, opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.browser-notify-btn:hover {
+    background: rgba(77, 128, 178, 0.24);
+}
+
+.browser-notify-btn:active {
+    transform: scale(0.99);
+}
+
+.browser-notify-btn.is-active {
+    border-color: var(--badge-consulta);
+    background: rgba(72, 187, 120, 0.16);
+}
+
+.browser-notify-btn:disabled {
+    opacity: 0.65;
+    cursor: default;
+}
+
+.browser-notify-status {
+    min-height: 18px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
 }
 
 @media (max-width: 900px) {
@@ -773,5 +824,15 @@ button {
     .timeline-step .step-text {
         font-size: 0.66rem;
         line-height: 1.05;
+    }
+
+    .browser-notify-btn {
+        width: 100%;
+        min-height: 44px;
+        font-size: 0.78rem;
+    }
+
+    .browser-notify-status {
+        font-size: 0.76rem;
     }
 }

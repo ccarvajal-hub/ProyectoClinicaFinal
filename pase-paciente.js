@@ -25,6 +25,9 @@ import { db } from "./firebase-config.js";
     timelineSteps: $("timeline-steps"),
     ultimaActualizacion: $("ultima-actualizacion"),
 
+    btnActivarAvisos: $("btn-activar-avisos"),
+    browserNotifyStatus: $("browser-notify-status"),
+
     recepcionModalOverlay: $("recepcion-modal-overlay"),
     recepcionModalDestino: $("recepcion-modal-destino"),
 
@@ -48,6 +51,10 @@ import { db } from "./firebase-config.js";
   let doctorModalTimer = null;
   let lastRecepcionModalKey = "";
   let lastDoctorModalKey = "";
+
+  let notificationsArmed = false;
+  let lastStatusKey = null;
+  let hasInitialStatus = false;
 
   const DEFAULT_STATUS_MESSAGE =
     "Estamos preparando tu atención. Mantente atento a los próximos llamados.";
@@ -224,25 +231,15 @@ import { db } from "./firebase-config.js";
 
     return {
       ...data,
-      pass:
-        data.pass ||
-        data.pass_id ||
-        data.passId ||
-        "",
+      pass: data.pass || data.pass_id || data.passId || "",
       agendadoId:
         data.agendadoId ||
         data.agendado_id ||
         data.id_agendado ||
         data.id ||
         "",
-      rut:
-        data.rut ||
-        data.RUT ||
-        "",
-      fecha_turno:
-        data.fecha_turno ||
-        data.fecha ||
-        "",
+      rut: data.rut || data.RUT || "",
+      fecha_turno: data.fecha_turno || data.fecha || "",
       nombre_paciente:
         data.nombre_paciente ||
         data.nombre ||
@@ -683,6 +680,130 @@ import { db } from "./firebase-config.js";
     return { nombre, ubicacion };
   }
 
+  function updateBrowserNotifyUI() {
+    if (!refs.btnActivarAvisos) return;
+
+    if (!("Notification" in window)) {
+      refs.btnActivarAvisos.disabled = true;
+      refs.btnActivarAvisos.textContent = "AVISOS NO DISPONIBLES";
+      if (refs.browserNotifyStatus) {
+        refs.browserNotifyStatus.textContent =
+          "Este navegador no admite notificaciones.";
+      }
+      return;
+    }
+
+    if (Notification.permission === "granted" && notificationsArmed) {
+      refs.btnActivarAvisos.disabled = false;
+      refs.btnActivarAvisos.classList.add("is-active");
+      refs.btnActivarAvisos.textContent = "AVISOS ACTIVADOS";
+
+      if (refs.browserNotifyStatus) {
+        refs.browserNotifyStatus.textContent =
+          "Te avisaremos cuando recepción o consulta te llamen.";
+      }
+      return;
+    }
+
+    if (Notification.permission === "denied") {
+      refs.btnActivarAvisos.disabled = true;
+      refs.btnActivarAvisos.classList.remove("is-active");
+      refs.btnActivarAvisos.textContent = "AVISOS BLOQUEADOS";
+
+      if (refs.browserNotifyStatus) {
+        refs.browserNotifyStatus.textContent =
+          "Las notificaciones están bloqueadas en este navegador.";
+      }
+      return;
+    }
+
+    refs.btnActivarAvisos.disabled = false;
+    refs.btnActivarAvisos.classList.remove("is-active");
+    refs.btnActivarAvisos.textContent = "ACTIVAR AVISOS DEL NAVEGADOR";
+
+    if (refs.browserNotifyStatus) {
+      refs.browserNotifyStatus.textContent =
+        "Actívalos para recibir avisos cuando llegue tu turno.";
+    }
+  }
+
+  async function handleActivateBrowserNotifications() {
+    if (!("Notification" in window)) {
+      updateBrowserNotifyUI();
+      return;
+    }
+
+    try {
+      if (Notification.permission === "granted") {
+        notificationsArmed = true;
+        updateBrowserNotifyUI();
+        return;
+      }
+
+      if (Notification.permission === "denied") {
+        notificationsArmed = false;
+        updateBrowserNotifyUI();
+        return;
+      }
+
+      if (refs.browserNotifyStatus) {
+        refs.browserNotifyStatus.textContent = "Solicitando permiso...";
+      }
+
+      const result = await Notification.requestPermission();
+      notificationsArmed = result === "granted";
+      updateBrowserNotifyUI();
+    } catch (error) {
+      console.error("[ticket] Error activando avisos del navegador:", error);
+      debugLog("Error avisos navegador", error?.message || error);
+      notificationsArmed = false;
+      updateBrowserNotifyUI();
+    }
+  }
+
+  function fireTicketNotification(statusKey, data) {
+    if (!notificationsArmed) return;
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    try {
+      const { nombre: doctor, ubicacion } = obtenerDoctorDesdeCache(data.doctor_id);
+      const destinoRecepcion = getRecepcionDestino(data);
+      const destinoDoctor = getDoctorDestino(data);
+      const tagId = getFirstDefined(data, ["id", "agendadoId"], "general");
+
+      if (statusKey === "llamado_recepcion") {
+        new Notification("Recepción te está llamando", {
+          body: `Dirígete a ${destinoRecepcion}`,
+          tag: `ticket-llamado-recepcion-${tagId}`,
+        });
+      }
+
+      if (statusKey === "llamado_doctor") {
+        new Notification("Ya puedes entrar a consulta", {
+          body: `Doctor: ${doctor}. Dirígete a ${destinoDoctor || ubicacion}`,
+          tag: `ticket-llamado-doctor-${tagId}`,
+        });
+      }
+    } catch (error) {
+      console.error("[ticket] No se pudo mostrar la notificación:", error);
+      debugLog("Error notificación", error?.message || error);
+    }
+  }
+
+  function maybeNotifyStatusChange(statusKey, data) {
+    if (!hasInitialStatus) {
+      hasInitialStatus = true;
+      lastStatusKey = statusKey;
+      return;
+    }
+
+    if (statusKey === lastStatusKey) return;
+
+    fireTicketNotification(statusKey, data);
+    lastStatusKey = statusKey;
+  }
+
   function render(data) {
     latestData = { ...(latestData || {}), ...(data || {}) };
 
@@ -741,6 +862,7 @@ import { db } from "./firebase-config.js";
 
     maybeShowRecepcionModal(statusKey, latestData);
     maybeShowDoctorModal(statusKey, latestData);
+    maybeNotifyStatusChange(statusKey, latestData);
   }
 
   function readFromUrl() {
@@ -1103,6 +1225,15 @@ import { db } from "./firebase-config.js";
     }
   }
 
+  function bindEvents() {
+    if (refs.btnActivarAvisos) {
+      refs.btnActivarAvisos.addEventListener(
+        "click",
+        handleActivateBrowserNotifications
+      );
+    }
+  }
+
   function init() {
     clearDebugBox();
 
@@ -1114,6 +1245,8 @@ import { db } from "./firebase-config.js";
 
     render(initialData);
     setupStorageSync();
+    bindEvents();
+    updateBrowserNotifyUI();
     startRealtimeFirestore(initialData);
 
     setInterval(refreshFromCurrentSources, 60000);
