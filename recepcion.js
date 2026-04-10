@@ -40,6 +40,8 @@ let RECEPCION_ACTUAL = {
 };
 
 const cacheDoctores = {};
+let textoBusquedaPacientes = "";
+let ultimoSnapshotAgendados = [];
 
 const CONFIG_ESTADOS = {
     pendiente: {
@@ -168,6 +170,34 @@ function normalizarEstado(estado) {
         .trim()
         .toLowerCase()
         .replace(/\s+/g, "_");
+}
+
+function normalizarTexto(texto) {
+    return String(texto || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\./g, "")
+        .replace(/-/g, "")
+        .trim();
+}
+
+function formatearRut(rut) {
+    const limpio = String(rut || "")
+        .replace(/\./g, "")
+        .replace(/-/g, "")
+        .trim()
+        .toUpperCase();
+
+    if (!limpio) return "SIN RUT";
+    if (limpio.length < 2) return limpio;
+
+    const cuerpo = limpio.slice(0, -1);
+    const dv = limpio.slice(-1);
+
+    const cuerpoConPuntos = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    return `${cuerpoConPuntos}-${dv}`;
 }
 
 function obtenerEstadoVisual(paciente) {
@@ -498,6 +528,10 @@ function crearFilaEspera(id, paciente, nombreDoctor) {
     name.className = "name";
     name.textContent = paciente.nombre || "SIN NOMBRE";
 
+    const rut = document.createElement("div");
+    rut.className = "rut";
+    rut.textContent = formatearRut(paciente.rut);
+
     const docDiv = document.createElement("div");
     docDiv.className = "doc";
     docDiv.textContent = `Dr. ${nombreDoctor}`;
@@ -516,6 +550,7 @@ function crearFilaEspera(id, paciente, nombreDoctor) {
     estadoWrap.appendChild(crearBadgeEstado(paciente));
 
     row.appendChild(name);
+    row.appendChild(rut);
     row.appendChild(docDiv);
     row.appendChild(hora);
     row.appendChild(recepcion);
@@ -534,6 +569,10 @@ function crearFilaHistorial(paciente, nombreDoctor) {
     name.className = "name";
     name.textContent = paciente.nombre || "SIN NOMBRE";
 
+    const rut = document.createElement("div");
+    rut.className = "rut";
+    rut.textContent = formatearRut(paciente.rut);
+
     const docDiv = document.createElement("div");
     docDiv.className = "doc";
     docDiv.textContent = `Dr. ${nombreDoctor}`;
@@ -552,6 +591,7 @@ function crearFilaHistorial(paciente, nombreDoctor) {
     estadoWrap.appendChild(crearBadgeEstado(paciente));
 
     row.appendChild(name);
+    row.appendChild(rut);
     row.appendChild(docDiv);
     row.appendChild(hora);
     row.appendChild(recepcion);
@@ -561,35 +601,71 @@ function crearFilaHistorial(paciente, nombreDoctor) {
     return row;
 }
 
-function iniciarListenerAgendados() {
-    const qAgendados = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
+function textoContieneTodasLasPalabras(textoBase, textoBusqueda) {
+    const base = normalizarTexto(textoBase);
+    const palabras = normalizarTexto(textoBusqueda)
+        .split(/\s+/)
+        .filter(Boolean);
 
-    onSnapshot(
-        qAgendados,
-        async (snapshot) => {
-            const esperaDiv = document.getElementById("lista-espera");
-            const atendidosDiv = document.getElementById("lista-atendidos");
+    if (!palabras.length) return true;
 
-            if (!esperaDiv || !atendidosDiv) return;
+    return palabras.every((palabra) => base.includes(palabra));
+}
 
-            esperaDiv.innerHTML = "";
-            atendidosDiv.innerHTML = "";
+function pacienteCoincideBusqueda(paciente) {
+    const termino = normalizarTexto(textoBusquedaPacientes);
+    if (!termino) return true;
+
+    const nombrePaciente = normalizarTexto(paciente?.nombre || "");
+    const rutPaciente = normalizarTexto(paciente?.rut || "");
+
+    return (
+        textoContieneTodasLasPalabras(nombrePaciente, termino) ||
+        textoContieneTodasLasPalabras(rutPaciente, termino)
+    );
+}
+
+function renderizarListas(snapshotDocs) {
+    const esperaDiv = document.getElementById("lista-espera");
+    const atendidosDiv = document.getElementById("lista-atendidos");
+
+    if (!esperaDiv || !atendidosDiv) return;
+
+    esperaDiv.innerHTML = "";
+    atendidosDiv.innerHTML = "";
+
+    const fechaHoy = getFechaChileYMD();
+
+    const trabajos = snapshotDocs.map(async (docSnap) => {
+        const paciente = docSnap.data();
+        const id = docSnap.id;
+        const estado = normalizarEstado(paciente.estado);
+        const fechaTurno = String(paciente.fecha_turno || "").trim().replace(/\s+/g, "");
+
+        if (fechaTurno !== fechaHoy) return null;
+        if (!ESTADOS_AGENDA.includes(estado) && !ESTADOS_HISTORIAL.includes(estado)) return null;
+
+        const nombreDoctor = await obtenerNombreDoctor(paciente.doctor_id);
+
+        if (!pacienteCoincideBusqueda(paciente, nombreDoctor)) return null;
+
+        return {
+            id,
+            paciente,
+            estado,
+            nombreDoctor
+        };
+    });
+
+    Promise.all(trabajos)
+        .then((resultados) => {
+            const items = resultados.filter(Boolean);
 
             let contEspera = 0;
             let contAtendidos = 0;
 
-            const fechaHoy = getFechaChileYMD();
-
-            for (const docSnap of snapshot.docs) {
-                const paciente = docSnap.data();
-                const id = docSnap.id;
-                const estado = normalizarEstado(paciente.estado);
-                const fechaTurno = String(paciente.fecha_turno || "").trim().replace(/\s+/g, "");
-
-                if (fechaTurno !== fechaHoy) continue;
-                if (!ESTADOS_AGENDA.includes(estado) && !ESTADOS_HISTORIAL.includes(estado)) continue;
-
-                const nombreDoctor = await obtenerNombreDoctor(paciente.doctor_id);
+            for (const item of items) {
+                const { id, paciente, estado, nombreDoctor } = item;
 
                 if (ESTADOS_HISTORIAL.includes(estado)) {
                     atendidosDiv.appendChild(crearFilaHistorial(paciente, nombreDoctor));
@@ -601,12 +677,28 @@ function iniciarListenerAgendados() {
             }
 
             if (contEspera === 0) {
-                esperaDiv.innerHTML = '<div class="empty-msg">No hay pacientes en recepción hoy.</div>';
+                esperaDiv.innerHTML = '<div class="empty-msg">No se encontraron pacientes en recepción.</div>';
             }
 
             if (contAtendidos === 0) {
-                atendidosDiv.innerHTML = '<div class="empty-msg">No hay movimientos registrados hoy.</div>';
+                atendidosDiv.innerHTML = '<div class="empty-msg">No se encontraron movimientos en historial.</div>';
             }
+        })
+        .catch((error) => {
+            console.error("Error renderizando listas:", error);
+            esperaDiv.innerHTML = `<div class="empty-msg">Error cargando agenda: ${error.message}</div>`;
+            atendidosDiv.innerHTML = `<div class="empty-msg">Error cargando historial: ${error.message}</div>`;
+        });
+}
+
+function iniciarListenerAgendados() {
+    const qAgendados = query(collection(db, "agendados"), orderBy("hora_consulta", "asc"));
+
+    onSnapshot(
+        qAgendados,
+        (snapshot) => {
+            ultimoSnapshotAgendados = snapshot.docs;
+            renderizarListas(ultimoSnapshotAgendados);
         },
         (error) => {
             console.error("Error en onSnapshot:", error);
@@ -625,7 +717,18 @@ function iniciarListenerAgendados() {
     );
 }
 
+function iniciarBuscador() {
+    const input = document.getElementById("buscador-pacientes");
+    if (!input) return;
+
+    input.addEventListener("input", () => {
+        textoBusquedaPacientes = input.value || "";
+        renderizarListas(ultimoSnapshotAgendados);
+    });
+}
+
 mostrarFechaCabecera();
+iniciarBuscador();
 
 const btnCerrarSesion = document.getElementById("btn-cerrar-sesion");
 if (btnCerrarSesion) {
