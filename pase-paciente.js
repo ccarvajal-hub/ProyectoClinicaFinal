@@ -12,7 +12,6 @@ import { db } from "./firebase-config.js";
   const DEBUG_MODE = false;
   const RECEPCION_MODAL_MS = 10000;
   const DOCTOR_MODAL_MS = 10000;
-  const PRE_TICKET_STATUS_MS = 700;
 
   const $ = (id) => document.getElementById(id);
 
@@ -25,14 +24,6 @@ import { db } from "./firebase-config.js";
     estadoMensaje: $("estado-mensaje"),
     timelineSteps: $("timeline-steps"),
     ultimaActualizacion: $("ultima-actualizacion"),
-
-    preTicketOverlay: $("pre-ticket-overlay"),
-    btnActivarNotificaciones: $("btn-activar-notificaciones"),
-    btnContinuarSinNotificaciones: $("btn-continuar-sin-notificaciones"),
-    preTicketStatus: $("pre-ticket-status"),
-
-    iosInstallGuide: $("ios-install-guide"),
-    btnEntendidoIOS: $("btn-entendido-ios"),
 
     recepcionModalOverlay: $("recepcion-modal-overlay"),
     recepcionModalDestino: $("recepcion-modal-destino"),
@@ -52,16 +43,11 @@ import { db } from "./firebase-config.js";
   let queueDoctorId = "";
   let queueFechaTurno = "";
 
-  let notificationsArmed = false;
-  let lastStatusKey = null;
-  let hasInitialStatus = false;
-
   let doctoresMap = {};
   let recepcionModalTimer = null;
   let doctorModalTimer = null;
   let lastRecepcionModalKey = "";
   let lastDoctorModalKey = "";
-  let pushServiceWorkerRegistration = null;
 
   const DEFAULT_STATUS_MESSAGE =
     "Estamos preparando tu atención. Mantente atento a los próximos llamados.";
@@ -231,6 +217,38 @@ import { db } from "./firebase-config.js";
       }
     }
     return fallback;
+  }
+
+  function normalizeIncomingData(data) {
+    if (!data || typeof data !== "object") return {};
+
+    return {
+      ...data,
+      pass:
+        data.pass ||
+        data.pass_id ||
+        data.passId ||
+        "",
+      agendadoId:
+        data.agendadoId ||
+        data.agendado_id ||
+        data.id_agendado ||
+        data.id ||
+        "",
+      rut:
+        data.rut ||
+        data.RUT ||
+        "",
+      fecha_turno:
+        data.fecha_turno ||
+        data.fecha ||
+        "",
+      nombre_paciente:
+        data.nombre_paciente ||
+        data.nombre ||
+        data.paciente ||
+        ""
+    };
   }
 
   function normalizeStatus(rawStatus) {
@@ -665,49 +683,6 @@ import { db } from "./firebase-config.js";
     return { nombre, ubicacion };
   }
 
-  function fireTicketNotification(statusKey, data) {
-    if (!notificationsArmed) return;
-    if (!("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
-
-    try {
-      const { nombre: doctor, ubicacion } = obtenerDoctorDesdeCache(data.doctor_id);
-      const destinoRecepcion = getRecepcionDestino(data);
-      const destinoDoctor = getDoctorDestino(data);
-      const tagId = getFirstDefined(data, ["id", "agendadoId"], "general");
-
-      if (statusKey === "llamado_recepcion") {
-        new Notification("Recepción te está llamando", {
-          body: `Dirígete a ${destinoRecepcion}`,
-          tag: `ticket-llamado-recepcion-${tagId}`,
-        });
-      }
-
-      if (statusKey === "llamado_doctor") {
-        new Notification("Ya puedes entrar a consulta", {
-          body: `Doctor: ${doctor}. Dirígete a ${destinoDoctor || ubicacion}`,
-          tag: `ticket-llamado-doctor-${tagId}`,
-        });
-      }
-    } catch (error) {
-      console.error("No se pudo mostrar la notificación:", error);
-      debugLog("Error notificación", error?.message || error);
-    }
-  }
-
-  function maybeNotifyStatusChange(statusKey, data) {
-    if (!hasInitialStatus) {
-      hasInitialStatus = true;
-      lastStatusKey = statusKey;
-      return;
-    }
-
-    if (statusKey === lastStatusKey) return;
-
-    fireTicketNotification(statusKey, data);
-    lastStatusKey = statusKey;
-  }
-
   function render(data) {
     latestData = { ...(latestData || {}), ...(data || {}) };
 
@@ -766,7 +741,6 @@ import { db } from "./firebase-config.js";
 
     maybeShowRecepcionModal(statusKey, latestData);
     maybeShowDoctorModal(statusKey, latestData);
-    maybeNotifyStatusChange(statusKey, latestData);
   }
 
   function readFromUrl() {
@@ -849,8 +823,8 @@ import { db } from "./firebase-config.js";
   }
 
   function mergeInitialData() {
-    const fromStorage = removeEmptyFields(readFromStorage());
-    const fromUrl = removeEmptyFields(readFromUrl());
+    const fromStorage = normalizeIncomingData(removeEmptyFields(readFromStorage()));
+    const fromUrl = normalizeIncomingData(removeEmptyFields(readFromUrl()));
 
     return {
       ...fromStorage,
@@ -861,7 +835,7 @@ import { db } from "./firebase-config.js";
   function setupStorageSync() {
     window.addEventListener("storage", () => {
       debugLog("Evento storage", "detectado");
-      const storageData = readFromStorage();
+      const storageData = normalizeIncomingData(readFromStorage());
       render(storageData);
     });
   }
@@ -907,7 +881,7 @@ import { db } from "./firebase-config.js";
 
         snapshot.forEach((docSnap) => {
           const data = docSnap.data() || {};
-          const uid = String(data.uid || "").trim();
+          const uid = String(data.uid || docSnap.id || "").trim();
 
           if (uid) {
             doctoresMap[uid] = {
@@ -1117,7 +1091,7 @@ import { db } from "./firebase-config.js";
   }
 
   function refreshFromCurrentSources() {
-    const storageData = readFromStorage();
+    const storageData = normalizeIncomingData(readFromStorage());
 
     if (Object.keys(storageData).length) {
       render(storageData);
@@ -1126,167 +1100,6 @@ import { db } from "./firebase-config.js";
 
     if (latestData) {
       render(latestData);
-    }
-  }
-
-  function esIOS() {
-    return /iPhone|iPad|iPod/i.test(window.navigator.userAgent);
-  }
-
-  function estaEnStandaloneIOS() {
-    return window.navigator.standalone === true;
-  }
-
-  function estaEnModoApp() {
-    try {
-      return (
-        window.matchMedia("(display-mode: standalone)").matches ||
-        estaEnStandaloneIOS()
-      );
-    } catch {
-      return estaEnStandaloneIOS();
-    }
-  }
-
-  function soportaServiceWorker() {
-    return "serviceWorker" in navigator;
-  }
-
-  async function registrarPushServiceWorker() {
-    if (!soportaServiceWorker()) {
-      debugLog("SW", "service worker no soportado");
-      return null;
-    }
-
-    if (pushServiceWorkerRegistration) {
-      return pushServiceWorkerRegistration;
-    }
-
-    try {
-      const registration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
-      pushServiceWorkerRegistration = registration;
-      debugLog("SW registrado", registration?.scope || "ok");
-      return registration;
-    } catch (error) {
-      console.error("[ticket] Error registrando service worker:", error);
-      debugLog("Error SW", error?.message || error);
-      return null;
-    }
-  }
-
-  function mostrarGuiaInstalacionIOS() {
-    if (refs.iosInstallGuide) {
-      refs.iosInstallGuide.classList.remove("hidden");
-      refs.iosInstallGuide.classList.add("show");
-    }
-
-    if (refs.preTicketStatus) {
-      refs.preTicketStatus.textContent =
-        "En iPhone, agrega este pase a la pantalla de inicio para poder recibir avisos.";
-    }
-  }
-
-  function ocultarGuiaInstalacionIOS() {
-    if (refs.iosInstallGuide) {
-      refs.iosInstallGuide.classList.add("hidden");
-      refs.iosInstallGuide.classList.remove("show");
-    }
-  }
-
-  function openTicket() {
-    document.body.classList.remove("pre-ticket-open");
-
-    if (refs.preTicketOverlay) {
-      refs.preTicketOverlay.classList.add("hidden");
-    }
-
-    ocultarGuiaInstalacionIOS();
-  }
-
-  async function handleActivateNotifications() {
-    if (!refs.preTicketStatus) {
-      openTicket();
-      return;
-    }
-
-    if (esIOS() && !estaEnModoApp()) {
-      notificationsArmed = false;
-      mostrarGuiaInstalacionIOS();
-      return;
-    }
-
-    if (!("Notification" in window)) {
-      notificationsArmed = false;
-      refs.preTicketStatus.textContent =
-        "Este dispositivo no admite notificaciones.";
-      setTimeout(openTicket, 600);
-      return;
-    }
-
-    try {
-      if (Notification.permission === "granted") {
-        await registrarPushServiceWorker();
-        notificationsArmed = true;
-        refs.preTicketStatus.textContent = "Notificaciones activadas.";
-        setTimeout(openTicket, 400);
-        return;
-      }
-
-      if (Notification.permission === "denied") {
-        notificationsArmed = false;
-        refs.preTicketStatus.textContent =
-          "Las notificaciones están bloqueadas en este navegador.";
-        setTimeout(openTicket, PRE_TICKET_STATUS_MS);
-        return;
-      }
-
-      refs.preTicketStatus.textContent = "Solicitando permiso...";
-      const result = await Notification.requestPermission();
-
-      if (result === "granted") {
-        await registrarPushServiceWorker();
-        notificationsArmed = true;
-        refs.preTicketStatus.textContent = "Notificaciones activadas.";
-      } else {
-        notificationsArmed = false;
-        refs.preTicketStatus.textContent = "Entrarás sin notificaciones.";
-      }
-
-      setTimeout(openTicket, 500);
-    } catch (error) {
-      console.error("[ticket] No se pudo solicitar permiso de notificaciones:", error);
-      debugLog("Error permiso notificaciones", error?.message || error);
-      notificationsArmed = false;
-      refs.preTicketStatus.textContent =
-        "No se pudo activar. Entrando al ticket...";
-      setTimeout(openTicket, PRE_TICKET_STATUS_MS);
-    }
-  }
-
-  function handleContinueWithoutNotifications() {
-    notificationsArmed = false;
-    openTicket();
-  }
-
-  function bindEvents() {
-    if (refs.btnActivarNotificaciones) {
-      refs.btnActivarNotificaciones.addEventListener(
-        "click",
-        handleActivateNotifications
-      );
-    }
-
-    if (refs.btnContinuarSinNotificaciones) {
-      refs.btnContinuarSinNotificaciones.addEventListener(
-        "click",
-        handleContinueWithoutNotifications
-      );
-    }
-
-    if (refs.btnEntendidoIOS) {
-      refs.btnEntendidoIOS.addEventListener("click", () => {
-        ocultarGuiaInstalacionIOS();
-      });
     }
   }
 
@@ -1301,7 +1114,6 @@ import { db } from "./firebase-config.js";
 
     render(initialData);
     setupStorageSync();
-    bindEvents();
     startRealtimeFirestore(initialData);
 
     setInterval(refreshFromCurrentSources, 60000);
