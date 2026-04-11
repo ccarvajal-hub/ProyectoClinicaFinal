@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.11_01";
+const APP_VERSION = "Totem v2026.04.11_02";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -627,6 +627,7 @@ function obtenerBloqueInfo(el) {
     if (!el) return null;
 
     return (
+        el.closest(".info-item") ||
         el.closest(".result-item") ||
         el.closest(".result-row") ||
         el.closest(".info-row") ||
@@ -635,6 +636,11 @@ function obtenerBloqueInfo(el) {
 }
 
 function mostrarOcultarInfoModal(mostrar) {
+    const infoBox = modal?.querySelector(".info-box");
+    if (infoBox) {
+        infoBox.style.display = mostrar ? "" : "none";
+    }
+
     const bloques = [
         obtenerBloqueInfo(resNombre),
         obtenerBloqueInfo(resDoctor),
@@ -645,6 +651,18 @@ function mostrarOcultarInfoModal(mostrar) {
         if (!bloque) return;
         bloque.style.display = mostrar ? "" : "none";
     });
+}
+
+function mostrarOcultarMensajeModal(mostrar, texto = "") {
+    if (!modalMensaje) return;
+
+    modalMensaje.textContent = texto || "";
+
+    if (mostrar && texto && texto.trim()) {
+        modalMensaje.style.display = "";
+    } else {
+        modalMensaje.style.display = "none";
+    }
 }
 
 /* =========================
@@ -664,7 +682,8 @@ function abrirModal({
     autoCloseAction = null,
     passDraftId = null,
     passDraftUrl = "",
-    ocultarInfo = false
+    ocultarInfo = false,
+    ocultarMensaje = false
 }) {
     cancelarAutoCierreModal();
     ocultarAlerta();
@@ -687,9 +706,9 @@ function abrirModal({
     if (resNombre) resNombre.innerText = nombre || "---";
     if (resDoctor) resDoctor.innerText = doctor || "Doctor asignado";
     if (resUbicacion) resUbicacion.innerText = ubicacion || "---";
-    if (modalMensaje) modalMensaje.textContent = mensaje || "";
 
     mostrarOcultarInfoModal(!ocultarInfo);
+    mostrarOcultarMensajeModal(!ocultarMensaje, mensaje || "");
     configurarBotonModal(buttonText);
 
     if (modal) modal.style.display = "flex";
@@ -729,7 +748,9 @@ function cerrarModal() {
     if (modal) modal.style.display = "none";
 
     limpiarContenidoExtraModal();
+    limpiarQRCodeEnModal();
     mostrarOcultarInfoModal(true);
+    mostrarOcultarMensajeModal(true, "");
     resetearInputRUT();
 
     modalContext = {
@@ -955,15 +976,32 @@ function abrirModalYaAtendido() {
     abrirModal({
         titulo: "SU ATENCIÓN YA FUE REALIZADA",
         tipo: "warning",
-        mensaje: "Si no está seguro, acérquese a recepción.",
+        mensaje: "",
         nombre: "",
         doctor: "",
         ubicacion: "",
         autoClose: true,
         buttonText: "CERRAR",
         contextType: "already_attended",
-        ocultarInfo: true
+        ocultarInfo: true,
+        ocultarMensaje: true
     });
+
+    const extra = asegurarContenedorExtraModal();
+    if (!extra) return;
+
+    extra.innerHTML = "";
+    extra.style.display = "block";
+    extra.style.textAlign = "center";
+
+    const texto = document.createElement("div");
+    texto.textContent = "PARA MAYOR INFORMACIÓN, DIRÍJASE A RECEPCIÓN.";
+    texto.style.fontSize = "1.05rem";
+    texto.style.fontWeight = "700";
+    texto.style.lineHeight = "1.4";
+    texto.style.marginTop = "10px";
+
+    extra.appendChild(texto);
 }
 
 async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
