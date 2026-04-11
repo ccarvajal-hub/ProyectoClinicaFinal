@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.11_02";
+const APP_VERSION = "Totem v2026.04.11_03";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -957,19 +957,35 @@ async function abrirModalFinalConQR(cita) {
 }
 
 function abrirModalYaIngresado(cita) {
-    const p = cita.data;
-
     abrirModal({
-        titulo: "YA REGISTRASTE TU LLEGADA",
+        titulo: "SU LLEGADA YA FUE REGISTRADA",
         tipo: "warning",
-        mensaje: "Por favor, espera tu llamado.",
-        nombre: p.nombre || "---",
-        doctor: p.doctor_nombre || "Doctor asignado",
-        ubicacion: "---",
+        mensaje: "",
+        nombre: "",
+        doctor: "",
+        ubicacion: "",
         autoClose: true,
         buttonText: "CERRAR",
-        contextType: "already_registered"
+        contextType: "already_registered",
+        ocultarInfo: true,
+        ocultarMensaje: true
     });
+
+    const extra = asegurarContenedorExtraModal();
+    if (!extra) return;
+
+    extra.innerHTML = "";
+    extra.style.display = "block";
+    extra.style.textAlign = "center";
+
+    const texto = document.createElement("div");
+    texto.textContent = "PARA MAYOR INFORMACIÓN, DIRÍJASE A RECEPCIÓN";
+    texto.style.fontSize = "1.05rem";
+    texto.style.fontWeight = "700";
+    texto.style.lineHeight = "1.4";
+    texto.style.marginTop = "10px";
+
+    extra.appendChild(texto);
 }
 
 function abrirModalYaAtendido() {
@@ -995,7 +1011,7 @@ function abrirModalYaAtendido() {
     extra.style.textAlign = "center";
 
     const texto = document.createElement("div");
-    texto.textContent = "PARA MAYOR INFORMACIÓN, DIRÍJASE A RECEPCIÓN.";
+    texto.textContent = "PARA MAYOR INFORMACIÓN, DIRÍJASE A RECEPCIÓN";
     texto.style.fontSize = "1.05rem";
     texto.style.fontWeight = "700";
     texto.style.lineHeight = "1.4";
