@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.11_03";
+const APP_VERSION = "Totem v2026.04.11_05";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -296,7 +296,7 @@ function textoEstadoHumano(estado) {
     const e = normalizarEstado(estado);
 
     if (estadoEsPendiente(e)) return "Pendiente";
-    if (e === ESTADOS.LLEGADO) return "Ya ingresado";
+    if (e === ESTADOS.LLEGADO) return "Ya registraste tu llegada";
     if (e === ESTADOS.LLAMADO_RECEPCION || e === "en_recepcion") return "En recepción";
     if (e === ESTADOS.PAGO_MANUAL) return "Pago manual";
     if (e === ESTADOS.PAGADO) return "Pagado";
@@ -361,7 +361,10 @@ function cancelarAutoCierreAlert() {
 
 function resetearInputRUT() {
     cancelarResetInput();
-    if (input) input.value = "";
+    if (input) {
+        input.value = "";
+        input.blur();
+    }
 }
 
 function programarResetInput() {
@@ -375,6 +378,7 @@ function programarResetInput() {
     resetTimer = setTimeout(() => {
         if (!btn.disabled && modal.style.display !== "flex") {
             input.value = "";
+            input.blur();
         }
     }, INPUT_AUTO_RESET_MS);
 }
@@ -712,7 +716,10 @@ function abrirModal({
     configurarBotonModal(buttonText);
 
     if (modal) modal.style.display = "flex";
-    if (input) input.value = "";
+    if (input) {
+        input.value = "";
+        input.blur();
+    }
 
     reproducirSonidoModal();
 
@@ -831,7 +838,7 @@ function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
     const horaFmt = hora || "--:--";
     const rutFmt = rut || "---";
 
-    return `CLINICA CEOLA
+    return `CLINICA CEMO
 ------------------------------
 
 HORA: ${horaFmt}
@@ -949,6 +956,7 @@ async function abrirModalFinalConQR(cita) {
     texto.style.marginTop = "6px";
     texto.style.textAlign = "center";
     texto.style.fontSize = "0.95rem";
+    texto.style.lineHeight = "1.35";
     texto.style.opacity = "0.92";
     texto.textContent = "Al aceptar o al cerrarse este mensaje se activará tu ticket digital e impresión.";
 
@@ -956,9 +964,9 @@ async function abrirModalFinalConQR(cita) {
     renderizarQRCodeEnModal(passDraftUrl);
 }
 
-function abrirModalYaIngresado(cita) {
+function abrirModalYaIngresado() {
     abrirModal({
-        titulo: "SU LLEGADA YA FUE REGISTRADA",
+        titulo: "YA REGISTRASTE TU LLEGADA",
         tipo: "warning",
         mensaje: "",
         nombre: "",
@@ -1025,7 +1033,7 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
         titulo: "TIENES MÁS DE UNA CITA HOY",
         tipo: "warning",
         mensaje: hayCitaEnProceso
-            ? "Debes terminar tu atención actual para pasar a la otra cita."
+            ? "Debes terminar tu atención actual antes de registrar otra cita."
             : "Selecciona la cita a la que vienes:",
         nombre: "---",
         doctor: "---",
@@ -1043,10 +1051,7 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
     extra.style.display = "block";
 
     const lista = document.createElement("div");
-    lista.style.display = "flex";
-    lista.style.flexDirection = "column";
-    lista.style.gap = "12px";
-    lista.style.marginTop = "8px";
+    lista.className = "multi-cita-lista";
 
     for (const cita of ordenarCitasPorHoraAsc(citas)) {
         const p = cita.data;
@@ -1055,27 +1060,26 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
         const boton = document.createElement("button");
         const esPendiente = estadoEsPendiente(cita.estadoNormalizado);
         const habilitado = esPendiente && !hayCitaEnProceso;
+        const estadoTexto = textoEstadoHumano(cita.estadoNormalizado);
 
         boton.type = "button";
-        boton.disabled = !habilitado;
-        boton.style.width = "100%";
-        boton.style.borderRadius = "16px";
-        boton.style.padding = "14px 16px";
-        boton.style.border = "1px solid rgba(255,255,255,0.18)";
-        boton.style.background = habilitado ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)";
-        boton.style.color = "#fff";
-        boton.style.textAlign = "left";
-        boton.style.cursor = habilitado ? "pointer" : "not-allowed";
-        boton.style.opacity = habilitado ? "1" : "0.55";
+        boton.className = "multi-cita-btn";
+
+        if (!habilitado) {
+            boton.classList.add("disabled");
+            boton.disabled = true;
+        }
 
         boton.innerHTML = `
-            <div style="font-weight:800; font-size:1rem; margin-bottom:4px;">
-                ${p.hora_consulta || "--:--"} · ${nombreDoctorMostrar}
-            </div>
-            <div style="font-size:0.9rem; opacity:0.9;">
-                ${textoEstadoHumano(cita.estadoNormalizado)}
-            </div>
-        `;
+    <div class="multi-cita-fila">
+        <div class="multi-cita-titulo">
+            <span class="hora">${p.hora_consulta || "--:--"}</span> · ${nombreDoctorMostrar}
+        </div>
+        <div class="multi-cita-estado">
+            ${estadoTexto}
+        </div>
+    </div>
+`;
 
         if (habilitado) {
             boton.addEventListener("click", async () => {
@@ -1087,13 +1091,8 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
     }
 
     const ayuda = document.createElement("div");
-    ayuda.style.marginTop = "14px";
-    ayuda.style.textAlign = "center";
-    ayuda.style.fontSize = "0.95rem";
-    ayuda.style.opacity = "0.92";
-    ayuda.textContent = hayCitaEnProceso
-        ? "Debe terminar su atención actual para pasar a la otra cita. Si no está seguro, acérquese a recepción."
-        : "Si no está seguro, acérquese a recepción.";
+    ayuda.className = "multi-cita-ayuda";
+    ayuda.textContent = "PARA MAYOR INFORMACIÓN, DIRÍJASE A RECEPCIÓN";
 
     extra.appendChild(lista);
     extra.appendChild(ayuda);
@@ -1151,7 +1150,7 @@ async function confirmarLlegada() {
         }
 
         if (enProceso.length === 1) {
-            abrirModalYaIngresado(enProceso[0]);
+            abrirModalYaIngresado();
             return;
         }
 
