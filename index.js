@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.10_07";
+const APP_VERSION = "Totem v2026.04.11_01";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -623,6 +623,30 @@ function configurarBotonModal(texto = "CERRAR") {
     btnCerrarModal.textContent = texto;
 }
 
+function obtenerBloqueInfo(el) {
+    if (!el) return null;
+
+    return (
+        el.closest(".result-item") ||
+        el.closest(".result-row") ||
+        el.closest(".info-row") ||
+        el.parentElement
+    );
+}
+
+function mostrarOcultarInfoModal(mostrar) {
+    const bloques = [
+        obtenerBloqueInfo(resNombre),
+        obtenerBloqueInfo(resDoctor),
+        obtenerBloqueInfo(resUbicacion)
+    ];
+
+    bloques.forEach((bloque) => {
+        if (!bloque) return;
+        bloque.style.display = mostrar ? "" : "none";
+    });
+}
+
 /* =========================
    MODAL
 ========================= */
@@ -639,7 +663,8 @@ function abrirModal({
     selectedAppointment = null,
     autoCloseAction = null,
     passDraftId = null,
-    passDraftUrl = ""
+    passDraftUrl = "",
+    ocultarInfo = false
 }) {
     cancelarAutoCierreModal();
     ocultarAlerta();
@@ -664,6 +689,7 @@ function abrirModal({
     if (resUbicacion) resUbicacion.innerText = ubicacion || "---";
     if (modalMensaje) modalMensaje.textContent = mensaje || "";
 
+    mostrarOcultarInfoModal(!ocultarInfo);
     configurarBotonModal(buttonText);
 
     if (modal) modal.style.display = "flex";
@@ -703,6 +729,7 @@ function cerrarModal() {
     if (modal) modal.style.display = "none";
 
     limpiarContenidoExtraModal();
+    mostrarOcultarInfoModal(true);
     resetearInputRUT();
 
     modalContext = {
@@ -924,19 +951,18 @@ function abrirModalYaIngresado(cita) {
     });
 }
 
-function abrirModalYaAtendido(cita) {
-    const p = cita.data;
-
+function abrirModalYaAtendido() {
     abrirModal({
         titulo: "SU ATENCIÓN YA FUE REALIZADA",
         tipo: "warning",
-        mensaje: "Si necesita ayuda, acérquese a recepción.",
-        nombre: p.nombre || "---",
-        doctor: p.doctor_nombre || "Doctor asignado",
-        ubicacion: "---",
+        mensaje: "Si no está seguro, acérquese a recepción.",
+        nombre: "",
+        doctor: "",
+        ubicacion: "",
         autoClose: true,
         buttonText: "CERRAR",
-        contextType: "already_attended"
+        contextType: "already_attended",
+        ocultarInfo: true
     });
 }
 
@@ -952,7 +978,8 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
         ubicacion: "---",
         autoClose: false,
         buttonText: "CERRAR",
-        contextType: "multi_select"
+        contextType: "multi_select",
+        ocultarInfo: true
     });
 
     const extra = asegurarContenedorExtraModal();
@@ -1075,7 +1102,7 @@ async function confirmarLlegada() {
         }
 
         if (atendidas.length === 1) {
-            abrirModalYaAtendido(atendidas[0]);
+            abrirModalYaAtendido();
             return;
         }
 
