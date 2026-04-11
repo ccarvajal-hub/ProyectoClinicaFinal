@@ -25,10 +25,20 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.10_06";
+const APP_VERSION = "Totem v2026.04.10_07";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
+
+const ESTADOS = {
+    PENDIENTE: "pendiente",
+    LLEGADO: "llegado",
+    LLAMADO_RECEPCION: "llamado_recepcion",
+    PAGO_MANUAL: "pago_manual",
+    PAGADO: "pagado",
+    LLAMADO_DOCTOR: "llamado_doctor",
+    ATENDIDO: "atendido"
+};
 
 const input = document.getElementById("rutInput");
 const btn = document.getElementById("btnConfirmar");
@@ -39,9 +49,6 @@ const modal = document.getElementById("modalConfirmacion");
 const modalTitulo = document.getElementById("modalTitulo");
 const modalMensaje = document.getElementById("modalMensaje");
 const btnCerrarModal = document.getElementById("btnCerrarModal");
-
-const qrModal = document.getElementById("qrModal");
-const qrCodeContainer = document.getElementById("qrCode");
 
 const resNombre = document.getElementById("resNombre");
 const resDoctor = document.getElementById("resDoctor");
@@ -56,29 +63,19 @@ const alertSound = document.getElementById("alertSound");
 let resetTimer = null;
 let modalTimer = null;
 let alertTimer = null;
-let qrTimer = null;
 let procesandoConfirmacion = false;
 let uiAudioCtx = null;
 
 const MODAL_AUTO_CLOSE_MS = 12000;
 const ALERT_AUTO_CLOSE_MS = 8000;
 const INPUT_AUTO_RESET_MS = 10000;
-const QR_AUTO_CLOSE_MS = 15000;
-
-const ESTADOS = {
-    PENDIENTE: "pendiente",
-    LLEGADO: "llegado",
-    LLAMADO_RECEPCION: "llamado_recepcion",
-    PAGO_MANUAL: "pago_manual",
-    PAGADO: "pagado",
-    LLAMADO_DOCTOR: "llamado_doctor",
-    ATENDIDO: "atendido"
-};
 
 let modalContext = {
     type: "info",
     selectedAppointment: null,
     autoCloseAction: null,
+    passDraftId: null,
+    passDraftUrl: "",
     closingByAction: false
 };
 
@@ -281,6 +278,7 @@ function estadoEsAtendido(estado) {
 
 function estadoEsEnProceso(estado) {
     const e = normalizarEstado(estado);
+
     return [
         ESTADOS.LLEGADO,
         ESTADOS.LLAMADO_RECEPCION,
@@ -288,8 +286,8 @@ function estadoEsEnProceso(estado) {
         ESTADOS.PAGADO,
         ESTADOS.LLAMADO_DOCTOR,
         "en_recepcion",
-        "llamando",
         "llamado",
+        "llamando",
         "atendiendo"
     ].includes(e);
 }
@@ -302,7 +300,7 @@ function textoEstadoHumano(estado) {
     if (e === ESTADOS.LLAMADO_RECEPCION || e === "en_recepcion") return "En recepción";
     if (e === ESTADOS.PAGO_MANUAL) return "Pago manual";
     if (e === ESTADOS.PAGADO) return "Pagado";
-    if (e === ESTADOS.LLAMADO_DOCTOR || e === "llamando" || e === "llamado" || e === "atendiendo") return "En atención";
+    if (e === ESTADOS.LLAMADO_DOCTOR || e === "llamado" || e === "llamando" || e === "atendiendo") return "En atención";
     if (e === ESTADOS.ATENDIDO) return "Atendido";
 
     return "No disponible";
@@ -358,13 +356,6 @@ function cancelarAutoCierreAlert() {
     if (alertTimer) {
         clearTimeout(alertTimer);
         alertTimer = null;
-    }
-}
-
-function cancelarAutoCierreQR() {
-    if (qrTimer) {
-        clearTimeout(qrTimer);
-        qrTimer = null;
     }
 }
 
@@ -448,10 +439,10 @@ async function obtenerDatosDoctor(doctorId) {
         return { nombreDoctorMostrar, ubicacionMostrar };
     }
 
-    const uidBuscado = String(doctorId).trim();
+    const idBuscado = String(doctorId).trim();
 
     try {
-        const docDirecto = await getDoc(doc(db, "doctores", uidBuscado));
+        const docDirecto = await getDoc(doc(db, "doctores", idBuscado));
 
         if (docDirecto.exists()) {
             const doctorData = docDirecto.data();
@@ -472,7 +463,7 @@ async function obtenerDatosDoctor(doctorId) {
 
         const qDoctores = query(
             collection(db, "doctores"),
-            where("uid", "==", uidBuscado)
+            where("uid", "==", idBuscado)
         );
 
         const querySnapshot = await getDocs(qDoctores);
@@ -506,70 +497,63 @@ function construirUrlPase(passId) {
     return `${PASE_BASE_URL}?pass=${encodeURIComponent(passId)}`;
 }
 
-function limpiarQRCode() {
-    if (qrCodeContainer) {
-        qrCodeContainer.innerHTML = "";
+function limpiarQRCodeEnModal() {
+    const extra = asegurarContenedorExtraModal();
+    if (!extra) return;
+
+    const qrWrapper = extra.querySelector("#qrFinalWrapper");
+    if (qrWrapper) {
+        qrWrapper.innerHTML = "";
     }
 }
 
-function mostrarQrModal() {
-    if (qrModal) {
-        qrModal.style.display = "flex";
+function renderizarQRCodeEnModal(passUrl) {
+    const extra = asegurarContenedorExtraModal();
+    if (!extra || !passUrl) return;
+
+    let qrWrapper = extra.querySelector("#qrFinalWrapper");
+
+    if (!qrWrapper) {
+        qrWrapper = document.createElement("div");
+        qrWrapper.id = "qrFinalWrapper";
+        qrWrapper.style.display = "flex";
+        qrWrapper.style.justifyContent = "center";
+        qrWrapper.style.alignItems = "center";
+        qrWrapper.style.marginTop = "14px";
+        extra.appendChild(qrWrapper);
     }
-}
 
-function ocultarQrModal() {
-    cancelarAutoCierreQR();
-
-    if (qrModal) {
-        qrModal.style.display = "none";
-    }
-
-    limpiarQRCode();
-}
-
-function programarAutoCierreQR() {
-    cancelarAutoCierreQR();
-
-    qrTimer = setTimeout(() => {
-        ocultarQrModal();
-    }, QR_AUTO_CLOSE_MS);
-}
-
-function renderizarQRCode(passUrl) {
-    if (!qrCodeContainer || !passUrl) return;
-
-    limpiarQRCode();
+    qrWrapper.innerHTML = "";
 
     if (typeof window.QRCode !== "function") {
         console.warn("QRCode library no está disponible.");
         return;
     }
 
-    new window.QRCode(qrCodeContainer, {
+    new window.QRCode(qrWrapper, {
         text: passUrl,
-        width: 240,
-        height: 240,
+        width: 220,
+        height: 220,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: window.QRCode.CorrectLevel.H
     });
 
     setTimeout(() => {
-        const qrImg = qrCodeContainer.querySelector("img");
-        const qrCanvas = qrCodeContainer.querySelector("canvas");
+        const qrImg = qrWrapper.querySelector("img");
+        const qrCanvas = qrWrapper.querySelector("canvas");
 
         if (qrImg) {
-            qrImg.style.width = "240px";
-            qrImg.style.height = "240px";
+            qrImg.style.width = "220px";
+            qrImg.style.height = "220px";
             qrImg.style.display = "block";
             qrImg.style.margin = "0 auto";
             qrImg.style.imageRendering = "crisp-edges";
         }
 
         if (qrCanvas) {
-            qrCanvas.style.width = "240px";
-            qrCanvas.style.height = "240px";
+            qrCanvas.style.width = "220px";
+            qrCanvas.style.height = "220px";
             qrCanvas.style.display = "block";
             qrCanvas.style.margin = "0 auto";
             qrCanvas.style.imageRendering = "crisp-edges";
@@ -577,14 +561,14 @@ function renderizarQRCode(passUrl) {
     }, 50);
 }
 
-async function crearPasePaciente({ agendadoId }) {
+async function crearPasePacienteBorrador({ agendadoId }) {
     const paseRef = doc(collection(db, "pases_paciente"));
     const passId = paseRef.id;
 
     await setDoc(paseRef, {
         pass_id: passId,
         agendado_id: agendadoId,
-        activo: true,
+        activo: false,
         push_enabled: false,
         push_token: "",
         created_at: serverTimestamp(),
@@ -593,6 +577,15 @@ async function crearPasePaciente({ agendadoId }) {
     });
 
     return passId;
+}
+
+async function activarPasePaciente(passId) {
+    if (!passId) return;
+
+    await updateDoc(doc(db, "pases_paciente", passId), {
+        activo: true,
+        updated_at: serverTimestamp()
+    });
 }
 
 /* =========================
@@ -644,7 +637,9 @@ function abrirModal({
     buttonText = "CERRAR",
     contextType = "info",
     selectedAppointment = null,
-    autoCloseAction = null
+    autoCloseAction = null,
+    passDraftId = null,
+    passDraftUrl = ""
 }) {
     cancelarAutoCierreModal();
     ocultarAlerta();
@@ -654,6 +649,8 @@ function abrirModal({
         type: contextType,
         selectedAppointment,
         autoCloseAction,
+        passDraftId,
+        passDraftUrl,
         closingByAction: false
     };
 
@@ -712,6 +709,8 @@ function cerrarModal() {
         type: "info",
         selectedAppointment: null,
         autoCloseAction: null,
+        passDraftId: null,
+        passDraftUrl: "",
         closingByAction: false
     };
 }
@@ -784,7 +783,7 @@ function construirTextoTicket({ nombre, rut, doctor, ubicacion, hora }) {
     const horaFmt = hora || "--:--";
     const rutFmt = rut || "---";
 
-    const textoTicket = `CLINICA CEOLA
+    return `CLINICA CEOLA
 ------------------------------
 
 HORA: ${horaFmt}
@@ -799,8 +798,6 @@ UBICACION: ${ubicacionFmt}
 POR FAVOR, DIRIJASE A RECEPCION
 ESPERE SU LLAMADO
 ------------------------------`;
-
-    return textoTicket;
 }
 
 function imprimirTicketSiExisteAndroid(datosTicket) {
@@ -824,18 +821,13 @@ function setBotonProcesando(estaProcesando) {
 
     btn.disabled = estaProcesando;
     btnBorrar.disabled = estaProcesando;
-
-    if (estaProcesando) {
-        btn.textContent = "Procesando...";
-    } else {
-        btn.textContent = "CONFIRMAR LLEGADA";
-    }
+    btn.textContent = estaProcesando ? "Procesando..." : "CONFIRMAR LLEGADA";
 }
 
 /* =========================
    FLUJO CITA / MODALES
 ========================= */
-async function registrarLlegadaFinal(cita) {
+async function registrarLlegadaFinal(cita, passDraftId) {
     if (!cita?.id || !cita?.data) {
         cerrarModal();
         return;
@@ -851,18 +843,9 @@ async function registrarLlegadaFinal(cita) {
             hora_llegada: ahora24
         });
 
-        const nuevoPassId = await crearPasePaciente({
-            agendadoId: cita.id
-        });
+        await activarPasePaciente(passDraftId);
 
-        const passUrl = construirUrlPase(nuevoPassId);
         const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
-
-        cerrarModal();
-
-        renderizarQRCode(passUrl);
-        mostrarQrModal();
-        programarAutoCierreQR();
 
         imprimirTicketSiExisteAndroid({
             nombre: p.nombre,
@@ -871,6 +854,8 @@ async function registrarLlegadaFinal(cita) {
             ubicacion: ubicacionMostrar,
             hora: ahora24
         });
+
+        cerrarModal();
     } catch (error) {
         console.error("Error al registrar llegada final:", error);
         mostrarAlerta("ERROR AL CONFIRMAR LA LLEGADA.");
@@ -878,9 +863,15 @@ async function registrarLlegadaFinal(cita) {
     }
 }
 
-async function abrirModalConfirmacionFinal(cita) {
+async function abrirModalFinalConQR(cita) {
     const p = cita.data;
     const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
+
+    const passDraftId = await crearPasePacienteBorrador({
+        agendadoId: cita.id
+    });
+
+    const passDraftUrl = construirUrlPase(passDraftId);
 
     abrirModal({
         titulo: "LLEGADA CONFIRMADA",
@@ -893,24 +884,28 @@ async function abrirModalConfirmacionFinal(cita) {
         buttonText: "ACEPTAR",
         contextType: "final_confirm",
         selectedAppointment: cita,
+        passDraftId,
+        passDraftUrl,
         autoCloseAction: async () => {
-            await registrarLlegadaFinal(cita);
+            await registrarLlegadaFinal(cita, passDraftId);
         }
     });
 
-    const passPreviewText = document.createElement("div");
-    passPreviewText.style.marginTop = "12px";
-    passPreviewText.style.textAlign = "center";
-    passPreviewText.style.fontSize = "0.95rem";
-    passPreviewText.style.opacity = "0.9";
-    passPreviewText.textContent = "Al aceptar o al cerrarse este mensaje se activará tu ticket digital e impresión.";
-
     const extra = asegurarContenedorExtraModal();
-    if (extra) {
-        extra.innerHTML = "";
-        extra.style.display = "block";
-        extra.appendChild(passPreviewText);
-    }
+    if (!extra) return;
+
+    extra.innerHTML = "";
+    extra.style.display = "block";
+
+    const texto = document.createElement("div");
+    texto.style.marginTop = "6px";
+    texto.style.textAlign = "center";
+    texto.style.fontSize = "0.95rem";
+    texto.style.opacity = "0.92";
+    texto.textContent = "Al aceptar o al cerrarse este mensaje se activará tu ticket digital e impresión.";
+
+    extra.appendChild(texto);
+    renderizarQRCodeEnModal(passDraftUrl);
 }
 
 function abrirModalYaIngresado(cita) {
@@ -945,13 +940,13 @@ function abrirModalYaAtendido(cita) {
     });
 }
 
-async function abrirModalSeleccionMultiple(citas) {
-    const extra = asegurarContenedorExtraModal();
-
+async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
     abrirModal({
         titulo: "TIENES MÁS DE UNA CITA HOY",
         tipo: "warning",
-        mensaje: "Selecciona la cita a la que vienes:",
+        mensaje: hayCitaEnProceso
+            ? "Debes terminar tu atención actual para pasar a la otra cita."
+            : "Selecciona la cita a la que vienes:",
         nombre: "---",
         doctor: "---",
         ubicacion: "---",
@@ -960,6 +955,7 @@ async function abrirModalSeleccionMultiple(citas) {
         contextType: "multi_select"
     });
 
+    const extra = asegurarContenedorExtraModal();
     if (!extra) return;
 
     extra.innerHTML = "";
@@ -973,9 +969,11 @@ async function abrirModalSeleccionMultiple(citas) {
 
     for (const cita of ordenarCitasPorHoraAsc(citas)) {
         const p = cita.data;
-        const doctorInfo = await obtenerDatosDoctor(p.doctor_id);
+        const { nombreDoctorMostrar } = await obtenerDatosDoctor(p.doctor_id);
+
         const boton = document.createElement("button");
-        const habilitado = estadoEsPendiente(cita.estadoNormalizado);
+        const esPendiente = estadoEsPendiente(cita.estadoNormalizado);
+        const habilitado = esPendiente && !hayCitaEnProceso;
 
         boton.type = "button";
         boton.disabled = !habilitado;
@@ -991,16 +989,16 @@ async function abrirModalSeleccionMultiple(citas) {
 
         boton.innerHTML = `
             <div style="font-weight:800; font-size:1rem; margin-bottom:4px;">
-                ${p.hora_consulta || "--:--"} · ${doctorInfo.nombreDoctorMostrar}
+                ${p.hora_consulta || "--:--"} · ${nombreDoctorMostrar}
             </div>
             <div style="font-size:0.9rem; opacity:0.9;">
-                ${habilitado ? "Disponible para ingreso" : textoEstadoHumano(cita.estadoNormalizado)}
+                ${textoEstadoHumano(cita.estadoNormalizado)}
             </div>
         `;
 
         if (habilitado) {
             boton.addEventListener("click", async () => {
-                await abrirModalConfirmacionFinal(cita);
+                await abrirModalFinalConQR(cita);
             });
         }
 
@@ -1011,8 +1009,10 @@ async function abrirModalSeleccionMultiple(citas) {
     ayuda.style.marginTop = "14px";
     ayuda.style.textAlign = "center";
     ayuda.style.fontSize = "0.95rem";
-    ayuda.style.opacity = "0.9";
-    ayuda.textContent = "Si no está seguro, acérquese a recepción.";
+    ayuda.style.opacity = "0.92";
+    ayuda.textContent = hayCitaEnProceso
+        ? "Debe terminar su atención actual para pasar a la otra cita. Si no está seguro, acérquese a recepción."
+        : "Si no está seguro, acérquese a recepción.";
 
     extra.appendChild(lista);
     extra.appendChild(ayuda);
@@ -1026,7 +1026,6 @@ async function confirmarLlegada() {
 
     cancelarResetInput();
     ocultarAlerta();
-    ocultarQrModal();
 
     const rutLimpio = limpiarRUT(input.value);
 
@@ -1055,24 +1054,28 @@ async function confirmarLlegada() {
         }
 
         const { pendientes, enProceso, atendidas } = clasificarCitas(citasHoy);
+        const totalCitas = pendientes.length + enProceso.length + atendidas.length;
 
-        if (enProceso.length > 0) {
-            abrirModalYaIngresado(enProceso[0]);
+        if (totalCitas >= 2) {
+            await abrirModalSeleccionMultiple(
+                [...pendientes, ...enProceso, ...atendidas],
+                enProceso.length > 0
+            );
             return;
         }
 
         if (pendientes.length === 1) {
-            await abrirModalConfirmacionFinal(pendientes[0]);
+            await abrirModalFinalConQR(pendientes[0]);
             return;
         }
 
-        if (pendientes.length >= 2) {
-            await abrirModalSeleccionMultiple([...pendientes, ...atendidas]);
+        if (enProceso.length === 1) {
+            abrirModalYaIngresado(enProceso[0]);
             return;
         }
 
-        if (pendientes.length === 0 && atendidas.length > 0) {
-            abrirModalYaAtendido(atendidas[atendidas.length - 1]);
+        if (atendidas.length === 1) {
+            abrirModalYaAtendido(atendidas[0]);
             return;
         }
 
@@ -1193,7 +1196,10 @@ if (btn) {
 if (btnCerrarModal) {
     btnCerrarModal.addEventListener("click", async () => {
         if (modalContext.type === "final_confirm" && modalContext.selectedAppointment) {
-            await registrarLlegadaFinal(modalContext.selectedAppointment);
+            await registrarLlegadaFinal(
+                modalContext.selectedAppointment,
+                modalContext.passDraftId
+            );
             return;
         }
 
@@ -1201,8 +1207,7 @@ if (btnCerrarModal) {
     });
 }
 
-/* Importante: no cerrar el modal tocando fuera.
-   En tótem eso genera cierres accidentales. */
+/* No cerrar el modal tocando fuera */
 
 document.addEventListener("keydown", (event) => {
     if (btn && btn.disabled) return;
@@ -1228,6 +1233,7 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
         event.preventDefault();
         confirmarLlegada();
+        return;
     }
 
     if (event.key === "Escape" && modal && modal.style.display === "flex") {
@@ -1240,8 +1246,7 @@ document.addEventListener("DOMContentLoaded", () => {
     asegurarVersionEnPantalla();
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
-    ocultarQrModal();
-    limpiarQRCode();
+    limpiarQRCodeEnModal();
 });
 
 window.addEventListener("load", () => {
