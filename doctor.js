@@ -199,7 +199,7 @@ function generarRutDemo(seedBase, index) {
     return `${numeroBase}${dv}`;
 }
 
-function obtenerPacientesDemoPorDoctor(uid, doctorNombre, box, fechaHoy) {
+function obtenerPacientesDemoPorDoctor(uid, doctorNombre, fechaHoy) {
     const primerNombre = [
         "María", "Valentina", "Camila", "Josefa", "Francisca", "Daniela",
         "Catalina", "Fernanda", "Javiera", "Antonia", "Sofía", "Constanza",
@@ -251,13 +251,21 @@ function obtenerPacientesDemoPorDoctor(uid, doctorNombre, box, fechaHoy) {
             fecha_turno: fechaHoy,
             doctor_id: uid,
             doctor_nombre: doctorNombre,
-            box: box,
             tv_origen: "",
             tv_destino: "",
             tv_hora_llamado: "",
             tv_doctor: "",
             tv_paciente: ""
         });
+    }
+
+    if (pacientes.length > 0) {
+        const pacienteDuplicado = {
+            ...pacientes[0],
+            hora_consulta: "11:30"
+        };
+
+        pacientes.push(pacienteDuplicado);
     }
 
     return pacientes;
@@ -304,11 +312,11 @@ async function agregarPacientesDemo() {
         return;
     }
 
-    const ok = confirm("¿Agregar 4 pacientes de prueba?");
+    const ok = confirm("¿Agregar pacientes de prueba?");
     if (!ok) return;
 
     const fechaHoy = obtenerFechaHoyChile();
-    const pacientesDemo = obtenerPacientesDemoPorDoctor(uidDoc, nombreDoc, boxDoc, fechaHoy);
+    const pacientesDemo = obtenerPacientesDemoPorDoctor(uidDoc, nombreDoc, fechaHoy);
 
     try {
         const q = query(
@@ -319,14 +327,21 @@ async function agregarPacientesDemo() {
 
         const snapshot = await getDocs(q);
 
-        const rutsExistentes = new Set(
-            snapshot.docs.map(docSnap => String(docSnap.data().rut || "").trim())
+        const clavesExistentes = new Set(
+            snapshot.docs.map(docSnap => {
+                const data = docSnap.data();
+                const rut = String(data.rut || "").trim();
+                const hora = String(data.hora_consulta || "").trim();
+                return `${rut}_${hora}`;
+            })
         );
 
         let agregados = 0;
 
         for (const paciente of pacientesDemo) {
-            if (rutsExistentes.has(paciente.rut)) {
+            const clave = `${String(paciente.rut).trim()}_${String(paciente.hora_consulta).trim()}`;
+
+            if (clavesExistentes.has(clave)) {
                 continue;
             }
 
@@ -335,7 +350,7 @@ async function agregarPacientesDemo() {
         }
 
         if (agregados === 0) {
-            alert("Los 4 pacientes de prueba de este doctor ya existen para hoy.");
+            alert("Los pacientes de prueba de este doctor ya existen para hoy.");
             return;
         }
 
@@ -406,25 +421,25 @@ async function resetearEstadosPacientes() {
 
         for (const docSnap of snapshot.docs) {
             await updateDoc(doc(db, "agendados", docSnap.id), {
-    estado: ESTADOS.PENDIENTE,
-    hora_llegada: "",
-    ultimo_llamado: "",
-    tv_origen: "",
-    tv_destino: "",
-    tv_hora_llamado: "",
-    tv_doctor: "",
-    tv_paciente: "",
+                estado: ESTADOS.PENDIENTE,
+                hora_llegada: "",
+                ultimo_llamado: "",
+                tv_origen: "",
+                tv_destino: "",
+                tv_hora_llamado: "",
+                tv_doctor: "",
+                tv_paciente: "",
 
-    registro_manual_recepcion: false,
-    tipo_pago: null,
-    hora_pago_manual_activado: null,
-    hora_pago: null,
+                registro_manual_recepcion: false,
+                tipo_pago: null,
+                hora_pago_manual_activado: null,
+                hora_pago: null,
 
-    recepcion_id: "",
-    recepcion_numero: null,
-    recepcion_nombre: "",
-    hora_llamado_recepcion: null
-});
+                recepcion_id: "",
+                recepcion_numero: null,
+                recepcion_nombre: "",
+                hora_llamado_recepcion: null
+            });
         }
 
         alert("Se resetearon los estados de los pacientes.");

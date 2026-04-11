@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.10_03";
+const APP_VERSION = "Totem v2026.04.10_05";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -62,6 +62,23 @@ let uiAudioCtx = null;
 const MODAL_AUTO_CLOSE_MS = 12000;
 const ALERT_AUTO_CLOSE_MS = 8000;
 const INPUT_AUTO_RESET_MS = 10000;
+
+const ESTADOS = {
+    PENDIENTE: "pendiente",
+    LLEGADO: "llegado",
+    LLAMADO_RECEPCION: "llamado_recepcion",
+    PAGO_MANUAL: "pago_manual",
+    PAGADO: "pagado",
+    LLAMADO_DOCTOR: "llamado_doctor",
+    ATENDIDO: "atendido"
+};
+
+let modalContext = {
+    type: "info",
+    selectedAppointment: null,
+    autoCloseAction: null,
+    closingByAction: false
+};
 
 /* =========================
    SONIDOS UI
@@ -245,48 +262,77 @@ function horaATotalMinutos(hora) {
 }
 
 function normalizarEstado(estado) {
-    return String(estado || "pendiente").toLowerCase().trim();
+    return String(estado || ESTADOS.PENDIENTE)
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "_");
 }
 
-function seleccionarCitaCorrecta(docs) {
-    const prioridadEstado = {
-        pendiente: 0,
-        agendado: 0,
-        confirmado: 0,
-        llegado: 1,
-        en_recepcion: 1,
-        pagado: 1,
-        llamando: 1,
-        llamado: 1,
-        atendiendo: 1,
-        atendido: 2
-    };
+function estadoEsPendiente(estado) {
+    const e = normalizarEstado(estado);
+    return e === ESTADOS.PENDIENTE || e === "agendado" || e === "confirmado";
+}
 
-    const citasValidas = docs
-        .map((item) => ({
-            doc: item,
-            data: item.data(),
-            estado: normalizarEstado(item.data().estado)
-        }))
-        .filter((item) => item.estado in prioridadEstado);
+function estadoEsAtendido(estado) {
+    return normalizarEstado(estado) === ESTADOS.ATENDIDO;
+}
 
-    if (citasValidas.length === 0) return null;
+function estadoEsEnProceso(estado) {
+    const e = normalizarEstado(estado);
+    return [
+        ESTADOS.LLEGADO,
+        ESTADOS.LLAMADO_RECEPCION,
+        ESTADOS.PAGO_MANUAL,
+        ESTADOS.PAGADO,
+        ESTADOS.LLAMADO_DOCTOR,
+        "en_recepcion",
+        "llamando",
+        "llamado",
+        "atendiendo"
+    ].includes(e);
+}
 
-    citasValidas.sort((a, b) => {
-        const prioridadA = prioridadEstado[a.estado];
-        const prioridadB = prioridadEstado[b.estado];
+function textoEstadoHumano(estado) {
+    const e = normalizarEstado(estado);
 
-        if (prioridadA !== prioridadB) {
-            return prioridadA - prioridadB;
-        }
+    if (estadoEsPendiente(e)) return "Pendiente";
+    if (e === ESTADOS.LLEGADO) return "Ya ingresado";
+    if (e === ESTADOS.LLAMADO_RECEPCION || e === "en_recepcion") return "En recepción";
+    if (e === ESTADOS.PAGO_MANUAL) return "Pago manual";
+    if (e === ESTADOS.PAGADO) return "Pagado";
+    if (e === ESTADOS.LLAMADO_DOCTOR || e === "llamando" || e === "llamado" || e === "atendiendo") return "En atención";
+    if (e === ESTADOS.ATENDIDO) return "Atendido";
 
-        const horaA = horaATotalMinutos(a.data.hora_consulta);
-        const horaB = horaATotalMinutos(b.data.hora_consulta);
+    return "No disponible";
+}
 
-        return horaA - horaB;
+function ordenarCitasPorHoraAsc(citas) {
+    return [...citas].sort((a, b) => {
+        return horaATotalMinutos(a.data.hora_consulta) - horaATotalMinutos(b.data.hora_consulta);
     });
+}
 
-    return citasValidas[0].doc;
+function clasificarCitas(citasDocs) {
+    const citas = citasDocs.map((docSnap) => ({
+        id: docSnap.id,
+        ref: docSnap,
+        data: docSnap.data(),
+        estadoNormalizado: normalizarEstado(docSnap.data().estado)
+    }));
+
+    const pendientes = ordenarCitasPorHoraAsc(
+        citas.filter((cita) => estadoEsPendiente(cita.estadoNormalizado))
+    );
+
+    const enProceso = ordenarCitasPorHoraAsc(
+        citas.filter((cita) => estadoEsEnProceso(cita.estadoNormalizado))
+    );
+
+    const atendidas = ordenarCitasPorHoraAsc(
+        citas.filter((cita) => estadoEsAtendido(cita.estadoNormalizado))
+    );
+
+    return { citas, pendientes, enProceso, atendidas };
 }
 
 /* =========================
@@ -396,6 +442,25 @@ async function obtenerDatosDoctor(doctorId) {
     const uidBuscado = String(doctorId).trim();
 
     try {
+        const docDirecto = await getDoc(doc(db, "doctores", uidBuscado));
+
+        if (docDirecto.exists()) {
+            const doctorData = docDirecto.data();
+
+            nombreDoctorMostrar =
+                doctorData.nombre ||
+                doctorData.nombre_doctor ||
+                doctorData.displayName ||
+                "Doctor asignado";
+
+            ubicacionMostrar = construirUbicacionDoctor(
+                doctorData.piso,
+                doctorData.consulta
+            );
+
+            return { nombreDoctorMostrar, ubicacionMostrar };
+        }
+
         const qDoctores = query(
             collection(db, "doctores"),
             where("uid", "==", uidBuscado)
@@ -403,22 +468,20 @@ async function obtenerDatosDoctor(doctorId) {
 
         const querySnapshot = await getDocs(qDoctores);
 
-        if (querySnapshot.empty) {
-            return { nombreDoctorMostrar, ubicacionMostrar };
+        if (!querySnapshot.empty) {
+            const doctorData = querySnapshot.docs[0].data();
+
+            nombreDoctorMostrar =
+                doctorData.nombre ||
+                doctorData.nombre_doctor ||
+                doctorData.displayName ||
+                "Doctor asignado";
+
+            ubicacionMostrar = construirUbicacionDoctor(
+                doctorData.piso,
+                doctorData.consulta
+            );
         }
-
-        const doctorData = querySnapshot.docs[0].data();
-
-        nombreDoctorMostrar =
-            doctorData.nombre ||
-            doctorData.nombre_doctor ||
-            doctorData.displayName ||
-            "Doctor asignado";
-
-        ubicacionMostrar = construirUbicacionDoctor(
-            doctorData.piso,
-            doctorData.consulta
-        );
 
         return { nombreDoctorMostrar, ubicacionMostrar };
     } catch (error) {
@@ -512,6 +575,41 @@ async function crearPasePaciente({ agendadoId }) {
 }
 
 /* =========================
+   MODAL HELPERS
+========================= */
+function asegurarContenedorExtraModal() {
+    if (!modal) return null;
+
+    let extra = modal.querySelector("#modalExtraContent");
+
+    if (!extra) {
+        extra = document.createElement("div");
+        extra.id = "modalExtraContent";
+        extra.style.width = "100%";
+        extra.style.marginTop = "14px";
+        extra.style.display = "none";
+
+        const parent = modalMensaje?.parentElement || modal;
+        parent.appendChild(extra);
+    }
+
+    return extra;
+}
+
+function limpiarContenidoExtraModal() {
+    const extra = asegurarContenedorExtraModal();
+    if (!extra) return;
+
+    extra.innerHTML = "";
+    extra.style.display = "none";
+}
+
+function configurarBotonModal(texto = "CERRAR") {
+    if (!btnCerrarModal) return;
+    btnCerrarModal.textContent = texto;
+}
+
+/* =========================
    MODAL
 ========================= */
 function abrirModal({
@@ -521,10 +619,22 @@ function abrirModal({
     nombre,
     doctor,
     ubicacion,
-    autoClose = true
+    autoClose = true,
+    buttonText = "CERRAR",
+    contextType = "info",
+    selectedAppointment = null,
+    autoCloseAction = null
 }) {
     cancelarAutoCierreModal();
     ocultarAlerta();
+    limpiarContenidoExtraModal();
+
+    modalContext = {
+        type: contextType,
+        selectedAppointment,
+        autoCloseAction,
+        closingByAction: false
+    };
 
     if (modalTitulo) {
         modalTitulo.textContent = titulo;
@@ -536,16 +646,37 @@ function abrirModal({
     if (resUbicacion) resUbicacion.innerText = ubicacion || "---";
     if (modalMensaje) modalMensaje.textContent = mensaje || "";
 
+    configurarBotonModal(buttonText);
+
     if (modal) modal.style.display = "flex";
     if (input) input.value = "";
 
     reproducirSonidoModal();
 
     if (autoClose) {
-        modalTimer = setTimeout(() => {
-            cerrarModal();
+        modalTimer = setTimeout(async () => {
+            await ejecutarAutoCierreModal();
         }, MODAL_AUTO_CLOSE_MS);
     }
+}
+
+async function ejecutarAutoCierreModal() {
+    cancelarAutoCierreModal();
+
+    if (typeof modalContext.autoCloseAction === "function") {
+        try {
+            modalContext.closingByAction = true;
+            await modalContext.autoCloseAction();
+        } catch (error) {
+            console.error("Error en autocierre del modal:", error);
+            cerrarModal();
+        } finally {
+            modalContext.closingByAction = false;
+        }
+        return;
+    }
+
+    cerrarModal();
 }
 
 function cerrarModal() {
@@ -553,9 +684,17 @@ function cerrarModal() {
 
     if (modal) modal.style.display = "none";
 
+    limpiarContenidoExtraModal();
     ocultarQrModal();
     limpiarQRCode();
     resetearInputRUT();
+
+    modalContext = {
+        type: "info",
+        selectedAppointment: null,
+        autoCloseAction: null,
+        closingByAction: false
+    };
 }
 
 /* =========================
@@ -675,6 +814,196 @@ function setBotonProcesando(estaProcesando) {
 }
 
 /* =========================
+   FLUJO CITA / MODALES
+========================= */
+async function registrarLlegadaFinal(cita) {
+    if (!cita?.id || !cita?.data) {
+        cerrarModal();
+        return;
+    }
+
+    const p = cita.data;
+    const rutLimpio = limpiarRUT(p.rut || "");
+    const ahora24 = obtenerHoraActualChile24();
+
+    try {
+        await updateDoc(doc(db, "agendados", cita.id), {
+            estado: ESTADOS.LLEGADO,
+            hora_llegada: ahora24
+        });
+
+        const nuevoPassId = await crearPasePaciente({
+            agendadoId: cita.id
+        });
+
+        const passUrl = construirUrlPase(nuevoPassId);
+
+        renderizarQRCode(passUrl);
+        mostrarQrModal();
+
+        const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
+
+        imprimirTicketSiExisteAndroid({
+            nombre: p.nombre,
+            rut: formatearRUT(rutLimpio),
+            doctor: nombreDoctorMostrar,
+            ubicacion: ubicacionMostrar,
+            hora: ahora24
+        });
+
+        cerrarModal();
+    } catch (error) {
+        console.error("Error al registrar llegada final:", error);
+        mostrarAlerta("ERROR AL CONFIRMAR LA LLEGADA.");
+        cerrarModal();
+    }
+}
+
+async function abrirModalConfirmacionFinal(cita) {
+    const p = cita.data;
+    const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
+
+    renderizarQRCode("");
+    limpiarQRCode();
+    ocultarQrModal();
+
+    abrirModal({
+        titulo: "LLEGADA CONFIRMADA",
+        tipo: "success",
+        mensaje: "Por favor, diríjase a recepción.",
+        nombre: p.nombre || "---",
+        doctor: nombreDoctorMostrar,
+        ubicacion: ubicacionMostrar,
+        autoClose: true,
+        buttonText: "ACEPTAR",
+        contextType: "final_confirm",
+        selectedAppointment: cita,
+        autoCloseAction: async () => {
+            await registrarLlegadaFinal(cita);
+        }
+    });
+
+    const passPreviewText = document.createElement("div");
+    passPreviewText.style.marginTop = "12px";
+    passPreviewText.style.textAlign = "center";
+    passPreviewText.style.fontSize = "0.95rem";
+    passPreviewText.style.opacity = "0.9";
+    passPreviewText.textContent = "Al aceptar o al cerrarse este mensaje se activará tu ticket digital e impresión.";
+
+    const extra = asegurarContenedorExtraModal();
+    if (extra) {
+        extra.innerHTML = "";
+        extra.style.display = "block";
+        extra.appendChild(passPreviewText);
+    }
+}
+
+function abrirModalYaIngresado(cita) {
+    const p = cita.data;
+
+    abrirModal({
+        titulo: "YA REGISTRASTE TU LLEGADA",
+        tipo: "warning",
+        mensaje: "Por favor, espera tu llamado.",
+        nombre: p.nombre || "---",
+        doctor: p.doctor_nombre || "Doctor asignado",
+        ubicacion: "---",
+        autoClose: true,
+        buttonText: "CERRAR",
+        contextType: "already_registered"
+    });
+}
+
+function abrirModalYaAtendido(cita) {
+    const p = cita.data;
+
+    abrirModal({
+        titulo: "SU ATENCIÓN YA FUE REALIZADA",
+        tipo: "warning",
+        mensaje: "Si necesita ayuda, acérquese a recepción.",
+        nombre: p.nombre || "---",
+        doctor: p.doctor_nombre || "Doctor asignado",
+        ubicacion: "---",
+        autoClose: true,
+        buttonText: "CERRAR",
+        contextType: "already_attended"
+    });
+}
+
+async function abrirModalSeleccionMultiple(citas) {
+    const extra = asegurarContenedorExtraModal();
+
+    abrirModal({
+        titulo: "TIENES MÁS DE UNA CITA HOY",
+        tipo: "warning",
+        mensaje: "Selecciona la cita a la que vienes:",
+        nombre: "---",
+        doctor: "---",
+        ubicacion: "---",
+        autoClose: false,
+        buttonText: "CERRAR",
+        contextType: "multi_select"
+    });
+
+    if (!extra) return;
+
+    extra.innerHTML = "";
+    extra.style.display = "block";
+
+    const lista = document.createElement("div");
+    lista.style.display = "flex";
+    lista.style.flexDirection = "column";
+    lista.style.gap = "12px";
+    lista.style.marginTop = "8px";
+
+    for (const cita of ordenarCitasPorHoraAsc(citas)) {
+        const p = cita.data;
+        const doctorInfo = await obtenerDatosDoctor(p.doctor_id);
+        const boton = document.createElement("button");
+        const habilitado = estadoEsPendiente(cita.estadoNormalizado);
+
+        boton.type = "button";
+        boton.disabled = !habilitado;
+        boton.style.width = "100%";
+        boton.style.borderRadius = "16px";
+        boton.style.padding = "14px 16px";
+        boton.style.border = "1px solid rgba(255,255,255,0.18)";
+        boton.style.background = habilitado ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)";
+        boton.style.color = "#fff";
+        boton.style.textAlign = "left";
+        boton.style.cursor = habilitado ? "pointer" : "not-allowed";
+        boton.style.opacity = habilitado ? "1" : "0.55";
+
+        boton.innerHTML = `
+            <div style="font-weight:800; font-size:1rem; margin-bottom:4px;">
+                ${p.hora_consulta || "--:--"} · ${doctorInfo.nombreDoctorMostrar}
+            </div>
+            <div style="font-size:0.9rem; opacity:0.9;">
+                ${habilitado ? "Disponible para ingreso" : textoEstadoHumano(cita.estadoNormalizado)}
+            </div>
+        `;
+
+        if (habilitado) {
+            boton.addEventListener("click", async () => {
+                await abrirModalConfirmacionFinal(cita);
+            });
+        }
+
+        lista.appendChild(boton);
+    }
+
+    const ayuda = document.createElement("div");
+    ayuda.style.marginTop = "14px";
+    ayuda.style.textAlign = "center";
+    ayuda.style.fontSize = "0.95rem";
+    ayuda.style.opacity = "0.9";
+    ayuda.textContent = "Si no está seguro, acérquese a recepción.";
+
+    extra.appendChild(lista);
+    extra.appendChild(ayuda);
+}
+
+/* =========================
    FLUJO PRINCIPAL
 ========================= */
 async function confirmarLlegada() {
@@ -709,88 +1038,30 @@ async function confirmarLlegada() {
             return;
         }
 
-        const citaSeleccionada = seleccionarCitaCorrecta(citasHoy);
+        const { pendientes, enProceso, atendidas } = clasificarCitas(citasHoy);
 
-        if (!citaSeleccionada) {
-            mostrarAlerta("NO SE ENCONTRÓ UNA CITA VÁLIDA PARA HOY CON ESE RUT.");
-            resetearInputRUT();
+        if (enProceso.length > 0) {
+            abrirModalYaIngresado(enProceso[0]);
             return;
         }
 
-        const docSnap = citaSeleccionada;
-        const p = docSnap.data();
-        const estadoActual = normalizarEstado(p.estado);
-        const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
-
-        if (estadoActual === "llegado") {
-            mostrarAlerta("SU LLEGADA YA FUE REGISTRADA.");
-            resetearInputRUT();
+        if (pendientes.length === 1) {
+            await abrirModalConfirmacionFinal(pendientes[0]);
             return;
         }
 
-        if (estadoActual === "atendido") {
-            mostrarAlerta("SU ATENCIÓN DE HOY YA FUE REALIZADA.");
-            resetearInputRUT();
+        if (pendientes.length >= 2) {
+            await abrirModalSeleccionMultiple([...pendientes, ...atendidas]);
             return;
         }
 
-        const estadosYaRegistrados = [
-            "en_recepcion",
-            "pagado",
-            "llamando",
-            "llamado",
-            "atendiendo"
-        ];
-
-        if (estadosYaRegistrados.includes(estadoActual)) {
-            mostrarAlerta("SU LLEGADA YA FUE REGISTRADA.");
-            resetearInputRUT();
+        if (pendientes.length === 0 && atendidas.length > 0) {
+            abrirModalYaAtendido(atendidas[atendidas.length - 1]);
             return;
         }
 
-        const estadosInicialesValidos = ["pendiente", "agendado", "confirmado"];
-
-        if (!estadosInicialesValidos.includes(estadoActual)) {
-            mostrarAlerta("NO SE ENCONTRÓ UNA CITA VÁLIDA PARA HOY CON ESE RUT.");
-            resetearInputRUT();
-            return;
-        }
-
-        const ahora24 = obtenerHoraActualChile24();
-
-        await updateDoc(doc(db, "agendados", docSnap.id), {
-            estado: "llegado",
-            hora_llegada: ahora24
-        });
-
-        const nuevoPassId = await crearPasePaciente({
-            agendadoId: docSnap.id
-        });
-
-        const passUrl = construirUrlPase(nuevoPassId);
-
-        console.log("Pase paciente creado:", nuevoPassId);
-        console.log("URL pase:", passUrl);
-
-        renderizarQRCode(passUrl);
-        mostrarQrModal();
-
-        abrirModal({
-            titulo: "LLEGADA CONFIRMADA",
-            tipo: "success",
-            mensaje: "Por favor, diríjase a recepción.",
-            nombre: p.nombre,
-            doctor: nombreDoctorMostrar,
-            ubicacion: ubicacionMostrar
-        });
-
-        imprimirTicketSiExisteAndroid({
-            nombre: p.nombre,
-            rut: formatearRUT(rutLimpio),
-            doctor: nombreDoctorMostrar,
-            ubicacion: ubicacionMostrar,
-            hora: ahora24
-        });
+        mostrarAlerta("NO SE ENCONTRÓ UNA CITA VÁLIDA PARA HOY CON ESE RUT.");
+        resetearInputRUT();
     } catch (error) {
         console.error(error);
         mostrarAlerta("ERROR AL PROCESAR.");
@@ -904,7 +1175,14 @@ if (btn) {
 }
 
 if (btnCerrarModal) {
-    btnCerrarModal.addEventListener("click", cerrarModal);
+    btnCerrarModal.addEventListener("click", async () => {
+        if (modalContext.type === "final_confirm" && modalContext.selectedAppointment) {
+            await registrarLlegadaFinal(modalContext.selectedAppointment);
+            return;
+        }
+
+        cerrarModal();
+    });
 }
 
 if (modal) {
