@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.10_05";
+const APP_VERSION = "Totem v2026.04.10_06";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -56,12 +56,14 @@ const alertSound = document.getElementById("alertSound");
 let resetTimer = null;
 let modalTimer = null;
 let alertTimer = null;
+let qrTimer = null;
 let procesandoConfirmacion = false;
 let uiAudioCtx = null;
 
 const MODAL_AUTO_CLOSE_MS = 12000;
 const ALERT_AUTO_CLOSE_MS = 8000;
 const INPUT_AUTO_RESET_MS = 10000;
+const QR_AUTO_CLOSE_MS = 15000;
 
 const ESTADOS = {
     PENDIENTE: "pendiente",
@@ -359,6 +361,13 @@ function cancelarAutoCierreAlert() {
     }
 }
 
+function cancelarAutoCierreQR() {
+    if (qrTimer) {
+        clearTimeout(qrTimer);
+        qrTimer = null;
+    }
+}
+
 function resetearInputRUT() {
     cancelarResetInput();
     if (input) input.value = "";
@@ -510,13 +519,25 @@ function mostrarQrModal() {
 }
 
 function ocultarQrModal() {
+    cancelarAutoCierreQR();
+
     if (qrModal) {
         qrModal.style.display = "none";
     }
+
+    limpiarQRCode();
+}
+
+function programarAutoCierreQR() {
+    cancelarAutoCierreQR();
+
+    qrTimer = setTimeout(() => {
+        ocultarQrModal();
+    }, QR_AUTO_CLOSE_MS);
 }
 
 function renderizarQRCode(passUrl) {
-    if (!qrCodeContainer) return;
+    if (!qrCodeContainer || !passUrl) return;
 
     limpiarQRCode();
 
@@ -685,8 +706,6 @@ function cerrarModal() {
     if (modal) modal.style.display = "none";
 
     limpiarContenidoExtraModal();
-    ocultarQrModal();
-    limpiarQRCode();
     resetearInputRUT();
 
     modalContext = {
@@ -837,11 +856,13 @@ async function registrarLlegadaFinal(cita) {
         });
 
         const passUrl = construirUrlPase(nuevoPassId);
+        const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
+
+        cerrarModal();
 
         renderizarQRCode(passUrl);
         mostrarQrModal();
-
-        const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
+        programarAutoCierreQR();
 
         imprimirTicketSiExisteAndroid({
             nombre: p.nombre,
@@ -850,8 +871,6 @@ async function registrarLlegadaFinal(cita) {
             ubicacion: ubicacionMostrar,
             hora: ahora24
         });
-
-        cerrarModal();
     } catch (error) {
         console.error("Error al registrar llegada final:", error);
         mostrarAlerta("ERROR AL CONFIRMAR LA LLEGADA.");
@@ -862,10 +881,6 @@ async function registrarLlegadaFinal(cita) {
 async function abrirModalConfirmacionFinal(cita) {
     const p = cita.data;
     const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
-
-    renderizarQRCode("");
-    limpiarQRCode();
-    ocultarQrModal();
 
     abrirModal({
         titulo: "LLEGADA CONFIRMADA",
@@ -1011,6 +1026,7 @@ async function confirmarLlegada() {
 
     cancelarResetInput();
     ocultarAlerta();
+    ocultarQrModal();
 
     const rutLimpio = limpiarRUT(input.value);
 
@@ -1185,13 +1201,8 @@ if (btnCerrarModal) {
     });
 }
 
-if (modal) {
-    modal.addEventListener("click", (event) => {
-        if (event.target === modal) {
-            cerrarModal();
-        }
-    });
-}
+/* Importante: no cerrar el modal tocando fuera.
+   En tótem eso genera cierres accidentales. */
 
 document.addEventListener("keydown", (event) => {
     if (btn && btn.disabled) return;
