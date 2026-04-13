@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.11_06";
+const APP_VERSION = "Totem v2026.04.11_07";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -1073,7 +1073,7 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
         boton.innerHTML = `
     <div class="multi-cita-fila">
         <div class="multi-cita-titulo">
-            <span class="hora">${p.hora_consulta || "--:--"}</span> · ${nombreDoctorMostrar}
+            <span class="hora">${p.hora_consulta || "--:--"}</span>  &nbsp;-&nbsp;&nbsp;  ${nombreDoctorMostrar}
         </div>
         <div class="multi-cita-estado">
             ${estadoTexto}
