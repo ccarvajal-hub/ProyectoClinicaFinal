@@ -996,11 +996,11 @@ input {
     }
 
     .multi-cita-btn {
-        min-height: 48px;
-        padding: 8px 12px;
-        border-radius: 11px;
-        gap: 2px;
-    }
+    width: min(100%, 280px);
+    min-height: 42px;
+    padding: 7px 10px;
+    border-radius: 10px;
+}
 
     .multi-cita-titulo {
         font-size: 0.86rem;
