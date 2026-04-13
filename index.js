@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.12_01";
+const APP_VERSION = "Totem v2026.04.12_02";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -1055,12 +1055,45 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
     if (!extra) return;
 
     extra.innerHTML = "";
-    extra.style.display = "block";
+   extra.style.display = "flex";
+extra.style.flexDirection = "column";
+extra.style.flex = "1 1 auto";
+extra.style.minHeight = "0";
 
     const lista = document.createElement("div");
     lista.className = "multi-cita-lista";
+    lista.style.flex = "1 1 auto";
+    lista.style.minHeight = "0";
+    lista.style.overflowY = "auto";
 
     let citaSeleccionada = null;
+
+    const footer = document.createElement("div");
+    footer.className = "multi-cita-footer";
+    footer.style.flexShrink = "0";
+    footer.style.marginTop = "12px";
+    footer.style.paddingTop = "10px";
+    footer.style.display = "flex";
+    footer.style.flexDirection = "column";
+    footer.style.alignItems = "center";
+    footer.style.gap = "10px";
+
+    const btnAceptar = document.createElement("button");
+btnAceptar.type = "button";
+btnAceptar.className = "btn-close multi-cita-confirmar";
+btnAceptar.textContent = "ACEPTAR";
+btnAceptar.style.display = "flex";
+btnAceptar.style.width = "100%";
+btnAceptar.style.maxWidth = "320px";
+btnAceptar.style.flexShrink = "0";
+btnAceptar.disabled = true;
+btnAceptar.style.opacity = "0.55";
+btnAceptar.style.cursor = "not-allowed";
+
+    btnAceptar.addEventListener("click", async () => {
+        if (!citaSeleccionada) return;
+        await abrirModalFinalConQR(citaSeleccionada);
+    });
 
     for (const cita of ordenarCitasPorHoraAsc(citas)) {
         const p = cita.data;
@@ -1095,32 +1128,24 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
                 lista.querySelectorAll(".multi-cita-btn").forEach((b) => b.classList.remove("selected"));
                 boton.classList.add("selected");
                 citaSeleccionada = cita;
-                btnAceptar.style.display = "inline-flex";
+                btnAceptar.disabled = false;
+btnAceptar.style.opacity = "1";
+btnAceptar.style.cursor = "pointer";
             });
         }
 
         lista.appendChild(boton);
     }
 
-    extra.appendChild(lista);
-
-    const btnAceptar = document.createElement("button");
-    btnAceptar.type = "button";
-    btnAceptar.className = "btn-close multi-cita-confirmar";
-    btnAceptar.textContent = "ACEPTAR";
-    btnAceptar.style.display = "none";
-
-    btnAceptar.addEventListener("click", async () => {
-        if (!citaSeleccionada) return;
-        await abrirModalFinalConQR(citaSeleccionada);
-    });
-
-    extra.appendChild(btnAceptar);
-
     const ayuda = document.createElement("div");
     ayuda.className = "multi-cita-ayuda";
     ayuda.textContent = "PARA MAYOR INFORMACIÓN, DIRÍJASE A RECEPCIÓN";
-    extra.appendChild(ayuda);
+
+    footer.appendChild(ayuda);
+footer.appendChild(btnAceptar);
+
+    extra.appendChild(lista);
+    extra.appendChild(footer);
 }
 
 /* =========================

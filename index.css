@@ -446,6 +446,7 @@ input {
 
 .modal-content {
     width: min(92vw, 560px);
+    max-height: min(88vh, 760px);
     padding: 28px 20px 24px;
     text-align: center;
     background:
@@ -459,6 +460,9 @@ input {
     position: relative;
     top: 0;
     overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-content::before {
@@ -577,6 +581,8 @@ input {
     width: 100%;
     margin-top: 14px;
     display: none;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 #modalExtraContent button {
@@ -595,6 +601,10 @@ input {
     align-items: center;
     gap: 12px;
     margin-top: 4px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .multi-cita-btn {
@@ -681,13 +691,28 @@ input {
     white-space: nowrap;
 }
 
-.multi-cita-confirmar {
-    width: min(100%, 320px);
-    margin: 18px auto 0;
+.multi-cita-footer {
+    width: 100%;
+    margin-top: 12px;
+    padding-top: 12px;
+    padding-bottom: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    background: linear-gradient(180deg, rgba(24, 24, 24, 0) 0%, rgba(24, 24, 24, 0.96) 28%);
+    position: relative;
+    z-index: 2;
 }
 
+.multi-cita-confirmar {
+    width: min(100%, 320px);
+    margin: 20px auto 0 !important;
+    flex-shrink: 0;
+}
 .multi-cita-ayuda {
-    margin-top: 18px;
+    margin-top: 0;
     text-align: center;
     font-size: 0.98rem;
     font-weight: 800;
@@ -749,6 +774,13 @@ input {
 
 .btn-close:active {
     transform: scale(0.99);
+}
+
+.btn-close:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    filter: none;
+    transform: none;
 }
 
 .alert-overlay {
@@ -862,19 +894,19 @@ input {
     }
 
     .modal-content {
-    width: min(90vw, 500px);
-    padding: 24px 18px 20px;
-    border-radius: 22px;
-    top: 0;
-}
+        width: min(90vw, 500px);
+        padding: 24px 18px 20px;
+        border-radius: 22px;
+        top: 0;
+    }
 
-#modalTitulo {
-    font-size: 1.6rem;
-    line-height: 1.04;
-    margin-bottom: 16px;
-    white-space: normal;
-    text-wrap: balance;
-}
+    #modalTitulo {
+        font-size: 1.6rem;
+        line-height: 1.04;
+        margin-bottom: 16px;
+        white-space: normal;
+        text-wrap: balance;
+    }
 
     #modalMensaje {
         font-size: 0.9rem;
@@ -914,16 +946,19 @@ input {
     }
 
     .multi-cita-ayuda {
-        margin-top: 16px;
+        margin-top: 0;
         font-size: 0.9rem;
         line-height: 1.18;
     }
 
-    .btn-close,
-    .multi-cita-confirmar {
-        width: min(100%, 300px);
-        margin-top: 20px;
-    }
+   .btn-close {
+    width: min(100%, 300px);
+}
+
+.multi-cita-confirmar {
+    width: min(100%, 300px);
+    margin-top: 10px !important;
+}
 }
 
 /* TABLET CHICA / HORIZONTAL */
@@ -1112,14 +1147,14 @@ input {
     }
 
     .multi-cita-ayuda {
-        margin-top: 12px;
+        margin-top: 0;
         font-size: 0.86rem;
         line-height: 1.18;
     }
 
     .multi-cita-confirmar {
         width: min(100%, 280px);
-        margin-top: 16px;
+        margin-top: 0;
     }
 
     #qrFinalWrapper {
