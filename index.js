@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.11_08";
+const APP_VERSION = "Totem v2026.04.12_01";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -624,6 +624,13 @@ function limpiarContenidoExtraModal() {
 
 function configurarBotonModal(texto = "CERRAR") {
     if (!btnCerrarModal) return;
+
+    if (!texto) {
+        btnCerrarModal.style.display = "none";
+        return;
+    }
+
+    btnCerrarModal.style.display = "flex";
     btnCerrarModal.textContent = texto;
 }
 
@@ -1033,13 +1040,13 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
         titulo: "TIENES MÁS DE UNA CITA HOY",
         tipo: "warning",
         mensaje: hayCitaEnProceso
-            ? "Debes terminar tu atención actual antes de registrar otra cita."
-            : "Selecciona la cita a la que vienes:",
+            ? "DEBES TERMINAR TU ATENCIÓN ACTUAL ANTES DE REGISTRAR OTRA CITA."
+            : "SELECCIONA LA CITA A LA QUE VIENES:",
         nombre: "---",
         doctor: "---",
         ubicacion: "---",
         autoClose: false,
-        buttonText: "CERRAR",
+        buttonText: null,
         contextType: "multi_select",
         ocultarInfo: true
     });
@@ -1053,6 +1060,8 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
     const lista = document.createElement("div");
     lista.className = "multi-cita-lista";
 
+    let citaSeleccionada = null;
+
     for (const cita of ordenarCitasPorHoraAsc(citas)) {
         const p = cita.data;
         const { nombreDoctorMostrar } = await obtenerDatosDoctor(p.doctor_id);
@@ -1060,7 +1069,7 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
         const boton = document.createElement("button");
         const esPendiente = estadoEsPendiente(cita.estadoNormalizado);
         const habilitado = esPendiente && !hayCitaEnProceso;
-        const estadoTexto = textoEstadoHumano(cita.estadoNormalizado);
+        const estadoTexto = textoEstadoHumano(cita.estadoNormalizado).toUpperCase();
 
         boton.type = "button";
         boton.className = "multi-cita-btn";
@@ -1071,30 +1080,46 @@ async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
         }
 
         boton.innerHTML = `
-    <div class="multi-cita-fila">
-        <div class="multi-cita-titulo">
-            <span class="hora">${p.hora_consulta || "--:--"}</span>  &nbsp;-&nbsp;&nbsp;  ${nombreDoctorMostrar}
-        </div>
-        <div class="multi-cita-estado">
-            ${estadoTexto}
-        </div>
-    </div>
-`;
+            <div class="multi-cita-fila">
+                <div class="multi-cita-titulo">
+                    <span class="hora">${p.hora_consulta || "--:--"}</span><span class="multi-cita-separador">·</span>${(nombreDoctorMostrar || "").toUpperCase()}
+                </div>
+                <div class="multi-cita-estado">
+                    ${estadoTexto}
+                </div>
+            </div>
+        `;
 
         if (habilitado) {
-            boton.addEventListener("click", async () => {
-                await abrirModalFinalConQR(cita);
+            boton.addEventListener("click", () => {
+                lista.querySelectorAll(".multi-cita-btn").forEach((b) => b.classList.remove("selected"));
+                boton.classList.add("selected");
+                citaSeleccionada = cita;
+                btnAceptar.style.display = "inline-flex";
             });
         }
 
         lista.appendChild(boton);
     }
 
+    extra.appendChild(lista);
+
+    const btnAceptar = document.createElement("button");
+    btnAceptar.type = "button";
+    btnAceptar.className = "btn-close multi-cita-confirmar";
+    btnAceptar.textContent = "ACEPTAR";
+    btnAceptar.style.display = "none";
+
+    btnAceptar.addEventListener("click", async () => {
+        if (!citaSeleccionada) return;
+        await abrirModalFinalConQR(citaSeleccionada);
+    });
+
+    extra.appendChild(btnAceptar);
+
     const ayuda = document.createElement("div");
     ayuda.className = "multi-cita-ayuda";
     ayuda.textContent = "PARA MAYOR INFORMACIÓN, DIRÍJASE A RECEPCIÓN";
-
-    extra.appendChild(lista);
     extra.appendChild(ayuda);
 }
 
@@ -1286,8 +1311,6 @@ if (btnCerrarModal) {
         cerrarModal();
     });
 }
-
-/* No cerrar el modal tocando fuera */
 
 document.addEventListener("keydown", (event) => {
     if (btn && btn.disabled) return;
