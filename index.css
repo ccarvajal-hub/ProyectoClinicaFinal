@@ -859,9 +859,8 @@ input {
 .btn-close {
     width: min(100%, 320px);
     min-height: clamp(48px, 5.8vh, 54px);
-    margin: 24px auto 0;
-    background:
-        linear-gradient(180deg, #3a815f 0%, #2d6a4f 100%);
+    margin: 0 auto;
+    background: #2d6a4f;
     color: rgba(255, 255, 255, 0.96);
     border: none;
     border-radius: 16px;
@@ -870,9 +869,7 @@ input {
     letter-spacing: 0.4px;
     text-transform: uppercase;
     cursor: pointer;
-    box-shadow:
-        0 10px 22px rgba(45, 106, 79, 0.22),
-        inset 0 1px 0 rgba(255,255,255,0.08);
+    box-shadow: 0 8px 18px rgba(45, 106, 79, 0.18);
     transition: transform 0.08s ease, filter 0.15s ease;
     display: flex;
     align-items: center;
@@ -883,7 +880,7 @@ input {
 }
 
 .btn-close:hover {
-    filter: brightness(1.05);
+    filter: none;
 }
 
 .btn-close:active {
