@@ -445,9 +445,9 @@ input {
 }
 
 .modal-content {
-    width: min(92vw, 580px);
-    max-height: min(88vh, 780px);
-    padding: 28px 20px 24px;
+    width: min(92vw, 560px);
+    max-height: min(92vh, 820px);
+    padding: 28px 20px 32px;
     text-align: center;
     background:
         radial-gradient(circle at top, rgba(102, 149, 196, 0.08), transparent 32%),
@@ -510,6 +510,14 @@ input {
 
 #modalTitulo.success {
     color: var(--green-success);
+}
+
+#modalTitulo.success-title {
+    color: var(--green-success);
+    font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+    font-weight: 900;
+    line-height: 1.05;
+    text-transform: uppercase;
 }
 
 #modalTitulo.warning {
@@ -829,35 +837,36 @@ input {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 16px;
-    padding: 12px;
+    width: fit-content;
+    margin: 16px auto 0;
+    padding: 10px;
     background: #ffffff;
-    border-radius: 22px;
-    border: 1px solid rgba(72, 187, 120, 0.35);
+    border-radius: 20px;
+    border: 2px solid var(--yellow-accent);
     box-shadow:
-        0 14px 32px rgba(0,0,0,0.18),
-        inset 0 0 0 1px rgba(72, 187, 120, 0.08);
+        0 12px 26px rgba(0,0,0,0.18),
+        inset 0 0 0 1px rgba(255, 179, 71, 0.10);
 }
 
 #qrFinalWrapper img,
 #qrFinalWrapper canvas {
     display: block;
-    width: 220px !important;
-    height: 220px !important;
+    width: 155px !important;
+    height: 155px !important;
     margin: 0 auto;
 }
 
 .btn-close {
-    width: min(100%, 340px);
-    min-height: clamp(52px, 6vh, 58px);
-    margin: 0 auto;
+    width: min(100%, 320px);
+    min-height: clamp(48px, 5.8vh, 54px);
+    margin: 24px auto 0;
     background:
         linear-gradient(180deg, #3a815f 0%, #2d6a4f 100%);
     color: rgba(255, 255, 255, 0.96);
     border: none;
     border-radius: 16px;
     font-weight: 900;
-    font-size: clamp(1.04rem, 1.25vw, 1.1rem);
+    font-size: clamp(1.02rem, 1.2vw, 1.08rem);
     letter-spacing: 0.4px;
     text-transform: uppercase;
     cursor: pointer;
@@ -869,6 +878,8 @@ input {
     align-items: center;
     justify-content: center;
     text-align: center;
+    position: relative;
+    z-index: 3;
 }
 
 .btn-close:hover {
@@ -1280,23 +1291,26 @@ input {
         padding-top: 12px;
     }
 
-    .btn-close {
-        width: min(100%, 280px);
-        min-height: 48px;
-        border-radius: 14px;
-        font-size: 1rem;
-    }
+   #qrFinalWrapper {
+    margin-top: 12px;
+    padding: 8px;
+    border-radius: 16px;
+    border: 2px solid var(--yellow-accent);
+}
 
-    #qrFinalWrapper {
-        padding: 10px;
-        border-radius: 18px;
-    }
+#qrFinalWrapper img,
+#qrFinalWrapper canvas {
+    width: 140px !important;
+    height: 140px !important;
+}
 
-    #qrFinalWrapper img,
-    #qrFinalWrapper canvas {
-        width: 190px !important;
-        height: 190px !important;
-    }
+.btn-close {
+    width: min(100%, 280px);
+    min-height: 50px;
+    border-radius: 14px;
+    margin: 18px auto 0;
+    font-size: 1.04rem;
+}
 
     .alert-overlay {
         width: calc(100vw - 20px);

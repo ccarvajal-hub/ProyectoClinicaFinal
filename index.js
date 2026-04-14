@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.13_02";
+const APP_VERSION = "Totem v2026.04.13_03";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -977,7 +977,7 @@ async function abrirModalFinalConQR(cita) {
 
     abrirModal({
         titulo: "LLEGADA CONFIRMADA",
-        tipo: "success",
+        tipo: "warning",
         mensaje: "Por favor, diríjase a recepción.",
         nombre: p.nombre || "---",
         doctor: nombreDoctorMostrar,
