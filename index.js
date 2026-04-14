@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CL_TIMEZONE = "America/Santiago";
-const APP_VERSION = "Totem v2026.04.12_02";
+const APP_VERSION = "Totem v2026.04.13_02";
 
 /* URL fija del pase en GitHub Pages */
 const PASE_BASE_URL = "https://ccarvajal-hub.github.io/ProyectoClinicaFinal/pase-paciente.html";
@@ -54,6 +54,12 @@ const resNombre = document.getElementById("resNombre");
 const resDoctor = document.getElementById("resDoctor");
 const resUbicacion = document.getElementById("resUbicacion");
 
+const modalInfoBox = document.getElementById("modalInfoBox");
+const modalExtraContent = document.getElementById("modalExtraContent");
+const multiCitaContainer = document.getElementById("multiCitaContainer");
+const multiCitaLista = document.getElementById("multiCitaLista");
+const tplMultiCitaItem = document.getElementById("tplMultiCitaItem");
+
 const customAlert = document.getElementById("customAlert");
 const customAlertText = document.getElementById("customAlertText");
 
@@ -76,7 +82,10 @@ let modalContext = {
     autoCloseAction: null,
     passDraftId: null,
     passDraftUrl: "",
-    closingByAction: false
+    closingByAction: false,
+    multiAppointments: [],
+    multiSelectedId: null,
+    multiHasActiveProcess: false
 };
 
 /* =========================
@@ -598,6 +607,10 @@ async function activarPasePaciente(passId) {
 function asegurarContenedorExtraModal() {
     if (!modal) return null;
 
+    if (modalExtraContent) {
+        return modalExtraContent;
+    }
+
     let extra = modal.querySelector("#modalExtraContent");
 
     if (!extra) {
@@ -622,6 +635,22 @@ function limpiarContenidoExtraModal() {
     extra.style.display = "none";
 }
 
+function limpiarMultiCitaUI() {
+    if (multiCitaLista) {
+        multiCitaLista.innerHTML = "";
+    }
+
+    if (multiCitaContainer) {
+        multiCitaContainer.classList.add("hidden");
+    }
+}
+
+function mostrarMultiCitaUI() {
+    if (multiCitaContainer) {
+        multiCitaContainer.classList.remove("hidden");
+    }
+}
+
 function configurarBotonModal(texto = "CERRAR") {
     if (!btnCerrarModal) return;
 
@@ -632,6 +661,7 @@ function configurarBotonModal(texto = "CERRAR") {
 
     btnCerrarModal.style.display = "flex";
     btnCerrarModal.textContent = texto;
+    btnCerrarModal.disabled = false;
 }
 
 function obtenerBloqueInfo(el) {
@@ -647,7 +677,7 @@ function obtenerBloqueInfo(el) {
 }
 
 function mostrarOcultarInfoModal(mostrar) {
-    const infoBox = modal?.querySelector(".info-box");
+    const infoBox = modalInfoBox || modal?.querySelector(".info-box");
     if (infoBox) {
         infoBox.style.display = mostrar ? "" : "none";
     }
@@ -694,11 +724,14 @@ function abrirModal({
     passDraftId = null,
     passDraftUrl = "",
     ocultarInfo = false,
-    ocultarMensaje = false
+    ocultarMensaje = false,
+    multiAppointments = [],
+    multiHasActiveProcess = false
 }) {
     cancelarAutoCierreModal();
     ocultarAlerta();
     limpiarContenidoExtraModal();
+    limpiarMultiCitaUI();
 
     modalContext = {
         type: contextType,
@@ -706,7 +739,10 @@ function abrirModal({
         autoCloseAction,
         passDraftId,
         passDraftUrl,
-        closingByAction: false
+        closingByAction: false,
+        multiAppointments,
+        multiSelectedId: null,
+        multiHasActiveProcess
     };
 
     if (modalTitulo) {
@@ -762,6 +798,7 @@ function cerrarModal() {
     if (modal) modal.style.display = "none";
 
     limpiarContenidoExtraModal();
+    limpiarMultiCitaUI();
     limpiarQRCodeEnModal();
     mostrarOcultarInfoModal(true);
     mostrarOcultarMensajeModal(true, "");
@@ -773,7 +810,10 @@ function cerrarModal() {
         autoCloseAction: null,
         passDraftId: null,
         passDraftUrl: "",
-        closingByAction: false
+        closingByAction: false,
+        multiAppointments: [],
+        multiSelectedId: null,
+        multiHasActiveProcess: false
     };
 }
 
@@ -1035,117 +1075,143 @@ function abrirModalYaAtendido() {
     extra.appendChild(texto);
 }
 
+function actualizarSeleccionMultiCitaUI() {
+    if (!multiCitaLista) return;
+
+    const items = multiCitaLista.querySelectorAll(".multi-cita-item");
+
+    items.forEach((item) => {
+        const itemId = item.dataset.id || "";
+        const check = item.querySelector(".multi-cita-check");
+        const estaSeleccionada = modalContext.multiSelectedId === itemId;
+
+        item.classList.toggle("seleccionada", estaSeleccionada);
+
+        if (check) {
+            check.setAttribute("aria-pressed", estaSeleccionada ? "true" : "false");
+        }
+    });
+}
+
+function crearEstadoTextoElemento(estadoTexto) {
+    const estadoEl = document.createElement("div");
+    estadoEl.className = "multi-cita-estado-texto";
+    estadoEl.textContent = estadoTexto.toUpperCase();
+    return estadoEl;
+}
+
+async function crearItemMultiCita(cita, hayCitaEnProceso) {
+    const p = cita.data;
+    const { nombreDoctorMostrar, ubicacionMostrar } = await obtenerDatosDoctor(p.doctor_id);
+
+    let item;
+    if (tplMultiCitaItem?.content?.firstElementChild) {
+        item = tplMultiCitaItem.content.firstElementChild.cloneNode(true);
+    } else {
+        item = document.createElement("div");
+        item.className = "multi-cita-item";
+        item.innerHTML = `
+            <div class="multi-cita-item-main">
+                <div class="multi-cita-check-wrap">
+                    <button
+                        type="button"
+                        class="multi-cita-check"
+                        aria-label="Seleccionar cita"
+                        aria-pressed="false"
+                    ></button>
+                </div>
+                <div class="multi-cita-info">
+                    <div class="multi-cita-hora">--:--</div>
+                    <div class="multi-cita-doctor">Doctor</div>
+                    <div class="multi-cita-ubicacion">Ubicación</div>
+                </div>
+            </div>
+        `;
+    }
+
+    const esPendiente = estadoEsPendiente(cita.estadoNormalizado);
+    const habilitado = esPendiente && !hayCitaEnProceso;
+    const estadoTexto = textoEstadoHumano(cita.estadoNormalizado);
+
+    item.dataset.id = cita.id;
+    item.dataset.estado = cita.estadoNormalizado;
+
+    const horaEl = item.querySelector(".multi-cita-hora");
+    const doctorEl = item.querySelector(".multi-cita-doctor");
+    const ubicacionEl = item.querySelector(".multi-cita-ubicacion");
+    const infoEl = item.querySelector(".multi-cita-info");
+    const checkEl = item.querySelector(".multi-cita-check");
+
+    if (horaEl) horaEl.textContent = p.hora_consulta || "--:--";
+    if (doctorEl) doctorEl.textContent = nombreDoctorMostrar || "Doctor asignado";
+    if (ubicacionEl) ubicacionEl.textContent = ubicacionMostrar || "Por confirmar";
+
+    if (infoEl) {
+        infoEl.appendChild(crearEstadoTextoElemento(estadoTexto));
+    }
+
+    if (!habilitado) {
+        item.classList.add("deshabilitada");
+    }
+
+    if (checkEl) {
+        checkEl.disabled = !habilitado;
+        checkEl.setAttribute(
+            "aria-label",
+            habilitado ? "Seleccionar cita" : "Cita no disponible para confirmar"
+        );
+
+        if (habilitado) {
+            checkEl.addEventListener("click", () => {
+                modalContext.multiSelectedId = cita.id;
+                modalContext.selectedAppointment = cita;
+                actualizarSeleccionMultiCitaUI();
+            });
+        }
+    }
+
+    return item;
+}
+
 async function abrirModalSeleccionMultiple(citas, hayCitaEnProceso) {
     abrirModal({
         titulo: "TIENES MÁS DE UNA CITA HOY",
         tipo: "warning",
         mensaje: hayCitaEnProceso
             ? "DEBES TERMINAR TU ATENCIÓN ACTUAL ANTES DE REGISTRAR OTRA CITA."
-            : "SELECCIONA LA CITA A LA QUE VIENES:",
+            : "SELECCIONA LA CITA QUE DESEAS CONFIRMAR.",
         nombre: "---",
         doctor: "---",
         ubicacion: "---",
         autoClose: false,
-        buttonText: null,
+        buttonText: "ACEPTAR",
         contextType: "multi_select",
-        ocultarInfo: true
+        ocultarInfo: true,
+        multiAppointments: citas,
+        multiHasActiveProcess: hayCitaEnProceso
     });
 
-    const extra = asegurarContenedorExtraModal();
-    if (!extra) return;
+    mostrarMultiCitaUI();
 
-    extra.innerHTML = "";
-   extra.style.display = "flex";
-extra.style.flexDirection = "column";
-extra.style.flex = "1 1 auto";
-extra.style.minHeight = "0";
+    if (!multiCitaLista) return;
+    multiCitaLista.innerHTML = "";
 
-    const lista = document.createElement("div");
-    lista.className = "multi-cita-lista";
-    lista.style.flex = "1 1 auto";
-    lista.style.minHeight = "0";
-    lista.style.overflowY = "auto";
+    modalContext.multiSelectedId = null;
+    modalContext.selectedAppointment = null;
 
-    let citaSeleccionada = null;
+    // 🔥 ELIMINAR TÍTULO Y SUBTÍTULO DUPLICADO DEL BLOQUE MULTICITA
+    const multiTitulo = multiCitaContainer?.querySelector(".multi-cita-titulo");
+    const multiSubtitulo = multiCitaContainer?.querySelector(".multi-cita-subtitulo");
 
-    const footer = document.createElement("div");
-    footer.className = "multi-cita-footer";
-    footer.style.flexShrink = "0";
-    footer.style.marginTop = "12px";
-    footer.style.paddingTop = "10px";
-    footer.style.display = "flex";
-    footer.style.flexDirection = "column";
-    footer.style.alignItems = "center";
-    footer.style.gap = "10px";
-
-    const btnAceptar = document.createElement("button");
-btnAceptar.type = "button";
-btnAceptar.className = "btn-close multi-cita-confirmar";
-btnAceptar.textContent = "ACEPTAR";
-btnAceptar.style.display = "flex";
-btnAceptar.style.width = "100%";
-btnAceptar.style.maxWidth = "320px";
-btnAceptar.style.flexShrink = "0";
-btnAceptar.disabled = true;
-btnAceptar.style.opacity = "0.55";
-btnAceptar.style.cursor = "not-allowed";
-
-    btnAceptar.addEventListener("click", async () => {
-        if (!citaSeleccionada) return;
-        await abrirModalFinalConQR(citaSeleccionada);
-    });
+if (multiTitulo) multiTitulo.style.display = "none";
+if (multiSubtitulo) multiSubtitulo.style.display = "none";
 
     for (const cita of ordenarCitasPorHoraAsc(citas)) {
-        const p = cita.data;
-        const { nombreDoctorMostrar } = await obtenerDatosDoctor(p.doctor_id);
-
-        const boton = document.createElement("button");
-        const esPendiente = estadoEsPendiente(cita.estadoNormalizado);
-        const habilitado = esPendiente && !hayCitaEnProceso;
-        const estadoTexto = textoEstadoHumano(cita.estadoNormalizado).toUpperCase();
-
-        boton.type = "button";
-        boton.className = "multi-cita-btn";
-
-        if (!habilitado) {
-            boton.classList.add("disabled");
-            boton.disabled = true;
-        }
-
-        boton.innerHTML = `
-            <div class="multi-cita-fila">
-                <div class="multi-cita-titulo">
-                    <span class="hora">${p.hora_consulta || "--:--"}</span><span class="multi-cita-separador">·</span>${(nombreDoctorMostrar || "").toUpperCase()}
-                </div>
-                <div class="multi-cita-estado">
-                    ${estadoTexto}
-                </div>
-            </div>
-        `;
-
-        if (habilitado) {
-            boton.addEventListener("click", () => {
-                lista.querySelectorAll(".multi-cita-btn").forEach((b) => b.classList.remove("selected"));
-                boton.classList.add("selected");
-                citaSeleccionada = cita;
-                btnAceptar.disabled = false;
-btnAceptar.style.opacity = "1";
-btnAceptar.style.cursor = "pointer";
-            });
-        }
-
-        lista.appendChild(boton);
+        const item = await crearItemMultiCita(cita, hayCitaEnProceso);
+        multiCitaLista.appendChild(item);
     }
 
-    const ayuda = document.createElement("div");
-    ayuda.className = "multi-cita-ayuda";
-    ayuda.textContent = "PARA MAYOR INFORMACIÓN, DIRÍJASE A RECEPCIÓN";
-
-    footer.appendChild(ayuda);
-footer.appendChild(btnAceptar);
-
-    extra.appendChild(lista);
-    extra.appendChild(footer);
+    actualizarSeleccionMultiCitaUI();
 }
 
 /* =========================
@@ -1184,30 +1250,32 @@ async function confirmarLlegada() {
         }
 
         const { pendientes, enProceso, atendidas } = clasificarCitas(citasHoy);
-        const totalCitas = pendientes.length + enProceso.length + atendidas.length;
+const totalCitas = pendientes.length + enProceso.length + atendidas.length;
 
-        if (totalCitas >= 2) {
-            await abrirModalSeleccionMultiple(
-                [...pendientes, ...enProceso, ...atendidas],
-                enProceso.length > 0
-            );
-            return;
-        }
+// 🔴 SI TODAS LAS CITAS YA FUERON ATENDIDAS, MOSTRAR PILL Y NO ABRIR MODAL
+if (atendidas.length >= 1 && pendientes.length === 0 && enProceso.length === 0) {
+    mostrarAlerta("ESTE RUT NO TIENE CITAS PENDIENTES HOY");
+    resetearInputRUT();
+    return;
+}
 
-        if (pendientes.length === 1) {
-            await abrirModalFinalConQR(pendientes[0]);
-            return;
-        }
+if (totalCitas >= 2) {
+    await abrirModalSeleccionMultiple(
+        [...pendientes, ...enProceso, ...atendidas],
+        enProceso.length > 0
+    );
+    return;
+}
 
-        if (enProceso.length === 1) {
-            abrirModalYaIngresado();
-            return;
-        }
+if (pendientes.length === 1) {
+    await abrirModalFinalConQR(pendientes[0]);
+    return;
+}
 
-        if (atendidas.length === 1) {
-            abrirModalYaAtendido();
-            return;
-        }
+if (enProceso.length === 1) {
+    abrirModalYaIngresado();
+    return;
+}
 
         mostrarAlerta("NO SE ENCONTRÓ UNA CITA VÁLIDA PARA HOY CON ESE RUT.");
         resetearInputRUT();
@@ -1333,6 +1401,16 @@ if (btnCerrarModal) {
             return;
         }
 
+        if (modalContext.type === "multi_select") {
+            if (modalContext.selectedAppointment) {
+                await abrirModalFinalConQR(modalContext.selectedAppointment);
+                return;
+            }
+
+            cerrarModal();
+            return;
+        }
+
         cerrarModal();
     });
 }
@@ -1360,6 +1438,16 @@ document.addEventListener("keydown", (event) => {
 
     if (event.key === "Enter") {
         event.preventDefault();
+
+        if (modal && modal.style.display === "flex" && modalContext.type === "multi_select") {
+            if (modalContext.selectedAppointment) {
+                abrirModalFinalConQR(modalContext.selectedAppointment);
+            } else {
+                cerrarModal();
+            }
+            return;
+        }
+
         confirmarLlegada();
         return;
     }
@@ -1375,6 +1463,7 @@ document.addEventListener("DOMContentLoaded", () => {
     actualizarFechaHora();
     setInterval(actualizarFechaHora, 1000);
     limpiarQRCodeEnModal();
+    limpiarMultiCitaUI();
 });
 
 window.addEventListener("load", () => {

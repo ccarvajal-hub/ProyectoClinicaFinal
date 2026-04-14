@@ -130,7 +130,7 @@
             <div class="modal-icon success-icon">✓</div>
             <h2 id="modalTitulo" class="success">LLEGADA CONFIRMADA</h2>
 
-            <div class="info-box">
+            <div class="info-box" id="modalInfoBox">
                 <div class="info-item">
                     <span class="info-label">Paciente</span>
                     <span class="info-value" id="resNombre">---</span>
@@ -148,9 +148,27 @@
             </div>
 
             <p id="modalMensaje">POR FAVOR, DIRÍJASE A RECEPCIÓN.</p>
+
+            <!-- CONTENIDO EXTRA EXISTENTE -->
             <div id="modalExtraContent"></div>
 
-            <button class="btn-close" id="btnCerrarModal" type="button">ENTENDIDO</button>
+            <!-- NUEVO BLOQUE MULTICITA -->
+            <div id="multiCitaContainer" class="multi-cita-container hidden" aria-live="polite">
+                <h3 class="multi-cita-titulo">TIENES MÁS DE UNA CITA HOY</h3>
+
+                <p class="multi-cita-subtitulo">
+                    Selecciona la cita que deseas confirmar
+                </p>
+
+                <div id="multiCitaLista" class="multi-cita-lista">
+                    <!-- El JS inyecta aquí los items -->
+                </div>
+            </div>
+
+            <!-- BOTÓN SIEMPRE VISIBLE -->
+            <div class="modal-footer">
+                <button class="btn-close" id="btnCerrarModal" type="button">ACEPTAR</button>
+            </div>
         </div>
     </div>
 
@@ -177,6 +195,28 @@
             document.write('<script src="./js/qrcode.min.js"><\/script>');
         }
     </script>
+
+    <!-- TEMPLATE OPCIONAL PARA MULTICITA -->
+    <template id="tplMultiCitaItem">
+        <div class="multi-cita-item" data-id="" data-estado="">
+            <div class="multi-cita-item-main">
+                <div class="multi-cita-check-wrap">
+                    <button
+                        type="button"
+                        class="multi-cita-check"
+                        aria-label="Seleccionar cita"
+                        aria-pressed="false"
+                    ></button>
+                </div>
+
+                <div class="multi-cita-info">
+                    <div class="multi-cita-hora">--:--</div>
+                    <div class="multi-cita-doctor">Doctor</div>
+                    <div class="multi-cita-ubicacion">Ubicación</div>
+                </div>
+            </div>
+        </div>
+    </template>
 
     <!-- TU JS PRINCIPAL -->
     <script type="module" src="./index.js?v=20260411-02"></script>
